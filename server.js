@@ -8,6 +8,7 @@ const cors = require('cors');
 const os = require('os');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const config = require('./config');
 
 const app = express();
 const server = http.createServer(app);
@@ -16,22 +17,18 @@ const wss = new WebSocket.Server({
   verifyClient: (info) => {
     // Validate WebSocket origin
     const origin = info.origin || info.req.headers.origin;
-    const allowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
-    return !origin || allowedOrigins.includes(origin);
+    return !origin || config.CORS_ORIGINS.includes(origin);
   }
 });
 
 // Security middleware
-app.use(helmet({
-  contentSecurityPolicy: false, // Disable for development
-  crossOriginEmbedderPolicy: false
-}));
+app.use(helmet(config.HELMET_CONFIG));
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.',
+  windowMs: config.RATE_LIMIT.WINDOW_MS,
+  max: config.RATE_LIMIT.MAX_REQUESTS,
+  message: config.RATE_LIMIT.MESSAGE,
   standardHeaders: true,
   legacyHeaders: false
 });
@@ -40,7 +37,7 @@ app.use('/api/', limiter);
 
 // Restrict CORS to localhost only for security
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+  origin: config.CORS_ORIGINS,
   credentials: true
 }));
 app.use(express.json());
@@ -201,16 +198,13 @@ function setupWatchers() {
   console.log('Setting up file watchers...');
 
   const watchOptions = {
-    persistent: true,
-    ignoreInitial: true,
-    usePolling: true,
-    interval: 1000,
-    binaryInterval: 1000,
-    depth: 10,
-    awaitWriteFinish: {
-      stabilityThreshold: 500,
-      pollInterval: 100
-    }
+    persistent: config.WATCH_CONFIG.PERSISTENT,
+    ignoreInitial: config.WATCH_CONFIG.IGNORE_INITIAL,
+    usePolling: config.WATCH_CONFIG.USE_POLLING,
+    interval: config.WATCH_CONFIG.INTERVAL,
+    binaryInterval: config.WATCH_CONFIG.BINARY_INTERVAL,
+    depth: config.WATCH_CONFIG.DEPTH,
+    awaitWriteFinish: config.WATCH_CONFIG.AWAIT_WRITE_FINISH
   };
 
   // Watch teams directory - watch all JSON files recursively
@@ -382,9 +376,8 @@ function setupGracefulShutdown() {
 }
 
 // Start server
-const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-  console.log(`Agent Dashboard Server running on port ${PORT}`);
+server.listen(config.PORT, () => {
+  console.log(`Agent Dashboard Server running on port ${config.PORT}`);
   console.log(`WebSocket server ready`);
   console.log(`Monitoring teams at: ${TEAMS_DIR}`);
   console.log(`Monitoring tasks at: ${TASKS_DIR}`);

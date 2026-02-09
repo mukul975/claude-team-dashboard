@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { Activity, Circle } from 'lucide-react';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -88,3 +89,11 @@ export function ActivityFeed({ updates }) {
     </div>
   );
 }
+
+ActivityFeed.propTypes = {
+  updates: PropTypes.shape({
+    type: PropTypes.string,
+    data: PropTypes.array,
+    stats: PropTypes.object
+  })
+};

@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Users, ListTodo, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 
 export function StatsOverview({ stats }) {
@@ -70,3 +71,15 @@ export function StatsOverview({ stats }) {
     </div>
   );
 }
+
+StatsOverview.propTypes = {
+  stats: PropTypes.shape({
+    totalTeams: PropTypes.number,
+    totalAgents: PropTypes.number,
+    totalTasks: PropTypes.number,
+    pendingTasks: PropTypes.number,
+    inProgressTasks: PropTypes.number,
+    completedTasks: PropTypes.number,
+    blockedTasks: PropTypes.number
+  })
+};

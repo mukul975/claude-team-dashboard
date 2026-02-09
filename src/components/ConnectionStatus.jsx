@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Wifi, WifiOff, RefreshCw } from 'lucide-react';
 
 export function ConnectionStatus({ isConnected, error }) {
@@ -27,3 +28,8 @@ export function ConnectionStatus({ isConnected, error }) {
     </div>
   );
 }
+
+ConnectionStatus.propTypes = {
+  isConnected: PropTypes.bool.isRequired,
+  error: PropTypes.string
+};

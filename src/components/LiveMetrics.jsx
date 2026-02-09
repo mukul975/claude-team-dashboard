@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { Activity, Zap, TrendingUp } from 'lucide-react';
 
 export function LiveMetrics({ stats }) {
@@ -86,3 +87,14 @@ export function LiveMetrics({ stats }) {
     </div>
   );
 }
+
+LiveMetrics.propTypes = {
+  stats: PropTypes.shape({
+    totalTeams: PropTypes.number,
+    totalAgents: PropTypes.number,
+    totalTasks: PropTypes.number,
+    inProgressTasks: PropTypes.number,
+    completedTasks: PropTypes.number,
+    blockedTasks: PropTypes.number
+  })
+};

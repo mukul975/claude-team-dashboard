@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import { Users, ChevronDown, ChevronUp, Activity, Clock } from 'lucide-react';
 import { AgentCard } from './AgentCard';
 import { TaskList } from './TaskList';
@@ -105,3 +106,16 @@ export function TeamCard({ team }) {
     </div>
   );
 }
+
+TeamCard.propTypes = {
+  team: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    config: PropTypes.shape({
+      description: PropTypes.string,
+      leadName: PropTypes.string,
+      members: PropTypes.arrayOf(PropTypes.object)
+    }),
+    tasks: PropTypes.array,
+    lastUpdated: PropTypes.string
+  }).isRequired
+};

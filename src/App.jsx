@@ -92,6 +92,7 @@ function App() {
         <nav className="mb-6" role="tablist" aria-label="Dashboard sections">
           <div className="flex gap-2 overflow-x-auto pb-2">
             <button
+              id="tab-overview"
               onClick={() => setActiveTab('overview')}
               role="tab"
               aria-selected={activeTab === 'overview'}
@@ -106,45 +107,62 @@ function App() {
               Live Metrics
             </button>
             <button
+              id="tab-teams"
               onClick={() => setActiveTab('teams')}
+              role="tab"
+              aria-selected={activeTab === 'teams'}
+              aria-controls="tab-panel-teams"
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
                 activeTab === 'teams'
                   ? 'bg-claude-orange text-white shadow-lg'
                   : 'bg-gray-700/50 text-gray-300 hover:bg-gray-700'
               }`}
             >
-              <Users className="h-4 w-4" />
+              <Users className="h-4 w-4" aria-hidden="true" />
               Teams & Tasks
             </button>
             <button
+              id="tab-communication"
               onClick={() => setActiveTab('communication')}
+              role="tab"
+              aria-selected={activeTab === 'communication'}
+              aria-controls="tab-panel-communication"
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
                 activeTab === 'communication'
                   ? 'bg-claude-orange text-white shadow-lg'
                   : 'bg-gray-700/50 text-gray-300 hover:bg-gray-700'
               }`}
             >
-              <MessageSquare className="h-4 w-4" />
+              <MessageSquare className="h-4 w-4" aria-hidden="true" />
               Communication
             </button>
             <button
+              id="tab-monitoring"
               onClick={() => setActiveTab('monitoring')}
+              role="tab"
+              aria-selected={activeTab === 'monitoring'}
+              aria-controls="tab-panel-monitoring"
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
                 activeTab === 'monitoring'
                   ? 'bg-claude-orange text-white shadow-lg'
                   : 'bg-gray-700/50 text-gray-300 hover:bg-gray-700'
               }`}
             >
-              <Settings className="h-4 w-4" />
+              <Settings className="h-4 w-4" aria-hidden="true" />
               Monitoring
             </button>
           </div>
-        </div>
+        </nav>
 
         {/* Tab Content */}
         <div className="tab-content">
           {activeTab === 'overview' && (
-            <div className="space-y-6 animate-fadeIn">
+            <div
+              role="tabpanel"
+              id="tab-panel-overview"
+              aria-labelledby="tab-overview"
+              className="space-y-6 animate-fadeIn"
+            >
               {/* Live Metrics */}
               <LiveMetrics stats={stats} />
 
@@ -158,7 +176,12 @@ function App() {
           )}
 
           {activeTab === 'teams' && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fadeIn">
+            <div
+              role="tabpanel"
+              id="tab-panel-teams"
+              aria-labelledby="tab-teams"
+              className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fadeIn"
+            >
               {/* Teams Section */}
               <div className="lg:col-span-2 space-y-6">
                 <div className="flex items-center justify-between mb-4">
@@ -204,14 +227,24 @@ function App() {
           )}
 
           {activeTab === 'communication' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fadeIn">
+            <div
+              role="tabpanel"
+              id="tab-panel-communication"
+              aria-labelledby="tab-communication"
+              className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fadeIn"
+            >
               <RealTimeMessages teams={teams} />
               <LiveAgentStream teams={teams} />
             </div>
           )}
 
           {activeTab === 'monitoring' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fadeIn">
+            <div
+              role="tabpanel"
+              id="tab-panel-monitoring"
+              aria-labelledby="tab-monitoring"
+              className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fadeIn"
+            >
               <SystemStatus isConnected={isConnected} lastUpdate={lastUpdate} />
               <ActivityFeed updates={lastUpdate} />
             </div>
