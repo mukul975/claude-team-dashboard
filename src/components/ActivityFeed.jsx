@@ -76,9 +76,7 @@ export function ActivityFeed({ updates }) {
                 <div className="flex-1 min-w-0">
                   <p className="text-white text-sm">{activity.message}</p>
                   <p className="text-gray-400 text-xs mt-1">
-                    {formatDistanceToNow(new Date(activity.timestamp), {
-                      addSuffix: true
-                    })}
+                    {dayjs(activity.timestamp).fromNow()}
                   </p>
                 </div>
               </div>
