@@ -6,13 +6,13 @@
 
 ### Stop Flying Blind — Monitor Your Claude Code Agent Teams in Real Time
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/mukul975/agentdashboard/blob/main/LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/mukul975/claude-team-dashboard/blob/main/LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
-[![JavaScript](https://img.shields.io/badge/JavaScript-58%25-F7DF1E.svg?logo=javascript&logoColor=black)](https://github.com/mukul975/agentdashboard)
+[![JavaScript](https://img.shields.io/badge/JavaScript-58%25-F7DF1E.svg?logo=javascript&logoColor=black)](https://github.com/mukul975/claude-team-dashboard)
 [![Vite](https://img.shields.io/badge/Vite-7.x-646CFF.svg?logo=vite&logoColor=white)](https://vitejs.dev/)
-[![WebSocket](https://img.shields.io/badge/WebSocket-Real--Time-010101.svg?logo=socketdotio&logoColor=white)](https://github.com/mukul975/agentdashboard)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/mukul975/agentdashboard/pulls)
-[![GitHub Stars](https://img.shields.io/github/stars/mukul975/agentdashboard?style=social)](https://github.com/mukul975/agentdashboard)
+[![WebSocket](https://img.shields.io/badge/WebSocket-Real--Time-010101.svg?logo=socketdotio&logoColor=white)](https://github.com/mukul975/claude-team-dashboard)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/mukul975/claude-team-dashboard/pulls)
+[![GitHub Stars](https://img.shields.io/github/stars/mukul975/claude-team-dashboard?style=social)](https://github.com/mukul975/claude-team-dashboard)
 
 **Monitor, track, and orchestrate** your [Claude Code](https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview) agent teams from a **single, unified dashboard** — with **zero-delay WebSocket streaming**.
 
@@ -100,7 +100,7 @@ Instant desktop notifications for task completions, errors, and state changes. *
 
 ```bash
 # 1. Clone and enter
-git clone https://github.com/mukul975/agentdashboard.git
+git clone https://github.com/mukul975/claude-team-dashboard.git
 cd agentdashboard
 
 # 2. Install dependencies
@@ -243,7 +243,7 @@ agentdashboard/
 | [**CODE_OF_CONDUCT.md**](CODE_OF_CONDUCT.md) | Community guidelines and standards |
 | [**docs/**](docs/) | Additional guides, architecture docs, and assets |
 
-**Need help?** Open a [Discussion](https://github.com/mukul975/agentdashboard/discussions) or check existing [Issues](https://github.com/mukul975/agentdashboard/issues).
+**Need help?** Open a [Discussion](https://github.com/mukul975/claude-team-dashboard/discussions) or check existing [Issues](https://github.com/mukul975/claude-team-dashboard/issues).
 
 ---
 
@@ -263,7 +263,7 @@ agentdashboard/
 
 ### 💡 Have an Idea?
 
-We prioritize features based on community feedback. [**Open a feature request →**](https://github.com/mukul975/agentdashboard/issues/new?template=feature_request.yml)
+We prioritize features based on community feedback. [**Open a feature request →**](https://github.com/mukul975/claude-team-dashboard/issues/new?template=feature_request.yml)
 
 ---
 
@@ -291,13 +291,13 @@ git push origin feature/amazing-feature
 
 ### 🌟 Ways to Contribute
 
-- 🐛 **Report bugs** — Use the [bug report template](https://github.com/mukul975/agentdashboard/issues/new?template=bug_report.yml)
-- ✨ **Suggest features** — Use the [feature request template](https://github.com/mukul975/agentdashboard/issues/new?template=feature_request.yml)
+- 🐛 **Report bugs** — Use the [bug report template](https://github.com/mukul975/claude-team-dashboard/issues/new?template=bug_report.yml)
+- ✨ **Suggest features** — Use the [feature request template](https://github.com/mukul975/claude-team-dashboard/issues/new?template=feature_request.yml)
 - 📝 **Improve docs** — Fix typos, add examples, clarify instructions
 - 🧪 **Write tests** — Increase code coverage and reliability
 - 🎨 **Design improvements** — UI/UX enhancements welcome
 
-**First time contributing?** Check out issues labeled [`good first issue`](https://github.com/mukul975/agentdashboard/labels/good%20first%20issue).
+**First time contributing?** Check out issues labeled [`good first issue`](https://github.com/mukul975/claude-team-dashboard/labels/good%20first%20issue).
 
 ---
 
@@ -311,7 +311,7 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 
 ## ⭐ Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=mukul975/agentdashboard&type=Date)](https://star-history.com/#mukul975/agentdashboard&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=mukul975/claude-team-dashboard&type=Date)](https://star-history.com/#mukul975/claude-team-dashboard&Date)
 
 ---
 
@@ -323,7 +323,7 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 
 **Starring helps others discover this project.** It takes 2 seconds and makes a huge difference.
 
-[![GitHub stars](https://img.shields.io/github/stars/mukul975/agentdashboard?style=social)](https://github.com/mukul975/agentdashboard/stargazers)
+[![GitHub stars](https://img.shields.io/github/stars/mukul975/claude-team-dashboard?style=social)](https://github.com/mukul975/claude-team-dashboard/stargazers)
 
 ---
 

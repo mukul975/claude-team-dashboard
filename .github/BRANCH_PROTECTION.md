@@ -87,17 +87,17 @@ git push origin feature/amazing-feature
 
 Update the ruleset:
 \`\`\`bash
-gh api repos/mukul975/agentdashboard/rulesets/12620515 --method PUT --input ruleset.json
+gh api repos/mukul975/claude-team-dashboard/rulesets/12620515 --method PUT --input ruleset.json
 \`\`\`
 
 View current ruleset:
 \`\`\`bash
-gh api repos/mukul975/agentdashboard/rulesets/12620515
+gh api repos/mukul975/claude-team-dashboard/rulesets/12620515
 \`\`\`
 
 Delete ruleset:
 \`\`\`bash
-gh api repos/mukul975/agentdashboard/rulesets/12620515 --method DELETE
+gh api repos/mukul975/claude-team-dashboard/rulesets/12620515 --method DELETE
 \`\`\`
 
 ### Via GitHub UI
@@ -118,4 +118,4 @@ gh api repos/mukul975/agentdashboard/rulesets/12620515 --method DELETE
 ---
 
 **Last Updated**: February 10, 2026
-**Ruleset URL**: https://github.com/mukul975/agentdashboard/rules/12620515
+**Ruleset URL**: https://github.com/mukul975/claude-team-dashboard/rules/12620515

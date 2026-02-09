@@ -140,7 +140,7 @@ jobs:
     - name: Build Docker image (if Dockerfile exists)
       run: |
         if [ -f Dockerfile ]; then
-          docker build -t agentdashboard:${{ github.sha }} .
+          docker build -t claude-team-dashboard:${{ github.sha }} .
         else
           echo "No Dockerfile found, skipping Docker scan"
           exit 0
@@ -151,7 +151,7 @@ jobs:
       if: success()
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: 'agentdashboard:${{ github.sha }}'
+        image-ref: 'claude-team-dashboard:${{ github.sha }}'
         format: 'sarif'
         output: 'trivy-results.sarif'
 

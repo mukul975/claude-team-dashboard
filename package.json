@@ -1,11 +1,11 @@
 {
-  "name": "agentdashboard",
+  "name": "claude-team-dashboard",
   "version": "1.2.2",
   "description": "Real-time monitoring dashboard for Claude Code agent teams",
   "main": "server.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mukul975/agentdashboard.git"
+    "url": "https://github.com/mukul975/claude-team-dashboard.git"
   },
   "scripts": {
     "start": "node start.js",

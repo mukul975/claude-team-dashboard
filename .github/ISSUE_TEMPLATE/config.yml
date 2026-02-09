@@ -1,8 +1,8 @@
 blank_issues_enabled: true
 contact_links:
   - name: Documentation
-    url: https://github.com/mukul975/agentdashboard#readme
+    url: https://github.com/mukul975/claude-team-dashboard#readme
     about: Check the documentation for common questions
   - name: Discussion Forum
-    url: https://github.com/mukul975/agentdashboard/discussions
+    url: https://github.com/mukul975/claude-team-dashboard/discussions
     about: Ask questions and discuss ideas with the community

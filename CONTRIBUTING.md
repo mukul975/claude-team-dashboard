@@ -32,7 +32,7 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
 
 ```bash
 # 1. Fork & clone
-git clone https://github.com/YOUR_USERNAME/agentdashboard.git && cd agentdashboard
+git clone https://github.com/YOUR_USERNAME/claude-team-dashboard.git && cd claude-team-dashboard
 
 # 2. Install dependencies
 npm install
@@ -83,9 +83,9 @@ Have VS Code + Docker? Skip everything:
 
 ```bash
 # Fork the repository on GitHub, then:
-git clone https://github.com/YOUR_USERNAME/agentdashboard.git
-cd agentdashboard
-git remote add upstream https://github.com/mukul975/agentdashboard.git
+git clone https://github.com/YOUR_USERNAME/claude-team-dashboard.git
+cd claude-team-dashboard
+git remote add upstream https://github.com/mukul975/claude-team-dashboard.git
 ```
 
 #### 2. Create a Feature Branch
@@ -132,7 +132,7 @@ See [Commit Message Format](#-commit-message-format) for details.
 git push origin feature/your-feature-name
 ```
 
-Then open a PR on GitHub using our [PR template](https://github.com/mukul975/agentdashboard/blob/main/.github/PULL_REQUEST_TEMPLATE.md).
+Then open a PR on GitHub using our [PR template](https://github.com/mukul975/claude-team-dashboard/blob/main/.github/PULL_REQUEST_TEMPLATE.md).
 
 ## Coding Standards
 
@@ -262,7 +262,7 @@ Found a bug? Help us fix it!
 
 ### Submit a Bug Report
 
-Use our [bug report template](https://github.com/mukul975/agentdashboard/issues/new?template=bug_report.yml) and include:
+Use our [bug report template](https://github.com/mukul975/claude-team-dashboard/issues/new?template=bug_report.yml) and include:
 
 - **Clear title** — Describe the bug in one sentence
 - **Steps to reproduce** — Detailed, numbered steps
@@ -288,7 +288,7 @@ Have an idea? We'd love to hear it!
 
 ### Submit a Feature Request
 
-Use our [feature request template](https://github.com/mukul975/agentdashboard/issues/new?template=feature_request.yml) and include:
+Use our [feature request template](https://github.com/mukul975/claude-team-dashboard/issues/new?template=feature_request.yml) and include:
 
 - **Problem statement** — What problem does this solve?
 - **Proposed solution** — How would it work?
@@ -380,8 +380,8 @@ describe('AgentCard', () => {
 ## 💬 Questions or Need Help?
 
 - **📖 Check docs first** — [README](README.md) | [FEATURES](FEATURES.md)
-- **💬 Ask in Discussions** — [GitHub Discussions](https://github.com/mukul975/agentdashboard/discussions)
-- **🐛 Report bugs** — [Create an issue](https://github.com/mukul975/agentdashboard/issues/new/choose)
+- **💬 Ask in Discussions** — [GitHub Discussions](https://github.com/mukul975/claude-team-dashboard/discussions)
+- **🐛 Report bugs** — [Create an issue](https://github.com/mukul975/claude-team-dashboard/issues/new/choose)
 - **🤝 Join the community** — Share your agent monitoring stories!
 
 ---
@@ -398,6 +398,6 @@ By contributing, you agree that your contributions will be licensed under the **
 
 Every contribution — big or small — helps developers worldwide monitor their AI agents more effectively.
 
-[![Contributors](https://img.shields.io/github/contributors/mukul975/agentdashboard)](https://github.com/mukul975/agentdashboard/graphs/contributors)
+[![Contributors](https://img.shields.io/github/contributors/mukul975/claude-team-dashboard)](https://github.com/mukul975/claude-team-dashboard/graphs/contributors)
 
 </div>
