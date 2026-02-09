@@ -315,40 +315,6 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 
 ---
 
-## 👤 Author
-
-<table>
-  <tr>
-    <td>
-      <strong>Mahipal Jangra</strong><br><br>
-      Cybersecurity Researcher & Front-End Developer based in Berlin, Germany.<br>
-      M.Sc. in Computer Science (Cybersecurity) — SRH Berlin University of Applied Sciences.<br><br>
-      Research focus: AI agent vulnerabilities, Kubernetes security hardening, fraud detection, and quantum-resistant cryptography. Published with <strong>Springer</strong> and <strong>IS&T Electronic Imaging 2025</strong>.<br><br>
-      Also the creator of <a href="https://github.com/mukul975/mcp-web-scrape">MCP Web Scrape</a> and <a href="https://github.com/mukul975/mcp-windows-automation">MCP Windows Server</a>.
-    </td>
-  </tr>
-</table>
-
-| | |
-|---|---|
-| 🌐 Portfolio | [mahipal.engineer](https://www.mahipal.engineer/) |
-| 🔗 GitHub | [@mukul975](https://github.com/mukul975) |
-| 💼 LinkedIn | [mahipal975](https://www.linkedin.com/in/mahipal975/) |
-| 📸 Instagram | [@_mukul.jangra_](https://www.instagram.com/_mukul.jangra_/) |
-
----
-
-## 🔗 More From the Author
-
-| Project | Description |
-|---|---|
-| [**MCP Web Scrape**](https://github.com/mukul975/mcp-web-scrape) | TypeScript web scraping framework — transforms messy HTML into clean, agent-ready content via Model Context Protocol |
-| [**MCP Windows Server**](https://github.com/mukul975/mcp-windows-automation) | Python automation framework — 200+ tools for AI assistants to control Windows through natural language |
-| [**SK Studio**](https://www.skstudio.co.in/) | Fine art photography portfolio built with React & Vite |
-| [**EmailGuard**](https://github.com/mukul975) | AI-driven phishing email detection system using 50+ features with ML & NLP |
-
----
-
 <div align="center">
 
 ---
