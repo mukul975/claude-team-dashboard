@@ -1,0 +1,303 @@
+/* Premium Visual Polish Enhancements */
+
+/* Enhanced Badge Styles with Glow */
+.badge {
+  padding: 7px 16px !important;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 7px;
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.25),
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.badge::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+  animation: badgePulse 2.5s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(0.92);
+    filter: brightness(1.2);
+  }
+}
+
+.badge:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.35),
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+}
+
+.badge-pending {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.3), rgba(234, 179, 8, 0.18)) !important;
+  color: #facc15 !important;
+  border: 1px solid rgba(234, 179, 8, 0.5) !important;
+  text-shadow: 0 0 10px rgba(234, 179, 8, 0.3);
+}
+
+.badge-in-progress {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(59, 130, 246, 0.18)) !important;
+  color: #60a5fa !important;
+  border: 1px solid rgba(59, 130, 246, 0.5) !important;
+  text-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+}
+
+.badge-completed {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(34, 197, 94, 0.18)) !important;
+  color: #4ade80 !important;
+  border: 1px solid rgba(34, 197, 94, 0.5) !important;
+  text-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+}
+
+.badge-blocked {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(239, 68, 68, 0.18)) !important;
+  color: #f87171 !important;
+  border: 1px solid rgba(239, 68, 68, 0.5) !important;
+  text-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+}
+
+/* Visual Dividers */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 20%,
+    rgba(249, 115, 22, 0.25) 50%,
+    rgba(255, 255, 255, 0.08) 80%,
+    transparent 100%
+  );
+  margin: 28px 0;
+  position: relative;
+}
+
+.section-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 5px;
+  height: 5px;
+  background: #f97316;
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(249, 115, 22, 0.7), 0 0 24px rgba(249, 115, 22, 0.4);
+}
+
+/* Enhanced Icon Styling */
+.premium-icon-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.18), rgba(249, 115, 22, 0.08));
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    0 1px 3px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(249, 115, 22, 0.25);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.premium-icon-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), transparent 50%, rgba(249, 115, 22, 0.1));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.premium-icon-wrapper:hover {
+  transform: scale(1.08) rotate(3deg);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 0 24px rgba(249, 115, 22, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  border-color: rgba(249, 115, 22, 0.45);
+}
+
+.premium-icon-wrapper:hover::before {
+  opacity: 1;
+}
+
+/* Enhanced Card Borders */
+.card, .stat-card {
+  border-radius: 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  position: relative;
+}
+
+.card::after, .stat-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.15), transparent 30%, transparent 70%, rgba(249, 115, 22, 0.08));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.card:hover::after, .stat-card:hover::after {
+  opacity: 1;
+}
+
+/* Glass Effect Panel */
+.glass-effect {
+  background: rgba(30, 41, 59, 0.7) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Premium Button Enhancement */
+button, .premium-btn {
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.25),
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+button:hover, .premium-btn:hover {
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.35),
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Shimmer Effect */
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.shimmer-text {
+  background: linear-gradient(120deg, #f97316, #fb923c, #fdba74, #fb923c, #f97316);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
+
+/* Enhanced Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 5px;
+  border: 1px solid rgba(55, 65, 81, 0.3);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.6), rgba(249, 115, 22, 0.4));
+  border-radius: 5px;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.8), rgba(249, 115, 22, 0.6));
+  box-shadow: 0 0 8px rgba(249, 115, 22, 0.4);
+}
+
+/* Subtle Noise Texture */
+.texture-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M50 50c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10s-10-4.477-10-10 4.477-10 10-10zM10 10c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10S0 25.523 0 20s4.477-10 10-10zm10 8c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm40 40c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Glow on Text Headers */
+h1, h2, h3 {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.text-white {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Color Glow Effects */
+.text-claude-orange {
+  text-shadow: 0 0 15px rgba(249, 115, 22, 0.5), 0 0 5px rgba(249, 115, 22, 0.3) !important;
+}
+
+.text-blue-400 {
+  text-shadow: 0 0 10px rgba(96, 165, 250, 0.4) !important;
+}
+
+.text-green-400 {
+  text-shadow: 0 0 10px rgba(74, 222, 128, 0.4) !important;
+}
+
+.text-yellow-400 {
+  text-shadow: 0 0 10px rgba(250, 204, 21, 0.4) !important;
+}
+
+.text-red-400 {
+  text-shadow: 0 0 10px rgba(248, 113, 113, 0.4) !important;
+}
+
+/* Staggered Animation for Cards */
+.card:nth-child(1) { animation-delay: 0.05s; }
+.card:nth-child(2) { animation-delay: 0.1s; }
+.card:nth-child(3) { animation-delay: 0.15s; }
+.card:nth-child(4) { animation-delay: 0.2s; }
+.card:nth-child(5) { animation-delay: 0.25s; }
+.card:nth-child(6) { animation-delay: 0.3s; }
+
+.stat-card:nth-child(1) { animation-delay: 0.05s; }
+.stat-card:nth-child(2) { animation-delay: 0.1s; }
+.stat-card:nth-child(3) { animation-delay: 0.15s; }
+.stat-card:nth-child(4) { animation-delay: 0.2s; }
+.stat-card:nth-child(5) { animation-delay: 0.25s; }
+.stat-card:nth-child(6) { animation-delay: 0.3s; }

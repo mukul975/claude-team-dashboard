@@ -1,0 +1,783 @@
+/* ========================================
+   ANIMATION & MICRO-INTERACTIONS
+   Following 12 Principles of Animation
+   Premium Dashboard Animations
+   ======================================== */
+
+/* ==========================================
+   KEYFRAME ANIMATIONS
+   ========================================== */
+
+/* 1. Fade In Scale - Entrance with Squash & Stretch Principle */
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* 2. Slide In Right - Activity Feed Items with Anticipation */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 3. Slide In Left - Alternative entrance */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 4. Bounce In - Attention-Grabbing Animation */
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  70% {
+    transform: scale(0.96);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* 5. Shimmer - Loading State with Motion */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* 6. Spin - Smooth Rotation for Loaders */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 7. Glow Pulse - Live Connection Indicators */
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.4),
+                0 0 16px rgba(34, 197, 94, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(34, 197, 94, 0.6),
+                0 0 32px rgba(34, 197, 94, 0.3),
+                0 0 48px rgba(34, 197, 94, 0.1);
+  }
+}
+
+/* 8. Orange Glow - For Claude Orange Elements */
+@keyframes orangeGlow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(249, 115, 22, 0.3),
+                0 0 20px rgba(249, 115, 22, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(249, 115, 22, 0.5),
+                0 0 40px rgba(249, 115, 22, 0.3),
+                0 0 60px rgba(249, 115, 22, 0.1);
+  }
+}
+
+/* 9. Shake - Error State Feedback */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-4px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(4px);
+  }
+}
+
+/* 10. Float - Subtle Hovering Animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/* 11. Ripple - Expanding Circle Effect */
+@keyframes ripple {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* 12. Badge Pop - New Badge Appearance */
+@keyframes badgePop {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* 13. Progress Fill - Bar Growth Animation */
+@keyframes progressFill {
+  from {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  to {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+}
+
+/* 14. Fade In Up - Standard Entrance */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 15. Fade In Down - Top Entrance */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 16. Zoom In - Scale Entrance */
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 17. Slide Down - Dropdown Animation */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 18. Heartbeat - Pulsing Scale Animation */
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  10%, 30% {
+    transform: scale(0.95);
+  }
+  20%, 40% {
+    transform: scale(1.1);
+  }
+}
+
+/* ==========================================
+   ANIMATION UTILITY CLASSES
+   ========================================== */
+
+.animate-fade-in-scale {
+  animation: fadeInScale 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.animate-bounce-in {
+  animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-glow-pulse {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+.animate-orange-glow {
+  animation: orangeGlow 2s ease-in-out infinite;
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.animate-fade-in-down {
+  animation: fadeInDown 0.5s ease-out;
+}
+
+.animate-zoom-in {
+  animation: zoomIn 0.3s ease-out;
+}
+
+.animate-heartbeat {
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+/* ==========================================
+   CARD ANIMATIONS WITH STAGGER
+   ========================================== */
+
+.card-animated {
+  animation: fadeInScale 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+  animation-fill-mode: both;
+}
+
+.card-animated:nth-child(1) { animation-delay: 0ms; }
+.card-animated:nth-child(2) { animation-delay: 50ms; }
+.card-animated:nth-child(3) { animation-delay: 100ms; }
+.card-animated:nth-child(4) { animation-delay: 150ms; }
+.card-animated:nth-child(5) { animation-delay: 200ms; }
+.card-animated:nth-child(6) { animation-delay: 250ms; }
+.card-animated:nth-child(7) { animation-delay: 300ms; }
+.card-animated:nth-child(8) { animation-delay: 350ms; }
+
+/* ==========================================
+   STAT CARD ANIMATIONS
+   ========================================== */
+
+.stat-card-animated {
+  animation: fadeInScale 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+  animation-fill-mode: both;
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.stat-card-animated:hover {
+  transform: translateY(-4px) scale(1.02);
+}
+
+/* Stagger delays for stat cards */
+.stat-card-animated:nth-child(1) { animation-delay: 0s; }
+.stat-card-animated:nth-child(2) { animation-delay: 0.05s; }
+.stat-card-animated:nth-child(3) { animation-delay: 0.1s; }
+.stat-card-animated:nth-child(4) { animation-delay: 0.15s; }
+.stat-card-animated:nth-child(5) { animation-delay: 0.2s; }
+.stat-card-animated:nth-child(6) { animation-delay: 0.25s; }
+
+/* ==========================================
+   BUTTON & INTERACTIVE ELEMENTS
+   ========================================== */
+
+.button-animated {
+  position: relative;
+  transition: all 0.25s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.button-animated:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.button-animated:active {
+  transform: translateY(0) scale(0.98);
+  transition: all 0.1s ease-in;
+}
+
+/* Button with ripple effect */
+.button-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.button-ripple::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.button-ripple:active::after {
+  width: 300px;
+  height: 300px;
+}
+
+/* ==========================================
+   BADGE ANIMATIONS
+   ========================================== */
+
+.badge-animated {
+  animation: badgePop 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  transition: all 0.25s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.badge-animated:hover {
+  transform: scale(1.08);
+}
+
+/* Shimmer effect for in-progress badges */
+.badge-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.badge-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.15),
+    transparent
+  );
+  animation: shimmer 2.5s infinite;
+}
+
+/* ==========================================
+   LIVE INDICATOR ANIMATIONS
+   ========================================== */
+
+.live-indicator {
+  position: relative;
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background-color: #4ade80;
+  border-radius: 50%;
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+.live-indicator::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  background-color: inherit;
+  border-radius: 50%;
+  animation: ripple 2s ease-out infinite;
+}
+
+/* Small live indicator (6px) */
+.live-indicator-sm {
+  width: 6px;
+  height: 6px;
+}
+
+/* Large live indicator (14px) */
+.live-indicator-lg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ==========================================
+   ICON ANIMATIONS
+   ========================================== */
+
+.icon-hover {
+  transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.icon-hover:hover {
+  transform: scale(1.15) rotate(5deg);
+}
+
+.icon-spin-hover:hover {
+  animation: spin 0.6s ease-in-out;
+}
+
+.icon-bounce-hover:hover {
+  animation: heartbeat 0.6s ease-in-out;
+}
+
+/* ==========================================
+   ACTIVITY FEED ANIMATIONS
+   ========================================== */
+
+.activity-item-animated {
+  animation: slideInRight 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+  animation-fill-mode: both;
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.activity-item-animated:hover {
+  transform: translateX(-4px);
+  background-color: rgba(55, 65, 81, 0.5);
+}
+
+/* Stagger animation for activity items */
+.activity-item-animated:nth-child(1) { animation-delay: 0ms; }
+.activity-item-animated:nth-child(2) { animation-delay: 60ms; }
+.activity-item-animated:nth-child(3) { animation-delay: 120ms; }
+.activity-item-animated:nth-child(4) { animation-delay: 180ms; }
+.activity-item-animated:nth-child(5) { animation-delay: 240ms; }
+.activity-item-animated:nth-child(6) { animation-delay: 300ms; }
+.activity-item-animated:nth-child(7) { animation-delay: 360ms; }
+
+/* ==========================================
+   TASK LIST ANIMATIONS
+   ========================================== */
+
+.task-item-animated {
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  animation: fadeInUp 0.35s ease-out;
+  animation-fill-mode: both;
+}
+
+.task-item-animated:hover {
+  transform: translateX(6px);
+  background-color: rgba(55, 65, 81, 0.6);
+}
+
+/* Task status indicators */
+.task-status-pending {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.task-status-in-progress {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+.task-status-completed {
+  animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* ==========================================
+   LOADING STATES
+   ========================================== */
+
+.skeleton-animated {
+  background: linear-gradient(
+    90deg,
+    rgba(55, 65, 81, 0.3) 0%,
+    rgba(75, 85, 99, 0.5) 50%,
+    rgba(55, 65, 81, 0.3) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+.loading-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.loading-dots span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background-color: currentColor;
+  border-radius: 50%;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.loading-dots span:nth-child(1) { animation-delay: 0s; }
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* ==========================================
+   PROGRESS BAR ANIMATIONS
+   ========================================== */
+
+.progress-bar-animated {
+  position: relative;
+  overflow: hidden;
+  background: rgba(55, 65, 81, 0.5);
+  border-radius: 9999px;
+  height: 8px;
+}
+
+.progress-fill-animated {
+  height: 100%;
+  background: linear-gradient(90deg, #f97316, #fb923c);
+  border-radius: inherit;
+  transition: width 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+  animation: progressFill 1s ease-out;
+}
+
+/* Indeterminate progress bar */
+@keyframes indeterminateProgress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+.progress-indeterminate {
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-indeterminate::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 25%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.6), transparent);
+  animation: indeterminateProgress 1.5s ease-in-out infinite;
+}
+
+/* ==========================================
+   NUMBER COUNTER ANIMATIONS
+   ========================================== */
+
+.counter-animated {
+  display: inline-block;
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.counter-animated.updated {
+  animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* ==========================================
+   TOAST NOTIFICATIONS
+   ========================================== */
+
+.toast-enter {
+  animation: slideInRight 0.3s ease-out;
+}
+
+.toast-exit {
+  animation: slideInRight 0.3s ease-in reverse;
+}
+
+/* ==========================================
+   MODAL & OVERLAY ANIMATIONS
+   ========================================== */
+
+.modal-backdrop-enter {
+  opacity: 0;
+}
+
+.modal-backdrop-enter-active {
+  opacity: 1;
+  transition: opacity 0.3s ease-out;
+}
+
+.modal-backdrop-exit {
+  opacity: 1;
+}
+
+.modal-backdrop-exit-active {
+  opacity: 0;
+  transition: opacity 0.3s ease-in;
+}
+
+.modal-content-enter {
+  opacity: 0;
+  transform: scale(0.95) translateY(-20px);
+}
+
+.modal-content-enter-active {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.modal-content-exit {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.modal-content-exit-active {
+  opacity: 0;
+  transform: scale(0.95) translateY(-20px);
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* ==========================================
+   TEAM & AGENT CARD ANIMATIONS
+   ========================================== */
+
+.team-card-animated {
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.team-card-animated:hover {
+  transform: translateY(-3px);
+}
+
+.agent-card-animated {
+  transition: all 0.25s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.agent-card-animated:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+}
+
+/* ==========================================
+   CONNECTION STATUS ANIMATIONS
+   ========================================== */
+
+.connection-connected {
+  animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.connection-connecting {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.connection-error {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* ==========================================
+   HOVER EFFECTS
+   ========================================== */
+
+.hover-lift {
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+}
+
+.hover-scale {
+  transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+.hover-glow-orange {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.hover-glow-orange:hover {
+  box-shadow: 0 0 24px rgba(249, 115, 22, 0.6),
+              0 0 48px rgba(249, 115, 22, 0.3);
+}
+
+/* ==========================================
+   ACCESSIBILITY - REDUCED MOTION
+   ========================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Disable infinite animations */
+  .animate-pulse,
+  .animate-spin,
+  .animate-glow-pulse,
+  .animate-orange-glow,
+  .animate-float,
+  .animate-heartbeat,
+  .live-indicator,
+  .badge-shimmer::after,
+  .task-status-pending,
+  .task-status-in-progress,
+  .connection-connecting,
+  .loading-spinner,
+  .progress-indeterminate::after {
+    animation: none !important;
+  }
+
+  /* Keep functional transitions but instant */
+  .button-animated:hover,
+  .card-animated:hover,
+  .stat-card-animated:hover,
+  .hover-lift:hover,
+  .hover-scale:hover {
+    transition-duration: 0ms !important;
+    animation: none !important;
+  }
+}
