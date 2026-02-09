@@ -77,10 +77,23 @@ function sanitizeTeamName(teamName) {
   if (!teamName || typeof teamName !== 'string') {
     throw new Error('Invalid team name');
   }
-  // Only allow alphanumeric, dash, underscore
+
+  // Reject any path separators to prevent traversal
+  if (teamName.includes('/') || teamName.includes('\\') || teamName.includes(path.sep)) {
+    throw new Error('Invalid team name: path separators not allowed');
+  }
+
+  // Reject parent directory references
+  if (teamName.includes('..') || teamName.startsWith('.')) {
+    throw new Error('Invalid team name: relative paths not allowed');
+  }
+
+  // Only allow alphanumeric, dash, underscore (whitelist approach)
   if (!/^[a-zA-Z0-9_-]+$/.test(teamName)) {
     throw new Error('Invalid team name format');
   }
+
+  // Return the sanitized team name (now guaranteed safe for path operations)
   return teamName;
 }
 
@@ -98,22 +111,39 @@ function sanitizeFileName(fileName) {
   if (!fileName || typeof fileName !== 'string') {
     throw new Error('Invalid file name');
   }
-  // Prevent path traversal
+
+  // Reject any path separators
+  if (fileName.includes('/') || fileName.includes('\\') || fileName.includes(path.sep)) {
+    throw new Error('Invalid file name: path separators not allowed');
+  }
+
+  // Reject parent directory references
+  if (fileName.includes('..')) {
+    throw new Error('Invalid file name: relative paths not allowed');
+  }
+
+  // Use basename as additional safety layer
   const baseName = path.basename(fileName);
-  // Only allow safe characters
+
+  // Only allow safe characters (whitelist approach)
   if (!/^[a-zA-Z0-9_.-]+$/.test(baseName)) {
     throw new Error('Invalid file name format');
   }
+
+  // Return the sanitized filename (now guaranteed safe for path operations)
   return baseName;
 }
 
 // Validate path is within allowed directory
 function validatePath(filePath, allowedDir) {
-  const normalizedPath = path.normalize(filePath);
-  const normalizedDir = path.normalize(allowedDir);
+  const normalizedPath = path.resolve(filePath);
+  const normalizedDir = path.resolve(allowedDir);
 
-  // Check if path is within allowed directory
-  if (!normalizedPath.startsWith(normalizedDir)) {
+  // Use relative path to detect traversal attempts
+  const relativePath = path.relative(normalizedDir, normalizedPath);
+
+  // Check if relative path tries to go outside (starts with .. or is absolute)
+  if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
     throw new Error('Path traversal attempt detected');
   }
 
@@ -124,8 +154,13 @@ function validatePath(filePath, allowedDir) {
 async function readTeamConfig(teamName) {
   try {
     const sanitizedName = sanitizeTeamName(teamName);
-    const configPath = path.join(TEAMS_DIR, sanitizedName, 'config.json');
+    // Build path from sanitized components only - no user input in final path
+    const teamDir = path.join(TEAMS_DIR, sanitizedName);
+    const configPath = path.join(teamDir, 'config.json');
+
+    // Double-check the constructed path is within allowed directory
     const validatedPath = validatePath(configPath, TEAMS_DIR);
+    // lgtm[js/path-injection] - Path is constructed from sanitized teamName that only allows [a-zA-Z0-9_-]
     const data = await fs.readFile(validatedPath, 'utf8');
     return JSON.parse(data);
   } catch (error) {
@@ -143,6 +178,7 @@ async function readTasks(teamName) {
     const sanitizedName = sanitizeTeamName(teamName);
     const tasksPath = path.join(TASKS_DIR, sanitizedName);
     const validatedTasksPath = validatePath(tasksPath, TASKS_DIR);
+    // lgtm[js/path-injection] - Path is constructed from sanitized teamName that only allows [a-zA-Z0-9_-]
     const files = await fs.readdir(validatedTasksPath);
 
     // Use Promise.all for parallel file reads (performance improvement)
@@ -154,6 +190,7 @@ async function readTasks(teamName) {
           const sanitizedFile = sanitizeFileName(file);
           const taskPath = path.join(validatedTasksPath, sanitizedFile);
           const validatedPath = validatePath(taskPath, TASKS_DIR);
+          // lgtm[js/path-injection] - Path is constructed from sanitized fileName that only allows [a-zA-Z0-9_.-]
           const data = await fs.readFile(validatedPath, 'utf8');
           const task = JSON.parse(data);
           return { ...task, id: path.basename(sanitizedFile, '.json') };
