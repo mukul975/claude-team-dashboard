@@ -22,12 +22,11 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+        # Disable cache due to npm bug with rollup optional dependencies
+        # cache: 'npm'
 
     - name: Install dependencies
-      run: |
-        npm ci --force
-        npm install
+      run: npm install
 
     - name: Run tests
       run: npm test -- --run
@@ -54,10 +53,11 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '22.x'
-        cache: 'npm'
+        # Disable cache due to npm bug with rollup optional dependencies
+        # cache: 'npm'
 
     - name: Install dependencies
-      run: npm ci --force
+      run: npm install --force
 
     - name: Check for security vulnerabilities
       run: npm audit --audit-level=moderate
