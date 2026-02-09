@@ -1,86 +1,138 @@
 # Contributing to Claude Agent Dashboard
 
-Thank you for your interest in contributing to the Claude Agent Dashboard! This document provides guidelines and instructions for contributing.
+**Thank you for considering contributing!** Every bug report, feature request, documentation improvement, and code contribution helps make this project better.
 
-## Code of Conduct
+This guide will help you get started quickly and ensure your contributions can be merged smoothly.
 
-By participating in this project, you agree to maintain a respectful and collaborative environment.
+## 📖 Table of Contents
 
-## Getting Started
+- [Code of Conduct](#-code-of-conduct)
+- [Quick Start (4 Commands)](#-quick-start-4-commands)
+- [Development Workflow](#-development-workflow)
+- [Coding Standards](#-coding-standards)
+- [Testing Guidelines](#-testing-guidelines)
+- [Commit Message Format](#-commit-message-format)
+- [Pull Request Process](#-pull-request-process)
+- [Reporting Bugs](#-reporting-bugs)
+- [Requesting Features](#-requesting-features)
 
-### Prerequisites
+---
 
-- Node.js 18.x or higher
-- npm 9.x or higher
-- Git
+## 🤝 Code of Conduct
 
-### Development Setup
+By participating in this project, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md). We're committed to fostering an inclusive, respectful community.
 
-1. **Fork and Clone**
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/agentdashboard.git
-   cd agentdashboard
-   ```
+**TL;DR**: Be kind, be professional, be collaborative.
 
-2. **Install Dependencies**
-   ```bash
-   npm install
-   ```
+---
 
-3. **Start Development Servers**
-   ```bash
-   # Terminal 1: Start frontend dev server
-   npm run dev
+## ⚡ Quick Start (4 Commands)
 
-   # Terminal 2: Start backend server
-   npm run server
-   ```
+### Option 1: Standard Setup
 
-4. **Run Tests**
-   ```bash
-   npm test
-   ```
+```bash
+# 1. Fork & clone
+git clone https://github.com/YOUR_USERNAME/agentdashboard.git && cd agentdashboard
 
-## Development Workflow
+# 2. Install dependencies
+npm install
 
-### Branch Strategy
+# 3. Start development servers (frontend + backend)
+npm start
 
-- `main` - Production-ready code
-- `develop` - Integration branch for features
-- `feature/feature-name` - New features
-- `fix/bug-name` - Bug fixes
-- `docs/description` - Documentation updates
+# 4. Run tests
+npm test
+```
 
-### Creating a Pull Request
+**Done!** Dashboard is running at `http://localhost:5173`.
 
-1. **Create a Feature Branch**
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
+### Option 2: Dev Container (Instant Setup)
 
-2. **Make Your Changes**
-   - Write clean, readable code
-   - Follow existing code style
-   - Add tests for new features
-   - Update documentation as needed
+Have VS Code + Docker? Skip everything:
 
-3. **Test Your Changes**
-   ```bash
-   npm test
-   npm run build
-   ```
+1. Open project in VS Code
+2. Click **"Reopen in Container"** when prompted
+3. Wait for auto-install (2-3 minutes)
+4. Done — environment ready
 
-4. **Commit Your Changes**
-   ```bash
-   git add .
-   git commit -m "feat: description of your changes"
-   ```
+---
 
-5. **Push and Create PR**
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-   Then create a pull request on GitHub.
+## 🔧 Prerequisites
+
+- **Node.js** 18.x or higher ([Download](https://nodejs.org/))
+- **npm** 9.x or higher (bundled with Node.js)
+- **Git** ([Download](https://git-scm.com/))
+
+---
+
+## 🔄 Development Workflow
+
+### Branch Naming Strategy
+
+| Branch Type | Naming Convention | Example |
+|-------------|-------------------|---------|
+| New feature | `feature/description` | `feature/agent-performance-charts` |
+| Bug fix | `fix/description` | `fix/websocket-reconnection` |
+| Documentation | `docs/description` | `docs/update-api-guide` |
+| Refactoring | `refactor/description` | `refactor/component-structure` |
+| Performance | `perf/description` | `perf/optimize-websocket` |
+
+### Step-by-Step Contribution Process
+
+#### 1. Fork and Clone
+
+```bash
+# Fork the repository on GitHub, then:
+git clone https://github.com/YOUR_USERNAME/agentdashboard.git
+cd agentdashboard
+git remote add upstream https://github.com/mukul975/agentdashboard.git
+```
+
+#### 2. Create a Feature Branch
+
+```bash
+git checkout -b feature/your-feature-name
+```
+
+#### 3. Make Your Changes
+
+Follow these guidelines:
+
+- ✅ **Write clean, readable code** — Future you will thank you
+- ✅ **Follow existing code style** — Consistency matters
+- ✅ **Add tests for new features** — Tests prevent regressions
+- ✅ **Update documentation** — If it's not documented, it doesn't exist
+- ✅ **Keep commits atomic** — One logical change per commit
+
+#### 4. Test Your Changes
+
+```bash
+# Run tests
+npm test
+
+# Test production build
+npm run build && npm run preview
+
+# Lint code
+npm run lint
+```
+
+#### 5. Commit with Conventional Commits
+
+```bash
+git add .
+git commit -m "feat: add agent performance analytics"
+```
+
+See [Commit Message Format](#-commit-message-format) for details.
+
+#### 6. Push and Create Pull Request
+
+```bash
+git push origin feature/your-feature-name
+```
+
+Then open a PR on GitHub using our [PR template](https://github.com/mukul975/agentdashboard/blob/main/.github/PULL_REQUEST_TEMPLATE.md).
 
 ## Coding Standards
 
@@ -140,55 +192,212 @@ describe('ComponentName', () => {
 });
 ```
 
-## Commit Message Guidelines
+---
 
-Follow the Conventional Commits specification:
+## 📝 Commit Message Format
 
-- `feat:` New feature
-- `fix:` Bug fix
-- `docs:` Documentation changes
-- `style:` Code style changes (formatting, etc.)
-- `refactor:` Code refactoring
-- `perf:` Performance improvements
-- `test:` Adding or updating tests
-- `chore:` Maintenance tasks
+We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification. This enables automatic changelog generation and semantic versioning.
 
-**Examples:**
+### Format
+
 ```
-feat: add real-time agent status indicator
-fix: resolve WebSocket connection timeout issue
-docs: update installation instructions
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
 ```
 
-## Reporting Issues
+### Types
 
-When reporting bugs, please include:
+| Type | Description | Example |
+|------|-------------|---------|
+| `feat` | New feature | `feat: add agent performance charts` |
+| `fix` | Bug fix | `fix: resolve WebSocket reconnection issue` |
+| `docs` | Documentation only | `docs: update API reference` |
+| `style` | Code style (formatting, semicolons) | `style: fix indentation in Dashboard.jsx` |
+| `refactor` | Code refactoring (no behavior change) | `refactor: extract WebSocket logic to hook` |
+| `perf` | Performance improvement | `perf: optimize task list rendering` |
+| `test` | Adding/updating tests | `test: add unit tests for AgentCard` |
+| `chore` | Maintenance tasks | `chore: update dependencies` |
+| `ci` | CI/CD changes | `ci: add GitHub Actions workflow` |
 
-- Clear description of the issue
-- Steps to reproduce
-- Expected vs actual behavior
-- Screenshots if applicable
-- Environment details (OS, Node version, browser)
+### Examples
 
-## Feature Requests
+**Simple commit:**
+```bash
+git commit -m "feat: add dark mode toggle"
+```
 
-When suggesting features:
+**Commit with body:**
+```bash
+git commit -m "fix: prevent WebSocket memory leak
 
-- Explain the problem it solves
-- Describe your proposed solution
-- Consider alternatives
-- Provide use cases
+- Close connections on component unmount
+- Clear event listeners properly
+- Add cleanup to useEffect hooks
 
-## Questions?
+Closes #42"
+```
 
-- Check the [README](README.md) first
-- Open a [Discussion](https://github.com/mukul975/agentdashboard/discussions)
-- Create an [Issue](https://github.com/mukul975/agentdashboard/issues)
+**Breaking change:**
+```bash
+git commit -m "feat!: restructure agent status API
 
-## License
-
-By contributing, you agree that your contributions will be licensed under the MIT License.
+BREAKING CHANGE: Agent status format changed from object to array.
+See migration guide in CHANGELOG.md"
+```
 
 ---
 
-Thank you for contributing to making Claude Agent Dashboard better! 🚀
+## 🐛 Reporting Bugs
+
+Found a bug? Help us fix it!
+
+### Before Submitting
+
+1. **Search existing issues** — Your bug might already be reported
+2. **Update to latest version** — Bug might be fixed in newer release
+3. **Reproduce the bug** — Make sure it's consistent
+
+### Submit a Bug Report
+
+Use our [bug report template](https://github.com/mukul975/agentdashboard/issues/new?template=bug_report.yml) and include:
+
+- **Clear title** — Describe the bug in one sentence
+- **Steps to reproduce** — Detailed, numbered steps
+- **Expected behavior** — What should happen?
+- **Actual behavior** — What actually happens?
+- **Screenshots/videos** — If applicable
+- **Environment** — OS, Node version, browser, dashboard version
+- **Additional context** — Anything else relevant
+
+**Good bug report = faster fix**
+
+---
+
+## ✨ Requesting Features
+
+Have an idea? We'd love to hear it!
+
+### Before Requesting
+
+1. **Check roadmap** — Feature might already be planned
+2. **Search existing requests** — Avoid duplicates
+3. **Consider scope** — Does it fit the project's vision?
+
+### Submit a Feature Request
+
+Use our [feature request template](https://github.com/mukul975/agentdashboard/issues/new?template=feature_request.yml) and include:
+
+- **Problem statement** — What problem does this solve?
+- **Proposed solution** — How would it work?
+- **Alternatives considered** — Other approaches you thought of
+- **Use cases** — Real-world scenarios
+- **Mockups** — UI mockups or diagrams (if applicable)
+
+**Tip**: Features with strong use cases get prioritized.
+
+---
+
+## 🧪 Testing Guidelines
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm test -- --watch
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run tests with UI
+npm run test:ui
+```
+
+### Writing Tests
+
+We use **Vitest** + **React Testing Library**. Test user behavior, not implementation details.
+
+**Example:**
+
+```javascript
+import { describe, it, expect } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { AgentCard } from '../AgentCard';
+
+describe('AgentCard', () => {
+  it('displays agent name and status', () => {
+    render(<AgentCard name="test-agent" status="active" />);
+
+    expect(screen.getByText('test-agent')).toBeInTheDocument();
+    expect(screen.getByText('active')).toBeInTheDocument();
+  });
+
+  it('shows error state when agent fails', () => {
+    render(<AgentCard name="test-agent" status="error" error="Connection failed" />);
+
+    expect(screen.getByText('Connection failed')).toBeInTheDocument();
+  });
+});
+```
+
+---
+
+## 🔍 Pull Request Process
+
+### Before Submitting
+
+- [ ] Code follows project style guidelines
+- [ ] All tests pass (`npm test`)
+- [ ] Build succeeds (`npm run build`)
+- [ ] Documentation updated (if needed)
+- [ ] Commit messages follow Conventional Commits
+- [ ] Branch is up-to-date with `main`
+
+### PR Checklist
+
+1. **Fill out the PR template completely**
+2. **Link related issues** — Use "Closes #123" in description
+3. **Request review** — Tag relevant maintainers
+4. **Respond to feedback** — Address review comments promptly
+5. **Keep PR focused** — One feature/fix per PR
+
+### What Happens Next?
+
+1. **Automated checks run** — CI/CD tests your code
+2. **Maintainers review** — We'll provide feedback within 48 hours
+3. **You address feedback** — Make requested changes
+4. **PR gets merged** — Your contribution goes live!
+
+**Average merge time**: 2-5 days for well-structured PRs.
+
+---
+
+## 💬 Questions or Need Help?
+
+- **📖 Check docs first** — [README](README.md) | [FEATURES](FEATURES.md)
+- **💬 Ask in Discussions** — [GitHub Discussions](https://github.com/mukul975/agentdashboard/discussions)
+- **🐛 Report bugs** — [Create an issue](https://github.com/mukul975/agentdashboard/issues/new/choose)
+- **🤝 Join the community** — Share your agent monitoring stories!
+
+---
+
+## 📜 License
+
+By contributing, you agree that your contributions will be licensed under the **MIT License**.
+
+---
+
+<div align="center">
+
+**Thank you for making Claude Agent Dashboard better!** 🚀
+
+Every contribution — big or small — helps developers worldwide monitor their AI agents more effectively.
+
+[![Contributors](https://img.shields.io/github/contributors/mukul975/agentdashboard)](https://github.com/mukul975/agentdashboard/graphs/contributors)
+
+</div>

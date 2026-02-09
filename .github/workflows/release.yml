@@ -1,0 +1,58 @@
+# Semantic Release workflow for automated version management and releases
+# Runs on every push to main branch and creates releases based on conventional commits
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  release:
+    name: Automated Release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22.x'
+
+    - name: Install dependencies
+      run: |
+        rm -rf node_modules package-lock.json
+        npm install --force
+
+    - name: Build application
+      run: npm run build
+
+    - name: Install semantic-release dependencies
+      run: |
+        npm install --save-dev \
+          semantic-release@^24.0.0 \
+          @semantic-release/changelog@^6.0.3 \
+          @semantic-release/git@^10.0.1 \
+          @semantic-release/github@^10.0.0 \
+          @semantic-release/npm@^12.0.0 \
+          @semantic-release/commit-analyzer@^13.0.0 \
+          @semantic-release/release-notes-generator@^14.0.0 \
+          conventional-changelog-conventionalcommits@^8.0.0
+
+    - name: Release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      run: npx semantic-release

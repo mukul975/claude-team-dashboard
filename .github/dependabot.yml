@@ -1,0 +1,55 @@
+# Dependabot configuration for automated dependency updates
+# Helps maintain security by keeping dependencies up-to-date
+version: 2
+updates:
+  # Monitor npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    # Group minor and patch updates together to reduce PR noise
+    groups:
+      production-dependencies:
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+      development-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+    # Assign reviewers and labels
+    reviewers:
+      - "mukul975"
+    labels:
+      - "dependencies"
+      - "security"
+    # Target branch for pull requests
+    target-branch: "develop"
+    # Commit message prefix
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    # Allow Dependabot to update lockfiles and manifests
+    versioning-strategy: increase
+
+  # Monitor GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "mukul975"
+    labels:
+      - "dependencies"
+      - "ci/cd"
+    commit-message:
+      prefix: "ci"
+      include: "scope"

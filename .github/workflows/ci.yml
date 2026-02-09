@@ -33,9 +33,20 @@ jobs:
     - name: Build application
       run: npm run build
 
-    - name: Run tests
-      run: npm test -- --run
+    - name: Run tests with coverage
+      run: npm run test:coverage -- --run
       continue-on-error: true
+
+    - name: Upload coverage to Codecov
+      if: matrix.node-version == '22.x'
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage/coverage-final.json
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+        verbose: true
 
     - name: Upload build artifacts
       if: matrix.node-version == '22.x'

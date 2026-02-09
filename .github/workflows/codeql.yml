@@ -1,0 +1,78 @@
+# CodeQL security analysis workflow
+# Performs automated security scanning for vulnerabilities and coding errors
+name: "CodeQL Analysis"
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run at 6:30 AM UTC every Monday
+    - cron: '30 6 * * 1'
+
+jobs:
+  analyze:
+    name: Analyze Code Security
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    permissions:
+      # Required for all workflows
+      security-events: write
+      # Required for workflows in private repositories
+      contents: read
+      actions: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # CodeQL supports JavaScript/TypeScript, Python, C/C++, C#, Java, Go, Ruby
+        language: [ 'javascript' ]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        # Enable all default queries plus security-extended and security-and-quality
+        queries: security-extended,security-and-quality
+        # Use latest CodeQL bundle
+        config: |
+          paths-ignore:
+            - node_modules
+            - dist
+            - build
+            - coverage
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22.x'
+
+    - name: Install dependencies
+      run: |
+        rm -rf node_modules package-lock.json
+        npm install --force
+
+    - name: Build application
+      run: npm run build
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{ matrix.language }}"
+        # Upload SARIF file for GitHub Security tab
+        upload: true
+        # Generate SARIF and upload to code scanning
+        output: sarif-results
+
+    - name: Upload SARIF as artifact
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: codeql-sarif-${{ matrix.language }}
+        path: sarif-results
+        retention-days: 30

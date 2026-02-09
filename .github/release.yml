@@ -1,0 +1,105 @@
+# GitHub Release Notes Configuration
+# Automatically categorizes pull requests in release notes
+# Documentation: https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes
+
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+      - duplicate
+      - invalid
+      - wontfix
+    authors:
+      - dependabot
+      - github-actions[bot]
+
+  categories:
+    - title: 🚀 Breaking Changes
+      labels:
+        - breaking-change
+        - breaking
+        - major
+
+    - title: ✨ New Features
+      labels:
+        - feature
+        - enhancement
+        - feat
+
+    - title: 🐛 Bug Fixes
+      labels:
+        - bug
+        - fix
+        - bugfix
+
+    - title: 📝 Documentation
+      labels:
+        - documentation
+        - docs
+
+    - title: 🔒 Security
+      labels:
+        - security
+        - vulnerability
+
+    - title: ⚡ Performance Improvements
+      labels:
+        - performance
+        - optimization
+        - perf
+
+    - title: ♻️ Code Refactoring
+      labels:
+        - refactor
+        - refactoring
+        - cleanup
+
+    - title: ✅ Testing
+      labels:
+        - test
+        - testing
+        - tests
+
+    - title: 🏗️ Build & CI/CD
+      labels:
+        - build
+        - ci
+        - ci/cd
+        - github-actions
+
+    - title: 📦 Dependencies
+      labels:
+        - dependencies
+        - deps
+
+    - title: 🎨 UI/UX Improvements
+      labels:
+        - ui
+        - ux
+        - design
+        - frontend
+
+    - title: 🔧 Maintenance
+      labels:
+        - chore
+        - maintenance
+
+    - title: 📚 Examples & Demos
+      labels:
+        - example
+        - demo
+        - sample
+
+    - title: 🌐 Internationalization
+      labels:
+        - i18n
+        - localization
+
+    - title: ♿ Accessibility
+      labels:
+        - accessibility
+        - a11y
+
+    - title: 🚦 Other Changes
+      labels:
+        - "*"

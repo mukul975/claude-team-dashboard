@@ -1,0 +1,127 @@
+# Code Owners Configuration
+# Documentation: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# This file defines who should automatically be requested for review
+# when someone opens a pull request that modifies code in specific areas.
+
+# Default owner for everything (unless a later match takes precedence)
+* @mukul975
+
+# =========================================
+# Critical Files - Require careful review
+# =========================================
+
+# Root configuration files
+/.gitignore @mukul975
+/package.json @mukul975
+/package-lock.json @mukul975
+
+# Environment and deployment
+/config.js @mukul975
+/start.js @mukul975
+/cleanup.js @mukul975
+
+# =========================================
+# Backend & Server
+# =========================================
+
+# Main server file
+/server.js @mukul975
+
+# =========================================
+# Frontend
+# =========================================
+
+# React source files
+/src/ @mukul975
+/src/**/*.jsx @mukul975
+/src/**/*.css @mukul975
+
+# Build configuration
+/index.html @mukul975
+/vite.config.js @mukul975
+/vitest.config.js @mukul975
+
+# =========================================
+# CI/CD & Automation
+# =========================================
+
+# GitHub Actions workflows
+/.github/workflows/ @mukul975
+/.github/workflows/ci.yml @mukul975
+/.github/workflows/codeql.yml @mukul975
+/.github/workflows/release.yml @mukul975
+
+# Dependabot configuration
+/.github/dependabot.yml @mukul975
+
+# GitHub configuration
+/.github/ISSUE_TEMPLATE/ @mukul975
+/.github/PULL_REQUEST_TEMPLATE.md @mukul975
+/.github/release.yml @mukul975
+
+# =========================================
+# Security
+# =========================================
+
+# Security policy
+/SECURITY.md @mukul975
+
+# CodeQL configuration
+/.github/workflows/codeql.yml @mukul975
+
+# Branch protection documentation
+/.github/BRANCH_PROTECTION.md @mukul975
+
+# CODEOWNERS itself
+/.github/CODEOWNERS @mukul975
+
+# =========================================
+# Testing & Quality Assurance
+# =========================================
+
+# Test configurations
+/vitest.config.js @mukul975
+/codecov.yml @mukul975
+
+# Test files
+/src/**/*.test.jsx @mukul975
+/src/**/*.spec.jsx @mukul975
+
+# =========================================
+# Documentation
+# =========================================
+
+# Main documentation files
+/README.md @mukul975
+/CONTRIBUTING.md @mukul975
+/LICENSE @mukul975
+/FEATURES.md @mukul975
+
+# Documentation directory
+/docs/ @mukul975
+
+# =========================================
+# Release & Version Management
+# =========================================
+
+# Semantic release configuration
+/.releaserc.json @mukul975
+/CHANGELOG.md @mukul975
+
+# =========================================
+# Special Notes
+# =========================================
+
+# For sensitive areas, you can require multiple reviewers:
+# /security/critical-feature.js @mukul975 @security-team
+
+# For specific file types across the repository:
+# **/*.security.js @security-team
+# **/*.test.js @qa-team
+
+# For specific technologies or domains:
+# When you have multiple team members, you can assign by expertise:
+# **/database/ @database-expert
+# **/api/ @backend-expert
+# **/components/ @frontend-expert
