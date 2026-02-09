@@ -25,8 +25,10 @@ jobs:
         # Disable cache due to npm bug with rollup optional dependencies
         # cache: 'npm'
 
-    - name: Install dependencies
-      run: npm install
+    - name: Clean install
+      run: |
+        rm -rf node_modules package-lock.json
+        npm install
 
     - name: Build application
       run: npm run build
@@ -57,8 +59,10 @@ jobs:
         # Disable cache due to npm bug with rollup optional dependencies
         # cache: 'npm'
 
-    - name: Install dependencies
-      run: npm install --force
+    - name: Clean install
+      run: |
+        rm -rf node_modules package-lock.json
+        npm install --force
 
     - name: Check for security vulnerabilities
       run: npm audit --audit-level=moderate
