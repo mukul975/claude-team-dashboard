@@ -1,5 +1,4 @@
 const { spawn } = require('child_process');
-const path = require('path');
 
 console.log('Starting Claude Agent Dashboard...\n');
 

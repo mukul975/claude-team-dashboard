@@ -84,6 +84,29 @@ function sanitizeTeamName(teamName) {
   return teamName;
 }
 
+// Sanitize string for logging to prevent log injection
+function sanitizeForLog(input) {
+  if (typeof input !== 'string') {
+    return String(input);
+  }
+  // Remove control characters that could be used for log injection
+  return input.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+}
+
+// Sanitize filename to prevent path traversal
+function sanitizeFileName(fileName) {
+  if (!fileName || typeof fileName !== 'string') {
+    throw new Error('Invalid file name');
+  }
+  // Prevent path traversal
+  const baseName = path.basename(fileName);
+  // Only allow safe characters
+  if (!/^[a-zA-Z0-9_.-]+$/.test(baseName)) {
+    throw new Error('Invalid file name format');
+  }
+  return baseName;
+}
+
 // Read team configuration
 async function readTeamConfig(teamName) {
   try {
@@ -92,7 +115,10 @@ async function readTeamConfig(teamName) {
     const data = await fs.readFile(configPath, 'utf8');
     return JSON.parse(data);
   } catch (error) {
-    console.error(`Error reading team config for ${teamName}:`, error.message);
+    console.error('Error reading team config:', {
+      team: sanitizeForLog(teamName),
+      error: error.message
+    });
     return null;
   }
 }
@@ -108,16 +134,31 @@ async function readTasks(teamName) {
     const taskPromises = files
       .filter(file => file.endsWith('.json'))
       .map(async file => {
-        const taskPath = path.join(tasksPath, file);
-        const data = await fs.readFile(taskPath, 'utf8');
-        const task = JSON.parse(data);
-        return { ...task, id: path.basename(file, '.json') };
+        try {
+          // Sanitize file name to prevent path traversal
+          const sanitizedFile = sanitizeFileName(file);
+          const taskPath = path.join(tasksPath, sanitizedFile);
+          const data = await fs.readFile(taskPath, 'utf8');
+          const task = JSON.parse(data);
+          return { ...task, id: path.basename(sanitizedFile, '.json') };
+        } catch (fileError) {
+          console.error('Error reading task file:', {
+            file: sanitizeForLog(file),
+            error: fileError.message
+          });
+          return null;
+        }
       });
 
-    const tasks = await Promise.all(taskPromises);
-    return tasks.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    const tasks = (await Promise.all(taskPromises))
+      .filter(task => task !== null)
+      .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    return tasks;
   } catch (error) {
-    console.error(`Error reading tasks for ${teamName}:`, error.message);
+    console.error('Error reading tasks:', {
+      team: sanitizeForLog(teamName),
+      error: error.message
+    });
     return [];
   }
 }

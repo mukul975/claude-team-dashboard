@@ -7,7 +7,6 @@ import { ActivityFeed } from './components/ActivityFeed';
 import { ConnectionStatus } from './components/ConnectionStatus';
 import { LiveMetrics } from './components/LiveMetrics';
 import { SystemStatus } from './components/SystemStatus';
-import { LiveCommunication } from './components/LiveCommunication';
 import { DetailedTaskProgress } from './components/DetailedTaskProgress';
 import { AgentActivity } from './components/AgentActivity';
 import { RealTimeMessages } from './components/RealTimeMessages';
