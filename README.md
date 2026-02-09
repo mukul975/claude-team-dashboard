@@ -361,6 +361,8 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 
 ---
 
+**Built by [Mahipal](https://www.mahipal.engineer)**
+
 _Maintained by [@mukul975](https://github.com/mukul975) — cybersecurity researcher, AI agent enthusiast_
 
 </div>
