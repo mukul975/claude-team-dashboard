@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1](https://github.com/mukul975/agentdashboard/compare/v1.0.0...v1.0.1) (2026-02-09)
+
+### 📚 Documentation
+
+* add complete GitHub growth transformation summary ([1bed850](https://github.com/mukul975/agentdashboard/commit/1bed850aa7c851d5656b4db5377283c7dd9c7a23))
+* remove docs folder and cleanup README footer ([a009f4a](https://github.com/mukul975/agentdashboard/commit/a009f4a10b9321993b8712d00cc12d51ec9f4ea0))
+
 ## 1.0.0 (2026-02-09)
 
 ### ✨ Features
