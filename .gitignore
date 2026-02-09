@@ -47,3 +47,4 @@ coverage/
 *.tmp
 *.temp
 .cache/
+docs/
