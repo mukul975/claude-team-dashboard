@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Activity, Zap, TrendingUp } from 'lucide-react';
+import { Zap } from 'lucide-react';
 
 export function LiveMetrics({ stats }) {
   const [pulse, setPulse] = useState(false);

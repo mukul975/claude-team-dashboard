@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, Cpu, Zap, Clock, CheckCircle } from 'lucide-react';
+import { Activity, Cpu, Zap } from 'lucide-react';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 dayjs.extend(relativeTime);
