@@ -29,9 +29,7 @@ jobs:
         # cache: 'npm'
 
     - name: Clean install
-      run: |
-        rm -rf node_modules package-lock.json
-        npm install
+      run: npm ci
 
     - name: Build application
       run: npm run build
@@ -74,9 +72,7 @@ jobs:
         # cache: 'npm'
 
     - name: Clean install
-      run: |
-        rm -rf node_modules package-lock.json
-        npm install --force
+      run: npm ci --force
 
     - name: Check for security vulnerabilities
       run: npm audit --audit-level=moderate

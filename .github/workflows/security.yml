@@ -31,9 +31,7 @@ jobs:
         node-version: '22.x'
 
     - name: Install dependencies
-      run: |
-        rm -rf node_modules package-lock.json
-        npm install --force
+      run: npm ci
 
     - name: Run npm audit
       run: npm audit --audit-level=moderate
@@ -83,12 +81,10 @@ jobs:
         node-version: '22.x'
 
     - name: Install dependencies
-      run: |
-        rm -rf node_modules package-lock.json
-        npm install --force
+      run: npm ci
 
     - name: Install license-checker
-      run: npm install -g license-checker
+      run: npm install -g license-checker@25.0.1
 
     - name: Check licenses
       run: |

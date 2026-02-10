@@ -56,9 +56,7 @@ jobs:
         node-version: '22.x'
 
     - name: Install dependencies
-      run: |
-        rm -rf node_modules package-lock.json
-        npm install --force
+      run: npm ci
 
     - name: Build application
       run: npm run build
