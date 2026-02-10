@@ -397,15 +397,15 @@ function sanitizeProjectPath(projectPath) {
 async function getSessionHistory(projectPath) {
   try {
     const sanitizedPath = sanitizeProjectPath(projectPath);
-    // codeql[js/path-injection] - Path is sanitized via sanitizeProjectPath with whitelist validation
+    // lgtm[js/path-injection] - Path is sanitized via sanitizeProjectPath with whitelist validation
     const projectDir = path.join(PROJECTS_DIR, sanitizedPath);
 
     // Validate the constructed path is within allowed directory
     const validatedDir = validatePath(projectDir, PROJECTS_DIR);
 
-    // codeql[js/path-injection] - Path is validated to be within PROJECTS_DIR
+    // lgtm[js/path-injection] - Path is validated to be within PROJECTS_DIR
     await fs.access(validatedDir);
-    // codeql[js/path-injection] - Path is validated to be within PROJECTS_DIR
+    // lgtm[js/path-injection] - Path is validated to be within PROJECTS_DIR
     const files = await fs.readdir(validatedDir);
     const sessions = [];
 
@@ -414,17 +414,17 @@ async function getSessionHistory(projectPath) {
         try {
           // Sanitize file name to prevent path traversal
           const sanitizedFile = sanitizeFileName(file);
-          // codeql[js/path-injection] - Path uses sanitized filename with whitelist validation
+          // lgtm[js/path-injection] - Path uses sanitized filename with whitelist validation
           const filePath = path.join(validatedDir, sanitizedFile);
 
           // Validate file path is within project directory
           const validatedPath = validatePath(filePath, PROJECTS_DIR);
 
-          // codeql[js/path-injection] - Path is validated to be within PROJECTS_DIR
+          // lgtm[js/path-injection] Path is validated to be within PROJECTS_DIR
           const stats = await fs.stat(validatedPath);
 
-          // codeql[js/path-injection] - Path is validated to be within PROJECTS_DIR
-          // codeql[js/toctou-race-condition] - Stats used only for metadata (size, timestamps), not for access control decisions
+          // lgtm[js/path-injection] Path is validated to be within PROJECTS_DIR
+          // lgtm[js/toctou-race-condition] Stats used only for metadata (size, timestamps), not for access control decisions
           const content = await fs.readFile(validatedPath, 'utf8');
           const lines = content.trim().split('\n').filter(l => l.trim());
 
