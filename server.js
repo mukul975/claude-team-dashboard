@@ -462,7 +462,7 @@ let taskWatcher = null;
 let outputWatcher = null;
 
 function setupWatchers() {
-  console.log('Setting up file watchers...');
+  console.log('\n🔍 Setting up file watchers to track changes...');
 
   const watchOptions = {
     persistent: config.WATCH_CONFIG.PERSISTENT,
@@ -479,21 +479,20 @@ function setupWatchers() {
 
   teamWatcher
     .on('ready', () => {
-      console.log('✓ Team file watcher is ready');
-      console.log(`  Watching: ${TEAMS_DIR}/**/*.json`);
+      console.log('   ✓ Team watcher is ready - I\'ll notify you when teams change');
     })
     .on('add', async (filePath) => {
-      console.log(`[TEAM] File added: ${filePath}`);
+      console.log(`📁 New team discovered: ${path.basename(filePath)}`);
       const teams = await getActiveTeams();
       broadcast({ type: 'teams_update', data: teams, stats: calculateTeamStats(teams) });
     })
     .on('change', async (filePath) => {
-      console.log(`[TEAM] File changed: ${filePath}`);
+      console.log(`🔄 Team updated: ${path.basename(filePath)}`);
       const teams = await getActiveTeams();
       broadcast({ type: 'teams_update', data: teams, stats: calculateTeamStats(teams) });
     })
     .on('unlink', async (filePath) => {
-      console.log(`[TEAM] File removed: ${filePath}`);
+      console.log(`🗑️  Team removed: ${path.basename(filePath)}`);
       const teams = await getActiveTeams();
       broadcast({ type: 'teams_update', data: teams, stats: calculateTeamStats(teams) });
     })
@@ -506,21 +505,20 @@ function setupWatchers() {
 
   taskWatcher
     .on('ready', () => {
-      console.log('✓ Task file watcher is ready');
-      console.log(`  Watching: ${TASKS_DIR}/**/*.json`);
+      console.log('   ✓ Task watcher is ready - tracking all your agent tasks');
     })
     .on('add', async (filePath) => {
-      console.log(`[TASK] File added: ${filePath}`);
+      console.log(`✨ New task created: ${path.basename(filePath)}`);
       const teams = await getActiveTeams();
       broadcast({ type: 'task_update', data: teams, stats: calculateTeamStats(teams) });
     })
     .on('change', async (filePath) => {
-      console.log(`[TASK] File changed: ${filePath}`);
+      console.log(`📝 Task updated: ${path.basename(filePath)}`);
       const teams = await getActiveTeams();
       broadcast({ type: 'task_update', data: teams, stats: calculateTeamStats(teams) });
     })
     .on('unlink', async (filePath) => {
-      console.log(`[TASK] File removed: ${filePath}`);
+      console.log(`✅ Task completed/removed: ${path.basename(filePath)}`);
       const teams = await getActiveTeams();
       broadcast({ type: 'task_update', data: teams, stats: calculateTeamStats(teams) });
     })
@@ -536,16 +534,15 @@ function setupWatchers() {
 
   outputWatcher
     .on('ready', () => {
-      console.log('✓ Agent output watcher is ready');
-      console.log(`  Watching: ${TEMP_TASKS_DIR}/*.output`);
+      console.log('   ✓ Output watcher is ready - monitoring agent activity\n');
     })
     .on('change', async (filePath) => {
-      console.log(`[OUTPUT] File changed: ${filePath}`);
+      console.log(`💬 Agent is working: ${path.basename(filePath)}`);
       const outputs = await getAgentOutputs();
       broadcast({ type: 'agent_outputs_update', outputs });
     })
     .on('add', async (filePath) => {
-      console.log(`[OUTPUT] File added: ${filePath}`);
+      console.log(`🎯 Agent started: ${path.basename(filePath)}`);
       const outputs = await getAgentOutputs();
       broadcast({ type: 'agent_outputs_update', outputs });
     })
@@ -556,7 +553,7 @@ function setupWatchers() {
 
 // WebSocket connection handler
 wss.on('connection', async (ws) => {
-  console.log('New client connected');
+  console.log('👋 A new viewer joined the dashboard');
   clients.add(ws);
 
   // Send initial data
@@ -578,7 +575,7 @@ wss.on('connection', async (ws) => {
   }
 
   ws.on('close', () => {
-    console.log('Client disconnected');
+    console.log('👋 A viewer left the dashboard');
     clients.delete(ws);
   });
 
@@ -763,11 +760,11 @@ function setupGracefulShutdown() {
     if (isShuttingDown) return;
     isShuttingDown = true;
 
-    console.log(`\n${signal} received. Shutting down gracefully...`);
+    console.log(`\n\n👋 Shutting down gracefully...`);
 
     // Stop accepting new connections
     server.close(() => {
-      console.log('✓ HTTP server closed');
+      console.log('   ✓ Stopped accepting new connections');
     });
 
     // Close WebSocket connections
@@ -783,19 +780,19 @@ function setupGracefulShutdown() {
       }
     });
     await Promise.all(closePromises);
-    console.log('✓ WebSocket connections closed');
+    console.log('   ✓ All viewers disconnected');
 
     // Close file watchers
     try {
       if (teamWatcher) await teamWatcher.close();
       if (taskWatcher) await taskWatcher.close();
       if (outputWatcher) await outputWatcher.close();
-      console.log('✓ File watchers closed');
+      console.log('   ✓ Stopped monitoring files');
     } catch (error) {
       console.error('Error closing watchers:', error.message);
     }
 
-    console.log('✓ Shutdown complete');
+    console.log('\n✨ Dashboard shut down successfully. See you next time!\n');
     process.exit(0);
   };
 
@@ -805,10 +802,12 @@ function setupGracefulShutdown() {
 
 // Start server
 server.listen(config.PORT, () => {
-  console.log(`Agent Dashboard Server running on port ${config.PORT}`);
-  console.log(`WebSocket server ready`);
-  console.log(`Monitoring teams at: ${TEAMS_DIR}`);
-  console.log(`Monitoring tasks at: ${TASKS_DIR}`);
+  console.log(`\n🚀 Dashboard is live and ready!`);
+  console.log(`   You can view it at: http://localhost:${config.PORT}`);
+  console.log(`\n📡 Real-time updates enabled - your teams will sync automatically`);
+  console.log(`\n👀 Watching for activity:`);
+  console.log(`   Teams: ${TEAMS_DIR}`);
+  console.log(`   Tasks: ${TASKS_DIR}`);
   setupWatchers();
   setupGracefulShutdown();
 });
