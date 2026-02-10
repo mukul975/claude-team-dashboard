@@ -421,16 +421,16 @@ async function getSessionHistory(projectPath) {
           const validatedPath = validatePath(filePath, PROJECTS_DIR);
 
           // lgtm[js/path-injection] Path is validated to be within PROJECTS_DIR
-          const stats = await fs.stat(validatedPath);
-
-          // lgtm[js/path-injection] Path is validated to be within PROJECTS_DIR
-          // lgtm[js/toctou-race-condition] Stats used only for metadata (size, timestamps), not for access control decisions
           const content = await fs.readFile(validatedPath, 'utf8');
           const lines = content.trim().split('\n').filter(l => l.trim());
 
           if (lines.length > 0) {
             const firstLine = JSON.parse(lines[0]);
             const lastLine = JSON.parse(lines[lines.length - 1]);
+
+            // Get stats after successful read to avoid TOCTOU race condition
+            // lgtm[js/path-injection] Path is validated to be within PROJECTS_DIR
+            const stats = await fs.stat(validatedPath);
 
             sessions.push({
               sessionId: file.replace('.jsonl', ''),

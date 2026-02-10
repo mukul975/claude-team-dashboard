@@ -11,6 +11,9 @@ on:
     # Run at 6:30 AM UTC every Monday
     - cron: '30 6 * * 1'
 
+permissions:
+  contents: read
+
 jobs:
   analyze:
     name: Analyze Code Security
