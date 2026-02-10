@@ -7,6 +7,8 @@ dayjs.extend(relativeTime);
 export function LiveCommunication({ teams }) {
   const [messages, setMessages] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (teams && teams.length > 0 && !selectedTeam) {
@@ -14,30 +16,83 @@ export function LiveCommunication({ teams }) {
     }
   }, [teams, selectedTeam]);
 
-  // Simulate message detection from agent activity
+  // Fetch real inbox messages from API
   useEffect(() => {
-    if (!teams || teams.length === 0) return;
+    if (!selectedTeam) return;
 
-    const interval = setInterval(() => {
-      const team = teams.find(t => t.name === selectedTeam);
-      if (team && team.tasks) {
-        const inProgressTasks = team.tasks.filter(t => t.status === 'in_progress');
-        if (inProgressTasks.length > 0 && Math.random() > 0.7) {
-          const task = inProgressTasks[Math.floor(Math.random() * inProgressTasks.length)];
-          const newMessage = {
-            id: Date.now(),
-            from: task.owner || 'Unknown',
-            message: `Working on: ${task.subject}`,
-            timestamp: new Date(),
-            type: 'status'
-          };
-          setMessages(prev => [newMessage, ...prev].slice(0, 20));
+    const fetchMessages = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await fetch(`http://localhost:3001/api/teams/${encodeURIComponent(selectedTeam)}/inboxes`);
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch messages: ${response.status}`);
         }
+
+        const data = await response.json();
+
+        // Convert inbox data to message format
+        const allMessages = [];
+
+        if (data.inboxes && typeof data.inboxes === 'object') {
+          Object.entries(data.inboxes).forEach(([agentName, inbox]) => {
+            if (inbox.messages && Array.isArray(inbox.messages)) {
+              inbox.messages.forEach(msg => {
+                // Parse idle_notification messages
+                let messageText = msg.text;
+                let messageType = 'message';
+
+                if (msg.text && msg.text.includes('idle_notification')) {
+                  try {
+                    const parsed = JSON.parse(msg.text);
+                    if (parsed.type === 'idle_notification') {
+                      messageText = `Idle - Last task: ${parsed.lastTaskSubject || 'None'}`;
+                      messageType = 'idle';
+                    }
+                  } catch (e) {
+                    // Not JSON, use as-is
+                  }
+                }
+
+                allMessages.push({
+                  id: `${agentName}-${msg.timestamp}-${Math.random()}`,
+                  from: msg.from || agentName,
+                  to: agentName,
+                  message: msg.summary || messageText,
+                  fullText: messageText,
+                  timestamp: new Date(msg.timestamp),
+                  type: messageType,
+                  color: msg.color || 'blue',
+                  read: msg.read || false
+                });
+              });
+            }
+          });
+        }
+
+        // Sort by timestamp (newest first)
+        allMessages.sort((a, b) => b.timestamp - a.timestamp);
+
+        // Keep last 50 messages
+        setMessages(allMessages.slice(0, 50));
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching messages:', err);
+        setError(err.message);
+        setLoading(false);
       }
-    }, 5000);
+    };
+
+    // Fetch immediately
+    fetchMessages();
+
+    // Then poll every 5 seconds
+    const interval = setInterval(fetchMessages, 5000);
 
     return () => clearInterval(interval);
-  }, [teams, selectedTeam]);
+  }, [selectedTeam]);
 
   const currentTeam = teams?.find(t => t.name === selectedTeam);
 
@@ -73,7 +128,18 @@ export function LiveCommunication({ teams }) {
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto space-y-2 mb-4" style={{ minHeight: 0 }}>
-        {messages.length === 0 ? (
+        {error ? (
+          <div className="text-center py-8 text-red-400">
+            <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">Error loading messages</p>
+            <p className="text-xs mt-1">{error}</p>
+          </div>
+        ) : loading && messages.length === 0 ? (
+          <div className="text-center py-8 text-gray-400">
+            <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50 animate-pulse" />
+            <p className="text-sm">Loading messages...</p>
+          </div>
+        ) : messages.length === 0 ? (
           <div className="text-center py-8 text-gray-400">
             <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
             <p className="text-sm">No messages yet</p>
@@ -83,15 +149,32 @@ export function LiveCommunication({ teams }) {
           messages.map(msg => (
             <div
               key={msg.id}
-              className="p-3 rounded-lg bg-gray-700/50 border border-gray-600 hover:border-claude-orange transition-colors"
+              className={`p-3 rounded-lg border transition-colors ${
+                msg.type === 'idle'
+                  ? 'bg-gray-700/30 border-gray-600/50'
+                  : 'bg-gray-700/50 border-gray-600 hover:border-claude-orange'
+              }`}
             >
               <div className="flex items-start justify-between mb-1">
-                <span className="text-sm font-semibold text-white">{msg.from}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-white">{msg.from}</span>
+                  {msg.to && (
+                    <>
+                      <span className="text-xs text-gray-500">→</span>
+                      <span className="text-xs text-gray-400">{msg.to}</span>
+                    </>
+                  )}
+                </div>
                 <span className="text-xs text-gray-400">
                   {dayjs(msg.timestamp).fromNow()}
                 </span>
               </div>
               <p className="text-sm text-gray-300">{msg.message}</p>
+              {!msg.read && (
+                <div className="mt-1">
+                  <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded">Unread</span>
+                </div>
+              )}
             </div>
           ))
         )}
