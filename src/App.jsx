@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Activity, Github, ExternalLink, BarChart3, MessageSquare, Users, Settings, History as HistoryIcon } from 'lucide-react';
 import { useWebSocket } from './hooks/useWebSocket';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { Header } from './components/Header';
+import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
 import { StatsOverview } from './components/StatsOverview';
 import { TeamCard } from './components/TeamCard';
 import { ActivityFeed } from './components/ActivityFeed';
@@ -21,6 +23,16 @@ function App() {
   const [activeTab, setActiveTab] = useState('overview');
   const [teamHistory, setTeamHistory] = useState([]);
   const [agentOutputs, setAgentOutputs] = useState([]);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+
+  const keyboardShortcuts = useMemo(
+    () => ({
+      '?': () => setShowShortcuts(true),
+      Escape: () => setShowShortcuts(false),
+    }),
+    []
+  );
+  useKeyboardShortcuts(keyboardShortcuts);
 
   const wsUrl = `ws://${window.location.hostname}:3001`;
   // lgtm[js/invocation-of-non-function] useWebSocket is a valid React hook
@@ -336,6 +348,11 @@ function App() {
           </div>
         </div>
       </footer>
+
+      <KeyboardShortcutsModal
+        isOpen={showShortcuts}
+        onClose={() => setShowShortcuts(false)}
+      />
     </div>
   );
 }
