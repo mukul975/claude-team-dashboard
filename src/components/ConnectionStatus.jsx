@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Wifi, WifiOff, RefreshCw, Zap } from 'lucide-react';
+import { WifiOff, RefreshCw, Zap } from 'lucide-react';
 
 export function ConnectionStatus({ isConnected, error }) {
   if (isConnected) {
