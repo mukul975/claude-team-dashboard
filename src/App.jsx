@@ -23,6 +23,7 @@ function App() {
   const [agentOutputs, setAgentOutputs] = useState([]);
 
   const wsUrl = `ws://${window.location.hostname}:3001`;
+  // codeql[js/invocation-of-non-function] - useWebSocket is a valid React hook
   const { data, isConnected, error } = useWebSocket(wsUrl);
 
   // Memoize expensive computations
