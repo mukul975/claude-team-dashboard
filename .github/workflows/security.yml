@@ -14,7 +14,6 @@ on:
 
 permissions:
   contents: read
-  security-events: write
   actions: read
 
 jobs:
@@ -107,8 +106,10 @@ jobs:
     name: OpenSSF Security Scorecard
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       security-events: write
       id-token: write
+      actions: read
 
     steps:
     - name: Checkout repository
@@ -132,6 +133,9 @@ jobs:
     name: Docker Image Scan
     runs-on: ubuntu-latest
     if: github.event_name != 'schedule'
+    permissions:
+      contents: read
+      security-events: write
 
     steps:
     - name: Checkout repository
