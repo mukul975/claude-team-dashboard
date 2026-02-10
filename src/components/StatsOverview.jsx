@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Users, ListTodo, Clock, CheckCircle, AlertCircle, TrendingUp } from 'lucide-react';
+import { Users, ListTodo, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { useCounterAnimation } from '../hooks/useCounterAnimation';
 
 export function StatsOverview({ stats }) {

@@ -364,22 +364,63 @@ async function getAgentOutputs() {
   }
 }
 
+// Sanitize project path to prevent path traversal
+function sanitizeProjectPath(projectPath) {
+  if (!projectPath || typeof projectPath !== 'string') {
+    throw new Error('Invalid project path');
+  }
+
+  // Reject any absolute paths
+  if (path.isAbsolute(projectPath)) {
+    throw new Error('Invalid project path: absolute paths not allowed');
+  }
+
+  // Reject parent directory references
+  if (projectPath.includes('..') || projectPath.startsWith('.')) {
+    throw new Error('Invalid project path: relative paths not allowed');
+  }
+
+  // Reject any path separators (only allow single directory name)
+  if (projectPath.includes('/') || projectPath.includes('\\')) {
+    throw new Error('Invalid project path: nested paths not allowed');
+  }
+
+  // Only allow alphanumeric, dash, underscore (whitelist approach)
+  if (!/^[a-zA-Z0-9_-]+$/.test(projectPath)) {
+    throw new Error('Invalid project path format');
+  }
+
+  return projectPath;
+}
+
 // Get session history
 async function getSessionHistory(projectPath) {
   try {
-    const projectDir = path.join(PROJECTS_DIR, projectPath);
-    await fs.access(projectDir);
-    const files = await fs.readdir(projectDir);
+    const sanitizedPath = sanitizeProjectPath(projectPath);
+    const projectDir = path.join(PROJECTS_DIR, sanitizedPath);
+
+    // Validate the constructed path is within allowed directory
+    const validatedDir = validatePath(projectDir, PROJECTS_DIR);
+
+    await fs.access(validatedDir);
+    const files = await fs.readdir(validatedDir);
     const sessions = [];
 
     for (const file of files) {
       if (file.endsWith('.jsonl')) {
         try {
-          const filePath = path.join(projectDir, file);
-          const stats = await fs.stat(filePath);
+          // Sanitize file name to prevent path traversal
+          const sanitizedFile = sanitizeFileName(file);
+          const filePath = path.join(validatedDir, sanitizedFile);
 
-          // Read first and last few lines to get session info
-          const content = await fs.readFile(filePath, 'utf8');
+          // Validate file path is within project directory
+          const validatedPath = validatePath(filePath, PROJECTS_DIR);
+
+          // Get file stats first
+          const stats = await fs.stat(validatedPath);
+
+          // Read content atomically to avoid race condition
+          const content = await fs.readFile(validatedPath, 'utf8');
           const lines = content.trim().split('\n').filter(l => l.trim());
 
           if (lines.length > 0) {
@@ -602,12 +643,31 @@ app.get('/api/agent-outputs', async (req, res) => {
 // Get specific agent output
 app.get('/api/agent-outputs/:taskId', async (req, res) => {
   try {
-    const taskId = req.params.taskId.replace(/[^a-zA-Z0-9]/g, '');
-    const filePath = path.join(TEMP_TASKS_DIR, `${taskId}.output`);
-    const content = await fs.readFile(filePath, 'utf8');
+    // Sanitize taskId to prevent path traversal
+    const taskId = req.params.taskId.replace(/[^a-zA-Z0-9_-]/g, '');
+
+    // Validate taskId is not empty after sanitization
+    if (!taskId || taskId.length === 0) {
+      return res.status(400).json({ error: 'Invalid task ID' });
+    }
+
+    // Construct file path with sanitized taskId
+    const fileName = `${taskId}.output`;
+    const filePath = path.join(TEMP_TASKS_DIR, fileName);
+
+    // Validate the constructed path is within allowed directory
+    const validatedPath = validatePath(filePath, TEMP_TASKS_DIR);
+
+    // Read the output file
+    const content = await fs.readFile(validatedPath, 'utf8');
     res.json({ taskId, content });
   } catch (error) {
-    res.status(404).json({ error: 'Output file not found' });
+    if (error.code === 'ENOENT') {
+      res.status(404).json({ error: 'Output file not found' });
+    } else {
+      console.error('Error reading agent output:', error.message);
+      res.status(500).json({ error: 'Failed to read output file' });
+    }
   }
 });
 
