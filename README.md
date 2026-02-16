@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="docs/logo.png" alt="Claude Agent Dashboard" width="200" />
-
 # 🤖 Claude Agent Dashboard
 
 ### Stop Flying Blind — Monitor Your Claude Code Agent Teams in Real Time
@@ -21,11 +19,6 @@
 [**Get Started in 60 Seconds**](#-quick-start) · [**See Features**](#-features) · [**Live Demo**](#-demo) · [**Docs**](#-documentation) · [**Contributing**](#-contributing)
 
 ---
-
-<!-- 🎬 DEMO GIF PLACEHOLDER - Add animated demo showing dashboard in action -->
-<img src="docs/dashboard-demo.gif" alt="Claude Agent Dashboard Demo" width="100%" />
-
-_Watch your agents work in real time — track tasks, monitor messages, catch errors instantly_
 
 </div>
 
@@ -229,20 +222,23 @@ claude-dashboard
 ### Project Structure
 
 ```
-agentdashboard/
+claude-team-dashboard/
 ├── src/                      # Frontend source code
 │   ├── components/           # React UI components
-│   ├── services/             # WebSocket & API clients
 │   ├── hooks/                # Custom React hooks
-│   └── utils/                # Helper functions
+│   ├── config/               # Configuration constants
+│   ├── styles/               # CSS stylesheets
+│   └── test/                 # Test setup
 ├── .devcontainer/            # VS Code dev container config
 ├── .github/                  # GitHub templates & workflows
 │   ├── ISSUE_TEMPLATE/       # Bug/feature issue forms
 │   └── workflows/            # CI/CD pipelines
-├── docs/                     # Documentation & assets
+├── test/                     # Test files
+├── dist/                     # Production build output
 ├── server.js                 # WebSocket backend server
-├── start.js                  # Unified launcher script
+├── start.js                  # Unified launcher script (CLI entry)
 ├── cleanup.js                # Process cleanup utility
+├── config.js                 # Server configuration
 ├── vite.config.js            # Vite bundler config
 ├── FEATURES.md               # Detailed feature list
 ├── CONTRIBUTING.md           # Contribution guide
@@ -298,7 +294,6 @@ agentdashboard/
 | [**CODE_OF_CONDUCT.md**](CODE_OF_CONDUCT.md) | Community guidelines and standards |
 | [**Natural Language Features**](#-natural-language-message-parsing) | How the dashboard translates technical agent messages to readable format |
 | [**Team Lifecycle Tracking**](#-team-lifecycle-tracking) | Automatic team monitoring, archiving, and history management |
-| [**docs/**](docs/) | Additional guides, architecture docs, and assets |
 
 **Need help?** Open a [Discussion](https://github.com/mukul975/claude-team-dashboard/discussions) or check existing [Issues](https://github.com/mukul975/claude-team-dashboard/issues).
 
