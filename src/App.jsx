@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Activity, Github, ExternalLink, BarChart3, MessageSquare, Users, Settings, History as HistoryIcon } from 'lucide-react';
+import { Activity, Github, ExternalLink, BarChart3, MessageSquare, Users, Settings, History as HistoryIcon, Archive } from 'lucide-react';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { Header } from './components/Header';
@@ -15,6 +15,7 @@ import { RealTimeMessages } from './components/RealTimeMessages';
 import { LiveAgentStream } from './components/LiveAgentStream';
 import { TeamHistory } from './components/TeamHistory';
 import { AgentOutputViewer } from './components/AgentOutputViewer';
+import { ArchiveViewer } from './components/ArchiveViewer';
 
 function App() {
   const [teams, setTeams] = useState([]);
@@ -72,7 +73,7 @@ function App() {
 
   // Keyboard navigation handler for tabs
   const handleTabKeyDown = (e) => {
-    const tabs = ['overview', 'teams', 'communication', 'monitoring', 'history'];
+    const tabs = ['overview', 'teams', 'communication', 'monitoring', 'history', 'archive'];
     const currentIndex = tabs.indexOf(activeTab);
 
     if (e.key === 'ArrowRight') {
@@ -200,6 +201,22 @@ function App() {
               <HistoryIcon className="h-4 w-4" aria-hidden="true" />
               History & Outputs
             </button>
+            <button
+              id="tab-archive"
+              onClick={() => setActiveTab('archive')}
+              onKeyDown={handleTabKeyDown}
+              role="tab"
+              aria-selected={activeTab === 'archive'}
+              aria-controls="tab-panel-archive"
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
+                activeTab === 'archive'
+                  ? 'bg-claude-orange text-white shadow-lg'
+                  : 'bg-gray-700/50 text-gray-300 hover:bg-gray-700'
+              }`}
+            >
+              <Archive className="h-4 w-4" aria-hidden="true" />
+              Archive
+            </button>
           </div>
         </nav>
 
@@ -311,6 +328,18 @@ function App() {
 
               {/* Team History */}
               <TeamHistory teamHistory={teamHistory} />
+            </div>
+          )}
+
+          {activeTab === 'archive' && (
+            <div
+              role="tabpanel"
+              id="tab-panel-archive"
+              aria-labelledby="tab-archive"
+              className="animate-fadeIn"
+            >
+              {/* Archive Viewer - Full Width */}
+              <ArchiveViewer />
             </div>
           )}
         </div>

@@ -3,9 +3,33 @@
   "version": "1.2.2",
   "description": "Real-time monitoring dashboard for Claude Code agent teams",
   "main": "server.js",
+  "bin": {
+    "claude-dashboard": "./start.js"
+  },
+  "files": [
+    "server.js",
+    "start.js",
+    "cleanup.js",
+    "config.js",
+    "dist/",
+    "src/",
+    "index.html",
+    "vite.config.js",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "preferGlobal": true,
   "repository": {
     "type": "git",
     "url": "https://github.com/mukul975/claude-team-dashboard.git"
+  },
+  "homepage": "https://github.com/mukul975/claude-team-dashboard#readme",
+  "bugs": {
+    "url": "https://github.com/mukul975/claude-team-dashboard/issues"
   },
   "scripts": {
     "start": "node start.js",

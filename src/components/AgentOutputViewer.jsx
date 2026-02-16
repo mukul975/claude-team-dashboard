@@ -308,7 +308,13 @@ export function AgentOutputViewer({ agentOutputs }) {
             ) : (
               <div className="text-gray-500 text-center py-12">
                 <Terminal className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>No output content available</p>
+                <p className="text-sm font-medium mb-2">No output content available</p>
+                <p className="text-xs text-gray-600 max-w-md mx-auto">
+                  This task output is empty. Agent outputs will appear here when agents write to their output streams during task execution.
+                </p>
+                <p className="text-xs text-gray-600 mt-2">
+                  Empty outputs are normal for agents that complete tasks quickly without verbose logging.
+                </p>
               </div>
             )}
           </div>

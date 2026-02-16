@@ -721,9 +721,11 @@ app.get('/api/teams/:teamName/inboxes', async (req, res) => {
       try {
         const content = await fs.readFile(filePath, 'utf8');
         const data = JSON.parse(content);
+        // Handle both array format (data is array) and object format (data.messages)
+        const messages = Array.isArray(data) ? data : (data.messages || []);
         inboxes[agentName] = {
-          messages: data.messages || [],
-          messageCount: data.messages?.length || 0
+          messages: messages,
+          messageCount: messages.length
         };
       } catch (error) {
         console.error(`Error reading inbox ${file}:`, error.message);
@@ -747,10 +749,12 @@ app.get('/api/teams/:teamName/inboxes/:agentName', async (req, res) => {
     try {
       const content = await fs.readFile(inboxPath, 'utf8');
       const data = JSON.parse(content);
+      // Handle both array format (data is array) and object format (data.messages)
+      const messages = Array.isArray(data) ? data : (data.messages || []);
       res.json({
         agent: agentName,
-        messages: data.messages || [],
-        messageCount: data.messages?.length || 0
+        messages: messages,
+        messageCount: messages.length
       });
     } catch (error) {
       if (error.code === 'ENOENT') {

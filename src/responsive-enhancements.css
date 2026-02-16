@@ -14,13 +14,19 @@
     padding: 1.25rem !important;
   }
 
+  /* Message cards optimized for mobile */
+  .message-card {
+    padding: 1rem !important;
+    border-radius: 14px !important;
+  }
+
   /* Smaller shadows for mobile */
-  .card:hover, .stat-card:hover {
-    transform: translateY(-4px) scale(1.005);
+  .card:hover, .stat-card:hover, .message-card:hover {
+    transform: translateY(-2px) scale(1.002);
     box-shadow:
-      0 20px 40px rgba(0, 0, 0, 0.5),
-      0 8px 16px rgba(0, 0, 0, 0.3),
-      0 0 40px rgba(249, 115, 22, 0.1);
+      0 12px 32px rgba(0, 0, 0, 0.4),
+      0 4px 12px rgba(0, 0, 0, 0.25),
+      0 0 20px rgba(249, 115, 22, 0.08);
   }
 
   /* Optimized buttons for touch */
@@ -29,6 +35,24 @@
     min-width: 44px;
     padding: 12px 20px;
     border-radius: 10px;
+  }
+
+  /* Filter buttons for mobile touch */
+  .filter-button {
+    min-height: 44px;
+    padding: 0.625rem 1.125rem;
+    font-size: 0.875rem;
+  }
+
+  /* Agent badges more readable on mobile */
+  .agent-badge {
+    font-size: 0.8125rem;
+    padding: 0.375rem 0.875rem;
+  }
+
+  /* Message emoji slightly smaller on mobile */
+  .message-emoji {
+    font-size: 1.375rem;
   }
 
   /* Badge adjustments */

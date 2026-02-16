@@ -17,6 +17,7 @@ body {
   animation: gradientShift 20s ease infinite;
   color: #e2e8f0;
   min-height: 100vh;
+  scroll-behavior: smooth;
 }
 
 @keyframes gradientShift {
@@ -114,33 +115,69 @@ strong, b {
   padding: 0 24px;
 }
 
-/* Cards - Improved spacing and visual balance */
+/* Cards - Improved spacing and visual balance with enhanced glassmorphism */
 .card {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.8) 100%);
+  border-radius: 20px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
   padding: 1.75rem; /* 28px - increased for better breathing room */
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(249, 115, 22, 0.1);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(249, 115, 22, 0.15);
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(249, 115, 22, 0.08),
+    transparent
+  );
+  transition: left 0.5s ease;
 }
 
 .card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(249, 115, 22, 0.2);
-  border-color: rgba(249, 115, 22, 0.2);
+  transform: translateY(-4px) scale(1.005);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.5),
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(249, 115, 22, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  border-color: rgba(249, 115, 22, 0.3);
+}
+
+.card:hover::before {
+  left: 100%;
 }
 
 .stat-card {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.9) 50%, rgba(30, 41, 59, 0.95) 100%);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.88) 0%, rgba(15, 23, 42, 0.85) 50%, rgba(30, 41, 59, 0.88) 100%);
+  border-radius: 20px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    0 2px 8px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
   padding: 1.5rem; /* 24px - optimized for stat cards */
-  border: 1px solid rgba(55, 65, 81, 0.5);
-  backdrop-filter: blur(16px);
+  border: 1px solid rgba(55, 65, 81, 0.6);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
   position: relative;
   overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .stat-card::before {
@@ -149,20 +186,44 @@ strong, b {
   top: 0;
   left: 0;
   right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.5), transparent);
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.7), rgba(251, 146, 60, 0.6), transparent);
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.4s ease;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.4);
+}
+
+.stat-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.08) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  pointer-events: none;
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(249, 115, 22, 0.3);
-  border-color: rgba(249, 115, 22, 0.3);
+  transform: translateY(-6px) scale(1.01);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(249, 115, 22, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 40px rgba(249, 115, 22, 0.15);
+  border-color: rgba(249, 115, 22, 0.4);
 }
 
 .stat-card:hover::before {
   opacity: 1;
+}
+
+.stat-card:hover::after {
+  opacity: 1;
+  transform: translate(-25%, -25%);
 }
 
 /* Badges - Improved typography and spacing */
@@ -916,11 +977,43 @@ strong, b {
   }
 }
 
-/* Enhanced focus states for accessibility */
+/* Enhanced focus states for accessibility - Modern Approach */
 *:focus-visible {
-  outline: 2px solid #f97316;
+  outline: 3px solid #f97316;
+  outline-offset: 3px;
+  border-radius: 6px;
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.2);
+  transition: outline-offset 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Specific focus states for interactive elements */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid #f97316;
   outline-offset: 2px;
-  border-radius: 4px;
+  box-shadow:
+    0 0 0 4px rgba(249, 115, 22, 0.25),
+    0 4px 12px rgba(249, 115, 22, 0.3);
+}
+
+/* Filter button focus enhancement */
+.filter-button:focus-visible {
+  outline: 2px solid #fb923c;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(251, 146, 60, 0.3);
+}
+
+/* Message card focus for keyboard navigation */
+.message-card:focus-visible {
+  outline: 2px solid #f97316;
+  outline-offset: 3px;
+  box-shadow:
+    0 0 0 5px rgba(249, 115, 22, 0.2),
+    0 8px 24px rgba(0, 0, 0, 0.4);
+  transform: scale(1.01);
 }
 
 /* ========================================
@@ -1118,18 +1211,653 @@ hr {
   color: #ffffff;
 }
 
-/* Tab content animation */
+/* Tab content animation - Enhanced */
 .animate-fadeIn {
-  animation: fadeIn 0.3s ease-out;
+  animation: fadeInSlide 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-@keyframes fadeIn {
+@keyframes fadeInSlide {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(20px) scale(0.98);
+    filter: blur(4px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Tab Panel Container */
+.tab-content {
+  position: relative;
+  min-height: 400px;
+}
+
+/* Individual Tab Panel */
+.tab-panel {
+  animation: fadeInSlide 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Enhanced Tab Navigation Buttons */
+nav[role="tablist"] button {
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+nav[role="tablist"] button[aria-selected="true"] {
+  box-shadow:
+    0 4px 16px rgba(249, 115, 22, 0.4),
+    0 2px 8px rgba(249, 115, 22, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+nav[role="tablist"] button[aria-selected="false"]:hover {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.7) 0%, rgba(31, 41, 55, 0.7) 100%);
+  border: 1px solid rgba(249, 115, 22, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+nav[role="tablist"] button .lucide {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+nav[role="tablist"] button:hover .lucide {
+  transform: scale(1.15);
+}
+
+nav[role="tablist"] button[aria-selected="true"] .lucide {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* Special highlight for Communication tab */
+#tab-communication[aria-selected="false"] {
+  position: relative;
+}
+
+#tab-communication[aria-selected="false"]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.05) 0%, rgba(251, 146, 60, 0.03) 100%);
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+#tab-communication[aria-selected="false"]:hover::before {
+  opacity: 0;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.1) 0%, rgba(251, 146, 60, 0.08) 100%);
+}
+
+/* ========================================
+   NATURAL LANGUAGE MESSAGE ENHANCEMENTS
+   Highlight agent communication with premium styling
+   ======================================== */
+
+/* Message Cards - Enhanced Glassmorphism */
+.message-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+}
+
+.message-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    transparent 50%,
+    rgba(249, 115, 22, 0.02) 100%
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.message-card:hover::before {
+  opacity: 1;
+}
+
+/* Message Type Indicators with Enhanced Glow */
+.message-status {
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.25) 0%, rgba(59, 130, 246, 0.15) 100%);
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  box-shadow:
+    0 4px 12px rgba(59, 130, 246, 0.2),
+    inset 0 1px 0 rgba(96, 165, 250, 0.2),
+    0 0 20px rgba(59, 130, 246, 0.1);
+}
+
+.message-completion {
+  background: linear-gradient(135deg, rgba(74, 222, 128, 0.25) 0%, rgba(34, 197, 94, 0.15) 100%);
+  border: 1px solid rgba(74, 222, 128, 0.4);
+  box-shadow:
+    0 4px 12px rgba(34, 197, 94, 0.25),
+    inset 0 1px 0 rgba(74, 222, 128, 0.2),
+    0 0 20px rgba(34, 197, 94, 0.15);
+  animation: successPulse 2s ease-in-out infinite;
+}
+
+@keyframes successPulse {
+  0%, 100% {
+    box-shadow:
+      0 4px 12px rgba(34, 197, 94, 0.25),
+      inset 0 1px 0 rgba(74, 222, 128, 0.2),
+      0 0 20px rgba(34, 197, 94, 0.15);
+  }
+  50% {
+    box-shadow:
+      0 4px 16px rgba(34, 197, 94, 0.35),
+      inset 0 1px 0 rgba(74, 222, 128, 0.3),
+      0 0 30px rgba(34, 197, 94, 0.25);
+  }
+}
+
+.message-coordination {
+  background: linear-gradient(135deg, rgba(192, 132, 252, 0.25) 0%, rgba(168, 85, 247, 0.15) 100%);
+  border: 1px solid rgba(192, 132, 252, 0.4);
+  box-shadow:
+    0 4px 12px rgba(168, 85, 247, 0.2),
+    inset 0 1px 0 rgba(192, 132, 252, 0.2),
+    0 0 20px rgba(168, 85, 247, 0.1);
+}
+
+.message-question {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.25) 0%, rgba(234, 179, 8, 0.15) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  box-shadow:
+    0 4px 12px rgba(234, 179, 8, 0.2),
+    inset 0 1px 0 rgba(251, 191, 36, 0.2),
+    0 0 20px rgba(234, 179, 8, 0.1);
+}
+
+/* Message Text Enhancement */
+.message-text {
+  font-size: 0.9375rem; /* 15px - slightly larger for better readability */
+  line-height: 1.65;
+  letter-spacing: -0.011em;
+  color: #f3f4f6;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Message Icon Glow */
+.message-icon {
+  filter: drop-shadow(0 2px 4px currentColor);
+  transition: transform 0.3s ease;
+}
+
+.message-card:hover .message-icon {
+  transform: scale(1.15) rotate(5deg);
+}
+
+/* Emoji Enhancement */
+.message-emoji {
+  font-size: 1.5rem;
+  line-height: 1;
+  display: inline-block;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3));
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.message-card:hover .message-emoji {
+  transform: scale(1.1) rotate(-5deg);
+}
+
+/* Agent Name Badge in Messages */
+.agent-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.2) 0%, rgba(251, 146, 60, 0.15) 100%);
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  box-shadow:
+    0 2px 6px rgba(249, 115, 22, 0.2),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+}
+
+.agent-badge:hover {
+  transform: scale(1.05);
+  box-shadow:
+    0 3px 8px rgba(249, 115, 22, 0.3),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* Message Timestamp Enhancement */
+.message-timestamp {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  font-feature-settings: 'tnum' 1;
+  letter-spacing: 0.01em;
+  transition: color 0.2s ease;
+}
+
+.message-card:hover .message-timestamp {
+  color: #d1d5db;
+}
+
+/* Unread Indicator with Pulse */
+.unread-badge {
+  position: relative;
+  padding: 0.25rem 0.625rem;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.2) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  border-radius: 6px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+  animation: unreadPulse 2s ease-in-out infinite;
+}
+
+@keyframes unreadPulse {
+  0%, 100% {
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 2px 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.2);
+    transform: scale(1.05);
+  }
+}
+
+/* Message Arrow Enhancement */
+.message-arrow {
+  color: #6b7280;
+  transition: all 0.3s ease;
+}
+
+.message-card:hover .message-arrow {
+  color: #ff8a3d;
+  transform: translateX(3px);
+}
+
+/* Enhanced Filter Buttons */
+.filter-button {
+  position: relative;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  text-transform: capitalize;
+  border: 1px solid transparent;
+}
+
+.filter-button-active {
+  background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+  color: #ffffff;
+  box-shadow:
+    0 4px 12px rgba(249, 115, 22, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border-color: rgba(251, 146, 60, 0.5);
+  transform: translateY(-2px);
+}
+
+.filter-button-inactive {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.6) 0%, rgba(31, 41, 55, 0.6) 100%);
+  color: #d1d5db;
+  border-color: rgba(75, 85, 99, 0.4);
+}
+
+.filter-button-inactive:hover {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.8) 0%, rgba(31, 41, 55, 0.8) 100%);
+  border-color: rgba(249, 115, 22, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Live Stats Enhancement */
+.live-stats-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(22, 163, 74, 0.1) 100%);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #4ade80;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2), inset 0 0.5px 0 rgba(34, 197, 94, 0.2);
+}
+
+/* ========================================
+   ENHANCED LOADING & SKELETON STATES
+   ======================================== */
+
+/* Shimmer Effect for Loading Cards */
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    90deg,
+    rgba(55, 65, 81, 0.3) 0%,
+    rgba(75, 85, 99, 0.5) 50%,
+    rgba(55, 65, 81, 0.3) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmerAnimation 1.8s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+@keyframes shimmerAnimation {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Skeleton Text Lines */
+.skeleton-text {
+  height: 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 6px;
+}
+
+.skeleton-text-sm {
+  height: 0.875rem;
+  margin-bottom: 0.375rem;
+  border-radius: 4px;
+}
+
+.skeleton-text-lg {
+  height: 1.25rem;
+  margin-bottom: 0.625rem;
+  border-radius: 8px;
+}
+
+/* Skeleton Message Card */
+.skeleton-message {
+  padding: 1rem;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.5) 100%);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Loading Dots Animation */
+.loading-dots-bounce {
+  display: inline-flex;
+  gap: 0.375rem;
+  align-items: center;
+}
+
+.loading-dots-bounce span {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: bounceDot 1.4s ease-in-out infinite;
+}
+
+.loading-dots-bounce span:nth-child(1) { animation-delay: 0s; }
+.loading-dots-bounce span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots-bounce span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes bounceDot {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+/* Spinner with Gradient */
+.spinner-gradient {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    #f97316 90deg,
+    #fb923c 180deg,
+    transparent 270deg
+  );
+  animation: spinGradient 1.2s linear infinite;
+  position: relative;
+}
+
+.spinner-gradient::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0f1729 0%, #1e2538 100%);
+}
+
+@keyframes spinGradient {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Progress Bar with Glow */
+.progress-bar-glow {
+  position: relative;
+  height: 6px;
+  background: rgba(55, 65, 81, 0.5);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-fill-glow {
+  height: 100%;
+  background: linear-gradient(90deg, #f97316 0%, #fb923c 50%, #f97316 100%);
+  background-size: 200% 100%;
+  border-radius: inherit;
+  box-shadow: 0 0 12px rgba(249, 115, 22, 0.6);
+  animation: progressGlow 2s ease-in-out infinite;
+  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes progressGlow {
+  0%, 100% {
+    background-position: 0% center;
+    box-shadow: 0 0 12px rgba(249, 115, 22, 0.6);
+  }
+  50% {
+    background-position: 100% center;
+    box-shadow: 0 0 20px rgba(249, 115, 22, 0.8), 0 0 40px rgba(249, 115, 22, 0.4);
+  }
+}
+
+/* ========================================
+   SCROLLBAR ENHANCEMENTS
+   Modern, Minimal Scrollbars
+   ======================================== */
+
+/* Custom Scrollbar for Webkit Browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 10px;
+  margin: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.6) 0%, rgba(251, 146, 60, 0.5) 100%);
+  border-radius: 10px;
+  border: 2px solid rgba(15, 23, 42, 0.3);
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.8) 0%, rgba(251, 146, 60, 0.7) 100%);
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.5);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+}
+
+/* Firefox Scrollbar Styling */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(249, 115, 22, 0.6) rgba(15, 23, 42, 0.5);
+}
+
+/* ========================================
+   VISUAL HIERARCHY ENHANCEMENTS
+   Depth & Layering
+   ======================================== */
+
+/* Section Divider with Glow */
+.section-divider {
+  position: relative;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.3), transparent);
+  margin: 2rem 0;
+}
+
+.section-divider::before {
+  content: '';
+  position: absolute;
+  inset: -2px 0;
+  background: linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.1), transparent);
+  filter: blur(4px);
+}
+
+/* Elevated Surface */
+.surface-elevated {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Floating Action Button Style */
+.fab {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+  box-shadow:
+    0 8px 24px rgba(249, 115, 22, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    inset 0 2px 0 rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 1000;
+  cursor: pointer;
+  border: none;
+  color: white;
+}
+
+.fab:hover {
+  transform: scale(1.1) translateY(-4px);
+  box-shadow:
+    0 12px 32px rgba(249, 115, 22, 0.6),
+    0 6px 16px rgba(0, 0, 0, 0.4),
+    inset 0 2px 0 rgba(255, 255, 255, 0.3);
+}
+
+.fab:active {
+  transform: scale(1) translateY(-2px);
+}
+
+/* Tooltip with Arrow */
+.tooltip {
+  position: absolute;
+  padding: 0.5rem 0.875rem;
+  background: rgba(17, 24, 39, 0.95);
+  color: #f3f4f6;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-radius: 8px;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(249, 115, 22, 0.3);
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 10000;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.tooltip::before {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  background: inherit;
+  transform: translateX(-50%) rotate(45deg);
+  box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Notification Badge */
+.notification-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  border-radius: 10px;
+  box-shadow:
+    0 2px 8px rgba(239, 68, 68, 0.5),
+    0 0 0 2px rgba(15, 23, 42, 1);
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow:
+      0 3px 12px rgba(239, 68, 68, 0.6),
+      0 0 0 2px rgba(15, 23, 42, 1);
   }
 }

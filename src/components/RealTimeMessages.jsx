@@ -167,10 +167,10 @@ export function RealTimeMessages({ teams }) {
 
   const getMessageColor = (type) => {
     switch (type) {
-      case 'status': return 'border-blue-500/30 bg-blue-500/10';
-      case 'completion': return 'border-green-500/30 bg-green-500/10';
-      case 'coordination': return 'border-purple-500/30 bg-purple-500/10';
-      case 'question': return 'border-yellow-500/30 bg-yellow-500/10';
+      case 'status': return 'message-status';
+      case 'completion': return 'message-completion';
+      case 'coordination': return 'message-coordination';
+      case 'question': return 'message-question';
       default: return 'border-gray-600 bg-gray-700/30';
     }
   };
@@ -192,22 +192,20 @@ export function RealTimeMessages({ teams }) {
           <Radio className="h-5 w-5 text-claude-orange" />
           <h3 className="text-lg font-semibold text-white">Agent Inter-Communication</h3>
         </div>
-        <span className="text-xs text-green-400 flex items-center gap-1">
+        <span className="live-stats-indicator">
           <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse"></span>
-          {messages.length} msgs
+          {messages.length} {messages.length === 1 ? 'message' : 'messages'}
         </span>
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex gap-2 mb-4 overflow-x-auto">
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
         {['all', 'status', 'completion', 'coordination', 'question'].map(f => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
-              filter === f
-                ? 'bg-claude-orange text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            className={`filter-button whitespace-nowrap ${
+              filter === f ? 'filter-button-active' : 'filter-button-inactive'
             }`}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -238,26 +236,26 @@ export function RealTimeMessages({ teams }) {
           filteredMessages.map(msg => (
             <div
               key={msg.id}
-              className={`p-3 rounded-lg border transition-all hover:scale-[1.02] ${getMessageColor(msg.type)}`}
+              className={`message-card p-3.5 rounded-xl border transition-all ${getMessageColor(msg.type)}`}
               style={{ animation: 'fadeIn 0.3s ease-out' }}
             >
               <div className="flex items-start gap-3">
-                <span className="text-2xl">{getTypeIcon(msg.type)}</span>
+                <span className="message-emoji text-2xl">{getTypeIcon(msg.type)}</span>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-bold text-white">{msg.from}</span>
-                    <ArrowRight className="h-3 w-3 text-gray-400" />
-                    <span className="text-sm text-gray-400">{msg.to}</span>
-                    <span className="ml-auto text-xs text-gray-500">
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <span className="agent-badge">{msg.from}</span>
+                    <ArrowRight className="message-arrow h-3.5 w-3.5" />
+                    <span className="text-sm text-gray-300 font-medium">{msg.to}</span>
+                    <span className="message-timestamp ml-auto">
                       {dayjs(msg.timestamp).fromNow()}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-200">{msg.message}</p>
+                  <p className="message-text">{msg.message}</p>
                   {msg.team && (
-                    <div className="mt-1 flex items-center gap-2">
-                      <span className="text-xs text-gray-500">Team: {msg.team}</span>
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="text-xs text-gray-400 font-medium">Team: {msg.team}</span>
                       {!msg.read && (
-                        <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded">Unread</span>
+                        <span className="unread-badge">New</span>
                       )}
                     </div>
                   )}

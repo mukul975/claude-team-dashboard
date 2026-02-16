@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const { spawn } = require('child_process');
 
 console.log('Starting Claude Agent Dashboard...\n');
