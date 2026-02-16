@@ -6,6 +6,8 @@
 
 ### Stop Flying Blind — Monitor Your Claude Code Agent Teams in Real Time
 
+[![npm version](https://img.shields.io/npm/v/claude-team-dashboard.svg?style=flat&color=blue)](https://www.npmjs.com/package/claude-team-dashboard)
+[![npm downloads](https://img.shields.io/npm/dm/claude-team-dashboard.svg?style=flat&color=brightgreen)](https://www.npmjs.com/package/claude-team-dashboard)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/mukul975/claude-team-dashboard/blob/main/LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
 [![JavaScript](https://img.shields.io/badge/JavaScript-58%25-F7DF1E.svg?logo=javascript&logoColor=black)](https://github.com/mukul975/claude-team-dashboard)
@@ -96,12 +98,36 @@ Instant desktop notifications for task completions, errors, and state changes. *
 
 ## 🚀 Quick Start
 
-### ⚡ 60-Second Setup
+### ⚡ 60-Second Setup (npm Package)
+
+Install and run with a single command:
+
+```bash
+# Install globally
+npm install -g claude-team-dashboard
+
+# Launch dashboard
+claude-dashboard
+```
+
+**Or use npx** (no installation required):
+
+```bash
+npx claude-team-dashboard
+```
+
+**That's it.** Open **http://localhost:5173** and you're monitoring agents in real time.
+
+---
+
+### 🛠️ Development Setup (From Source)
+
+Want to contribute or customize? Clone and develop locally:
 
 ```bash
 # 1. Clone and enter
 git clone https://github.com/mukul975/claude-team-dashboard.git
-cd agentdashboard
+cd claude-team-dashboard
 
 # 2. Install dependencies
 npm install
@@ -109,8 +135,6 @@ npm install
 # 3. Launch dashboard (starts both frontend + backend)
 npm start
 ```
-
-**That's it.** Open **http://localhost:5173** and you're monitoring agents in real time.
 
 ### 🎁 Dev Container (Instant Environment)
 
@@ -124,16 +148,46 @@ Have VS Code + Docker? **Skip setup entirely**:
 
 ```bash
 # Using Yarn
-yarn install && yarn start
+yarn global add claude-team-dashboard
+claude-dashboard
 
 # Using pnpm
-pnpm install && pnpm start
+pnpm add -g claude-team-dashboard
+claude-dashboard
 ```
 
 ### ✅ Prerequisites
 
 - **Node.js** v18+ ([Download](https://nodejs.org/))
 - **npm** v9+ (comes with Node.js)
+
+### 🖥️ CLI Usage
+
+Once installed, the `claude-dashboard` command is available globally:
+
+```bash
+# Start the dashboard
+claude-dashboard
+
+# The dashboard will:
+# ✓ Start backend server on http://localhost:3001
+# ✓ Start frontend on http://localhost:5173
+# ✓ Auto-watch ~/.claude/teams for agent activity
+# ✓ Stream real-time updates via WebSocket
+
+# Stop with Ctrl+C
+```
+
+**What gets monitored:**
+- `~/.claude/teams/` - Active agent teams
+- `~/.claude/tasks/` - Task management
+- `/tmp/claude/{project}/tasks/` - Agent outputs
+
+**Automatic features:**
+- Team lifecycle tracking
+- Auto-archiving on completion
+- Real-time message parsing
+- WebSocket streaming
 
 ---
 
