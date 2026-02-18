@@ -68,6 +68,10 @@ Debug coordination issues instantly. Watch agents communicate in real time with 
 
 Pixel-perfect theming with CSS custom properties. Every component — cards, charts, modals, toasts — adapts instantly when you toggle the theme.
 
+### ♿ **WCAG-Accessible Interface**
+
+Every button has a descriptive `aria-label`. Interactive elements have `role`, `tabIndex`, and keyboard handlers. Status components use `aria-live`. Modals trap focus. Fully navigable without a mouse.
+
 ### ⌨️ **Keyboard-First Navigation**
 
 Command palette (`⌘K`), tab shortcuts (`⌘1-8`), and a shortcuts modal (`?`) so you never have to touch the mouse.
@@ -698,10 +702,19 @@ The lifecycle tracking is powered by three independent watchers:
 // Rejects: ../, ./, path separators, control characters
 ```
 
-**Validation**: Archive file paths are validated to ensure they're within allowed directories:
+**Validation**: Archive file paths and inbox paths are validated against their base directories before any read:
 ```javascript
 validatePath(filePath, ARCHIVE_DIR)
+validatePath(inboxPath, TEAMS_DIR)
 ```
+
+**Error Response Hardening**: The global error handler never leaks internal error details or stack traces to clients — always returns a generic `"Internal server error"` message.
+
+**Rate Limiting**: App-level rate limiter on all `/api/` routes plus a stricter limiter on search endpoints.
+
+**Helmet**: Security headers applied at app level (CSP, X-Frame-Options, HSTS, etc.).
+
+**CORS**: Restricted to `localhost:3001` and `localhost:5173` only — no wildcard origins.
 
 **Read-Only**: The dashboard never modifies Claude Code files — it only reads and archives data.
 
@@ -732,6 +745,10 @@ validatePath(filePath, ARCHIVE_DIR)
 
 ### ✅ Recently Shipped
 
+- [x] **Full accessibility audit** — 50+ buttons with `aria-label`, interactive divs with `role`/`tabIndex`/`onKeyDown`, `aria-live` on status components, `role="alert"` on error states, focus management in modals
+- [x] **Security hardening** — server.js: fixed wrong sanitizer on inbox route, patched error message leakage in global handler, added path validation on archive listing, consistent error responses across all endpoints
+- [x] **Complete inline styles migration** — All 30+ components now use React inline `style={{}}` for every sizing, color, animation, and layout value — no broken Tailwind arbitrary values remain
+- [x] **Production code cleanup** — Removed 5 debug `console.log` statements from `useWebSocket.js`; cleaned unused imports across multiple components
 - [x] **Light / Dark mode** — Full CSS-variable-based theme system; every component, card, chart, modal, and toast adapts instantly
 - [x] **Export reports** — CSV & JSON export for tasks and inbox messages via the header Export menu
 - [x] **Performance analytics** — Analytics panel with historical charts, team comparison, and performance scoring
