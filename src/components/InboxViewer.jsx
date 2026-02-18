@@ -1,29 +1,29 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Inbox, Users, Search, ChevronDown, ChevronRight, ArrowDown, MessageSquare, User, Download } from 'lucide-react';
+import { Inbox, Users, Search, ChevronDown, ChevronRight, ArrowDown, MessageSquare, User } from 'lucide-react';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
 dayjs.extend(relativeTime);
 
 const AVATAR_COLORS = [
-  'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-cyan-500',
-  'bg-orange-500', 'bg-pink-500', 'bg-yellow-500', 'bg-red-500',
-  'bg-indigo-500', 'bg-teal-500', 'bg-rose-500', 'bg-emerald-500'
+  '#3b82f6', '#22c55e', '#a855f7', '#06b6d4',
+  '#f97316', '#ec4899', '#eab308', '#ef4444',
+  '#6366f1', '#14b8a6', '#f43f5e', '#10b981'
 ];
 
 const BORDER_COLOR_MAP = {
-  green: 'border-l-green-500',
-  blue: 'border-l-blue-500',
-  purple: 'border-l-purple-500',
-  cyan: 'border-l-cyan-400',
-  orange: 'border-l-orange-500',
-  pink: 'border-l-pink-500',
-  yellow: 'border-l-yellow-500',
-  red: 'border-l-red-500',
+  green: '#22c55e',
+  blue: '#3b82f6',
+  purple: '#a855f7',
+  cyan: '#22d3ee',
+  orange: '#f97316',
+  pink: '#ec4899',
+  yellow: '#eab308',
+  red: '#ef4444',
 };
 
-const DEFAULT_BORDER = 'border-l-gray-600';
+const DEFAULT_BORDER_COLOR = '#4b5563';
 
 function hashCode(str) {
   let hash = 0;
@@ -47,54 +47,9 @@ function getInitials(name) {
   return name.substring(0, 2).toUpperCase();
 }
 
-function getBorderClass(color) {
-  if (!color) return DEFAULT_BORDER;
-  return BORDER_COLOR_MAP[color.toLowerCase()] || DEFAULT_BORDER;
-}
-
-function HighlightText({ text, query }) {
-  if (!query || !text) return <>{text}</>;
-  const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const parts = text.split(new RegExp(`(${escapedQuery})`, 'gi'));
-  return (
-    <>
-      {parts.map((part, i) =>
-        part.toLowerCase() === query.toLowerCase() ? (
-          <mark key={i} style={{ background: 'rgba(249, 115, 22, 0.4)', color: '#fff', borderRadius: '2px', padding: '0 1px' }}>
-            {part}
-          </mark>
-        ) : (
-          <span key={i}>{part}</span>
-        )
-      )}
-    </>
-  );
-}
-
-HighlightText.propTypes = {
-  text: PropTypes.string,
-  query: PropTypes.string,
-};
-
-function downloadBlob(content, filename, mimeType) {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-function escapeCsvField(value) {
-  if (value == null) return '';
-  const str = String(value);
-  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
-    return '"' + str.replace(/"/g, '""') + '"';
-  }
-  return str;
+function getBorderColor(color) {
+  if (!color) return DEFAULT_BORDER_COLOR;
+  return BORDER_COLOR_MAP[color.toLowerCase()] || DEFAULT_BORDER_COLOR;
 }
 
 function renderBoldMarkdown(text) {
@@ -112,25 +67,27 @@ function MessageContent({ text }) {
   const [expanded, setExpanded] = useState(false);
 
   if (!text || text.trim() === '') {
-    return <p className="text-sm text-gray-400 italic">Empty message</p>;
+    return <p className="text-sm text-gray-400" style={{ fontStyle: 'italic', marginBottom: 0 }}>Empty message</p>;
   }
 
-  // Try JSON parse
   let parsed = null;
   const trimmed = text.trim();
   if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
     try {
       parsed = JSON.parse(trimmed);
     } catch (e) {
-      // starts with { but invalid JSON -- show as code block
       return (
         <pre
-          className="text-xs text-gray-300 overflow-x-auto p-2 rounded"
+          className="text-xs text-gray-300"
           style={{
             background: 'rgba(15, 23, 42, 0.7)',
             border: '1px solid rgba(55, 65, 81, 0.5)',
             maxHeight: '200px',
-            overflowY: 'auto'
+            overflowY: 'auto',
+            overflowX: 'auto',
+            padding: '0.5rem',
+            borderRadius: '4px',
+            margin: 0,
           }}
         >
           <code>{trimmed}</code>
@@ -144,24 +101,38 @@ function MessageContent({ text }) {
     return (
       <div>
         {summary && (
-          <p className="text-sm text-gray-200 leading-relaxed mb-1">
+          <p className="text-sm text-gray-200" style={{ lineHeight: 1.6, marginBottom: '0.25rem' }}>
             {renderBoldMarkdown(String(summary))}
           </p>
         )}
         <button
           onClick={() => setExpanded(!expanded)}
-          className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+          className="text-xs text-gray-500"
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 0,
+            transition: 'color 0.15s ease',
+          }}
+          onMouseEnter={e => { e.target.style.color = '#d1d5db'; }}
+          onMouseLeave={e => { e.target.style.color = '#6b7280'; }}
         >
           {expanded ? 'Hide raw data' : 'Show raw data'}
         </button>
         {expanded && (
           <pre
-            className="text-xs text-gray-400 overflow-x-auto p-2 rounded mt-1"
+            className="text-xs text-gray-400"
             style={{
               background: 'rgba(15, 23, 42, 0.7)',
               border: '1px solid rgba(55, 65, 81, 0.5)',
               maxHeight: '200px',
-              overflowY: 'auto'
+              overflowY: 'auto',
+              overflowX: 'auto',
+              padding: '0.5rem',
+              borderRadius: '4px',
+              marginTop: '0.25rem',
+              marginBottom: 0,
             }}
           >
             <code>{JSON.stringify(parsed, null, 2)}</code>
@@ -171,9 +142,8 @@ function MessageContent({ text }) {
     );
   }
 
-  // Plain text with markdown bold
   return (
-    <p className="text-sm text-gray-200 leading-relaxed">
+    <p className="text-sm text-gray-200" style={{ lineHeight: 1.6, marginBottom: 0 }}>
       {renderBoldMarkdown(text)}
     </p>
   );
@@ -197,74 +167,19 @@ function getTeamUnreadCount(teamData) {
   return count;
 }
 
-function getTeamAgentCount(teamData) {
-  if (!teamData) return 0;
-  return Object.keys(teamData).length;
-}
-
 export function InboxViewer({ allInboxes }) {
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [expandedTeams, setExpandedTeams] = useState({});
   const [selectedAgent, setSelectedAgent] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [globalSearchQuery, setGlobalSearchQuery] = useState('');
-  const [debouncedGlobalSearch, setDebouncedGlobalSearch] = useState('');
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [hasNewMessages, setHasNewMessages] = useState(false);
   const messagesContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const prevMessageCountRef = useRef(0);
-  const globalSearchTimerRef = useRef(null);
 
   const teamNames = allInboxes ? Object.keys(allInboxes) : [];
 
-  // Debounce global search by 200ms
-  useEffect(() => {
-    if (globalSearchTimerRef.current) {
-      clearTimeout(globalSearchTimerRef.current);
-    }
-    globalSearchTimerRef.current = setTimeout(() => {
-      setDebouncedGlobalSearch(globalSearchQuery);
-    }, 200);
-    return () => {
-      if (globalSearchTimerRef.current) {
-        clearTimeout(globalSearchTimerRef.current);
-      }
-    };
-  }, [globalSearchQuery]);
-
-  // Global search: flat list of all matching messages across all teams
-  const globalSearchResults = useMemo(() => {
-    const q = debouncedGlobalSearch.trim().toLowerCase();
-    if (!q || !allInboxes) return [];
-
-    const results = [];
-    for (const teamName of Object.keys(allInboxes)) {
-      const teamData = allInboxes[teamName];
-      for (const agentName of Object.keys(teamData || {})) {
-        const agentData = teamData[agentName];
-        const messages = agentData?.messages || [];
-        for (const msg of messages) {
-          const textMatch = msg.text && msg.text.toLowerCase().includes(q);
-          const fromMatch = msg.from && msg.from.toLowerCase().includes(q);
-          const summaryMatch = msg.summary && msg.summary.toLowerCase().includes(q);
-          if (textMatch || fromMatch || summaryMatch) {
-            results.push({ ...msg, teamName, agentName });
-          }
-        }
-      }
-    }
-    // Sort by timestamp descending (newest first)
-    results.sort((a, b) => {
-      if (!a.timestamp && !b.timestamp) return 0;
-      if (!a.timestamp) return 1;
-      if (!b.timestamp) return -1;
-      return new Date(b.timestamp) - new Date(a.timestamp);
-    });
-    return results;
-  }, [debouncedGlobalSearch, allInboxes]);
-
-  // Auto-select first team/agent if none selected
   useEffect(() => {
     if (teamNames.length > 0 && !selectedTeam) {
       const firstTeam = teamNames[0];
@@ -277,10 +192,8 @@ export function InboxViewer({ allInboxes }) {
     }
   }, [allInboxes, teamNames, selectedTeam]);
 
-  // Get current messages
   const currentMessages = (selectedTeam && selectedAgent && allInboxes?.[selectedTeam]?.[selectedAgent]?.messages) || [];
 
-  // Detect new messages and auto-scroll
   useEffect(() => {
     if (currentMessages.length > prevMessageCountRef.current) {
       if (isAtBottom && messagesEndRef.current) {
@@ -310,29 +223,6 @@ export function InboxViewer({ allInboxes }) {
     }
   };
 
-  const handleExportJson = () => {
-    if (!selectedTeam || !selectedAgent || currentMessages.length === 0) return;
-    const json = JSON.stringify(currentMessages, null, 2);
-    const filename = `${selectedTeam}-${selectedAgent}-${new Date().toISOString().split('T')[0]}.json`;
-    downloadBlob(json, filename, 'application/json');
-  };
-
-  const handleExportCsv = () => {
-    if (!selectedTeam || !selectedAgent || currentMessages.length === 0) return;
-    const headers = ['timestamp', 'from', 'agentName', 'teamName', 'summary', 'text'];
-    const rows = currentMessages.map(msg => [
-      escapeCsvField(msg.timestamp || ''),
-      escapeCsvField(msg.from || ''),
-      escapeCsvField(selectedAgent),
-      escapeCsvField(selectedTeam),
-      escapeCsvField(msg.summary || ''),
-      escapeCsvField((msg.text || '').substring(0, 200)),
-    ].join(','));
-    const csv = [headers.join(','), ...rows].join('\n');
-    const filename = `${selectedTeam}-${selectedAgent}-${new Date().toISOString().split('T')[0]}.csv`;
-    downloadBlob(csv, filename, 'text/csv');
-  };
-
   const toggleTeam = (teamName) => {
     setExpandedTeams(prev => ({ ...prev, [teamName]: !prev[teamName] }));
   };
@@ -345,7 +235,6 @@ export function InboxViewer({ allInboxes }) {
     prevMessageCountRef.current = allInboxes?.[teamName]?.[agentName]?.messages?.length || 0;
   };
 
-  // Filter messages by search
   const filteredMessages = searchQuery.trim()
     ? currentMessages.filter(msg => {
         const q = searchQuery.toLowerCase();
@@ -357,11 +246,16 @@ export function InboxViewer({ allInboxes }) {
       })
     : currentMessages;
 
-  // No data at all
   if (!allInboxes || teamNames.length === 0) {
     return (
       <div className="card" style={{ minHeight: '400px' }}>
-        <div className="flex flex-col items-center justify-center py-16">
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '4rem 1rem',
+        }}>
           <div style={{
             background: 'linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(251, 146, 60, 0.1))',
             padding: '1rem',
@@ -373,7 +267,7 @@ export function InboxViewer({ allInboxes }) {
           <h3 className="text-lg font-semibold text-white" style={{ marginBottom: '0.5rem' }}>
             No Active Teams
           </h3>
-          <p className="text-sm text-gray-400" style={{ textAlign: 'center', maxWidth: '300px' }}>
+          <p className="text-sm text-gray-400" style={{ textAlign: 'center', maxWidth: '300px', marginBottom: 0 }}>
             When agent teams start communicating, their inboxes will appear here for monitoring.
           </p>
         </div>
@@ -383,127 +277,15 @@ export function InboxViewer({ allInboxes }) {
 
   const currentAgentData = selectedTeam && selectedAgent ? allInboxes[selectedTeam]?.[selectedAgent] : null;
 
-  const isGlobalSearchActive = debouncedGlobalSearch.trim().length > 0;
-
   return (
     <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-      {/* Global Search Bar */}
-      <div style={{
-        padding: '0.75rem 1rem',
-        borderBottom: '1px solid rgba(55, 65, 81, 0.5)',
-        background: 'rgba(15, 23, 42, 0.3)',
-      }}>
-        <div style={{ position: 'relative' }}>
-          <Search style={{
-            position: 'absolute',
-            left: '0.75rem',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            height: '16px',
-            width: '16px',
-            color: '#6b7280',
-          }} />
-          <input
-            type="text"
-            placeholder="Search all messages..."
-            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-claude-orange"
-            style={{ paddingLeft: '2.25rem' }}
-            value={globalSearchQuery}
-            onChange={e => setGlobalSearchQuery(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* Global Search Results */}
-      {isGlobalSearchActive ? (
-        <div style={{ height: '560px', overflowY: 'auto', padding: '0.75rem 1rem' }}>
-          <div className="text-xs text-gray-500 px-3 py-1" style={{ marginBottom: '0.5rem' }}>
-            {globalSearchResults.length} match{globalSearchResults.length !== 1 ? 'es' : ''}
-          </div>
-          {globalSearchResults.length === 0 ? (
-            <div className="flex flex-col items-center justify-center" style={{ paddingTop: '4rem' }}>
-              <Search style={{ height: '40px', width: '40px', color: '#4b5563', marginBottom: '0.75rem' }} />
-              <p className="text-sm text-gray-400">No messages match &quot;{debouncedGlobalSearch}&quot;</p>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {globalSearchResults.map((msg, idx) => {
-                const borderClass = getBorderClass(msg.color);
-                const timestamp = msg.timestamp ? dayjs(msg.timestamp) : null;
-                const relTime = timestamp ? timestamp.fromNow() : '';
-                const fullTime = timestamp ? timestamp.format('YYYY-MM-DD HH:mm:ss') : '';
-                const displayText = msg.text
-                  ? (msg.text.length > 300 ? msg.text.substring(0, 300) + '...' : msg.text)
-                  : '';
-
-                return (
-                  <div
-                    key={`gs-${msg.teamName}-${msg.agentName}-${msg.timestamp}-${idx}`}
-                    className={`border-l-4 ${borderClass}`}
-                    style={{
-                      padding: '0.625rem 0.75rem',
-                      borderRadius: '0 8px 8px 0',
-                      background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.5), rgba(15, 23, 42, 0.45))',
-                      cursor: 'pointer',
-                      transition: 'background 0.15s ease',
-                    }}
-                    onClick={() => {
-                      setGlobalSearchQuery('');
-                      setSelectedTeam(msg.teamName);
-                      setSelectedAgent(msg.agentName);
-                      setExpandedTeams(prev => ({ ...prev, [msg.teamName]: true }));
-                    }}
-                  >
-                    {/* Breadcrumb: teamName > agentName */}
-                    <div className="flex items-center gap-1" style={{ marginBottom: '0.375rem' }}>
-                      <span className="text-xs font-medium" style={{ color: '#f97316' }}>{msg.teamName}</span>
-                      <ChevronRight style={{ height: '10px', width: '10px', color: '#6b7280' }} />
-                      <span className="text-xs font-medium text-gray-300">{msg.agentName}</span>
-                      {timestamp && (
-                        <span className="text-xs text-gray-500" style={{ marginLeft: 'auto' }} title={fullTime}>
-                          {relTime}
-                        </span>
-                      )}
-                    </div>
-                    {/* Sender */}
-                    <div className="flex items-center gap-2" style={{ marginBottom: '0.25rem' }}>
-                      <div
-                        className={getAvatarColor(msg.from || 'unknown')}
-                        style={{
-                          width: '20px',
-                          height: '20px',
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '0.5rem',
-                          fontWeight: 700,
-                          color: 'white',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {getInitials(msg.from || 'unknown')}
-                      </div>
-                      <span className="text-xs font-semibold text-white">{msg.from || 'Unknown'}</span>
-                    </div>
-                    {/* Message content with highlighted matches */}
-                    <p className="text-sm text-gray-300 leading-relaxed" style={{ marginTop: '0.25rem' }}>
-                      <HighlightText text={displayText} query={debouncedGlobalSearch.trim()} />
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      ) : (
-      <div style={{
+      <div className="inbox-viewer-grid" style={{
         display: 'grid',
         gridTemplateColumns: '280px 1fr',
-        height: '560px',
+        height: '600px',
         minHeight: 0,
       }}>
-        {/* LEFT PANEL: Team + Agent List */}
+        {/* LEFT PANEL */}
         <div style={{
           borderRight: '1px solid rgba(55, 65, 81, 0.6)',
           display: 'flex',
@@ -511,7 +293,6 @@ export function InboxViewer({ allInboxes }) {
           overflow: 'hidden',
           background: 'rgba(15, 23, 42, 0.4)',
         }}>
-          {/* Panel header */}
           <div style={{
             padding: '1rem 1rem 0.75rem 1rem',
             borderBottom: '1px solid rgba(55, 65, 81, 0.5)',
@@ -520,10 +301,11 @@ export function InboxViewer({ allInboxes }) {
               <Inbox style={{ height: '18px', width: '18px', color: '#ff8a3d' }} />
               <span className="text-sm font-semibold text-white">Inboxes</span>
             </div>
-            <p className="text-xs text-gray-500">{teamNames.length} team{teamNames.length !== 1 ? 's' : ''}</p>
+            <p className="text-xs text-gray-500" style={{ marginBottom: 0 }}>
+              {teamNames.length} team{teamNames.length !== 1 ? 's' : ''}
+            </p>
           </div>
 
-          {/* Scrollable team/agent list */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem' }}>
             {teamNames.map(teamName => {
               const teamData = allInboxes[teamName];
@@ -534,7 +316,6 @@ export function InboxViewer({ allInboxes }) {
 
               return (
                 <div key={teamName} style={{ marginBottom: '0.25rem' }}>
-                  {/* Team row */}
                   <button
                     onClick={() => {
                       toggleTeam(teamName);
@@ -559,8 +340,8 @@ export function InboxViewer({ allInboxes }) {
                         ? 'linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(251, 146, 60, 0.1))'
                         : 'transparent',
                       borderLeft: isTeamSelected ? '3px solid #f97316' : '3px solid transparent',
+                      color: 'inherit',
                     }}
-                    className="hover:bg-gray-700"
                     aria-expanded={isExpanded}
                   >
                     {isExpanded ? (
@@ -595,7 +376,6 @@ export function InboxViewer({ allInboxes }) {
                     )}
                   </button>
 
-                  {/* Agent sub-items */}
                   {isExpanded && agentNames.length > 0 && (
                     <div style={{ paddingLeft: '1.25rem', marginTop: '0.125rem' }}>
                       {agentNames.map(agentName => {
@@ -623,25 +403,22 @@ export function InboxViewer({ allInboxes }) {
                                 ? 'linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(251, 146, 60, 0.12))'
                                 : 'transparent',
                               borderLeft: isSelected ? '2px solid #fb923c' : '2px solid transparent',
+                              color: 'inherit',
                             }}
-                            className="hover:bg-gray-700"
                           >
-                            {/* Mini avatar */}
-                            <div
-                              className={getAvatarColor(agentName)}
-                              style={{
-                                width: '22px',
-                                height: '22px',
-                                borderRadius: '50%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '0.5625rem',
-                                fontWeight: 700,
-                                color: 'white',
-                                flexShrink: 0,
-                              }}
-                            >
+                            <div style={{
+                              width: '22px',
+                              height: '22px',
+                              borderRadius: '50%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.5625rem',
+                              fontWeight: 700,
+                              color: 'white',
+                              flexShrink: 0,
+                              background: getAvatarColor(agentName),
+                            }}>
                               {getInitials(agentName)}
                             </div>
                             <span
@@ -681,10 +458,9 @@ export function InboxViewer({ allInboxes }) {
                     </div>
                   )}
 
-                  {/* Team expanded but no agents */}
                   {isExpanded && agentNames.length === 0 && (
-                    <div style={{ paddingLeft: '2rem', padding: '0.5rem 0.5rem 0.5rem 2rem' }}>
-                      <p className="text-xs text-gray-500 italic">No inboxes yet</p>
+                    <div style={{ padding: '0.5rem 0.5rem 0.5rem 2rem' }}>
+                      <p className="text-xs text-gray-500" style={{ fontStyle: 'italic', marginBottom: 0 }}>No inboxes yet</p>
                     </div>
                   )}
                 </div>
@@ -693,16 +469,16 @@ export function InboxViewer({ allInboxes }) {
           </div>
         </div>
 
-        {/* RIGHT PANEL: Message Thread */}
+        {/* RIGHT PANEL */}
         <div style={{
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
           minHeight: 0,
+          position: 'relative',
         }}>
           {selectedTeam && selectedAgent && currentAgentData ? (
             <>
-              {/* Thread header */}
               <div style={{
                 padding: '0.75rem 1rem',
                 borderBottom: '1px solid rgba(55, 65, 81, 0.5)',
@@ -712,20 +488,18 @@ export function InboxViewer({ allInboxes }) {
                 flexShrink: 0,
               }}>
                 <div className="flex items-center gap-3">
-                  <div
-                    className={getAvatarColor(selectedAgent)}
-                    style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      color: 'white',
-                    }}
-                  >
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    color: 'white',
+                    background: getAvatarColor(selectedAgent),
+                  }}>
                     {getInitials(selectedAgent)}
                   </div>
                   <div>
@@ -737,44 +511,21 @@ export function InboxViewer({ allInboxes }) {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {currentMessages.length > 0 && (
-                    <>
-                      <button
-                        onClick={handleExportJson}
-                        className="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-2 py-1 rounded"
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', border: 'none', cursor: 'pointer' }}
-                      >
-                        <Download style={{ height: '10px', width: '10px' }} />
-                        Export JSON
-                      </button>
-                      <button
-                        onClick={handleExportCsv}
-                        className="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-2 py-1 rounded"
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', border: 'none', cursor: 'pointer' }}
-                      >
-                        <Download style={{ height: '10px', width: '10px' }} />
-                        Export CSV
-                      </button>
-                    </>
-                  )}
-                  {getUnreadCount(currentAgentData) > 0 && (
-                    <span style={{
-                      background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.15))',
-                      border: '1px solid rgba(59, 130, 246, 0.4)',
-                      color: '#93c5fd',
-                      fontSize: '0.6875rem',
-                      fontWeight: 600,
-                      padding: '0.25rem 0.625rem',
-                      borderRadius: '6px',
-                    }}>
-                      {getUnreadCount(currentAgentData)} unread
-                    </span>
-                  )}
-                </div>
+                {getUnreadCount(currentAgentData) > 0 && (
+                  <span style={{
+                    background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.15))',
+                    border: '1px solid rgba(59, 130, 246, 0.4)',
+                    color: '#93c5fd',
+                    fontSize: '0.6875rem',
+                    fontWeight: 600,
+                    padding: '0.25rem 0.625rem',
+                    borderRadius: '6px',
+                  }}>
+                    {getUnreadCount(currentAgentData)} unread
+                  </span>
+                )}
               </div>
 
-              {/* Search bar */}
               <div style={{
                 padding: '0.5rem 1rem',
                 borderBottom: '1px solid rgba(55, 65, 81, 0.3)',
@@ -812,18 +563,6 @@ export function InboxViewer({ allInboxes }) {
                 </div>
               </div>
 
-              {/* Message count bar */}
-              <div className="text-xs text-gray-500 px-3 py-1" style={{
-                borderBottom: '1px solid rgba(55, 65, 81, 0.3)',
-                flexShrink: 0,
-              }}>
-                {searchQuery.trim()
-                  ? `${filteredMessages.length} match${filteredMessages.length !== 1 ? 'es' : ''}`
-                  : `${currentMessages.length} message${currentMessages.length !== 1 ? 's' : ''}`
-                }
-              </div>
-
-              {/* Messages list */}
               <div
                 ref={messagesContainerRef}
                 onScroll={handleScroll}
@@ -831,18 +570,23 @@ export function InboxViewer({ allInboxes }) {
                   flex: 1,
                   overflowY: 'auto',
                   padding: '0.75rem 1rem',
-                  position: 'relative',
                   minHeight: 0,
                 }}
               >
                 {filteredMessages.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center" style={{ paddingTop: '4rem' }}>
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    paddingTop: '4rem',
+                  }}>
                     <MessageSquare style={{ height: '40px', width: '40px', color: '#4b5563', marginBottom: '0.75rem' }} />
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-gray-400" style={{ marginBottom: 0 }}>
                       {searchQuery.trim() ? 'No messages match your search' : 'No messages yet'}
                     </p>
                     {!searchQuery.trim() && (
-                      <p className="text-xs text-gray-500" style={{ marginTop: '0.25rem' }}>
+                      <p className="text-xs text-gray-500" style={{ marginTop: '0.25rem', marginBottom: 0 }}>
                         Messages to this agent will appear here
                       </p>
                     )}
@@ -850,19 +594,19 @@ export function InboxViewer({ allInboxes }) {
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     {filteredMessages.map((msg, idx) => {
-                      const borderClass = getBorderClass(msg.color);
+                      const borderColor = getBorderColor(msg.color);
                       const isUnread = msg.read === false;
                       const timestamp = msg.timestamp ? dayjs(msg.timestamp) : null;
-                      const relativeTime = timestamp ? timestamp.fromNow() : '';
+                      const relTime = timestamp ? timestamp.fromNow() : '';
                       const fullTime = timestamp ? timestamp.format('YYYY-MM-DD HH:mm:ss') : '';
 
                       return (
                         <div
                           key={`${msg.timestamp}-${msg.from}-${idx}`}
-                          className={`border-l-4 ${borderClass}`}
                           style={{
                             padding: '0.625rem 0.75rem',
                             borderRadius: '0 8px 8px 0',
+                            borderLeft: `4px solid ${borderColor}`,
                             background: isUnread
                               ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.85))'
                               : 'linear-gradient(135deg, rgba(30, 41, 59, 0.5), rgba(15, 23, 42, 0.45))',
@@ -872,7 +616,6 @@ export function InboxViewer({ allInboxes }) {
                           }}
                         >
                           <div className="flex items-start gap-3">
-                            {/* Unread dot */}
                             {isUnread && (
                               <div style={{
                                 width: '8px',
@@ -885,26 +628,22 @@ export function InboxViewer({ allInboxes }) {
                               }} />
                             )}
 
-                            {/* Avatar */}
-                            <div
-                              className={getAvatarColor(msg.from || 'unknown')}
-                              style={{
-                                width: '28px',
-                                height: '28px',
-                                borderRadius: '50%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '0.625rem',
-                                fontWeight: 700,
-                                color: 'white',
-                                flexShrink: 0,
-                              }}
-                            >
+                            <div style={{
+                              width: '28px',
+                              height: '28px',
+                              borderRadius: '50%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.625rem',
+                              fontWeight: 700,
+                              color: 'white',
+                              flexShrink: 0,
+                              background: getAvatarColor(msg.from || 'unknown'),
+                            }}>
                               {getInitials(msg.from || 'unknown')}
                             </div>
 
-                            {/* Content */}
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div className="flex items-center justify-between" style={{ marginBottom: '0.25rem' }}>
                                 <span className="text-xs font-semibold text-white">
@@ -916,7 +655,7 @@ export function InboxViewer({ allInboxes }) {
                                     title={fullTime}
                                     style={{ flexShrink: 0, marginLeft: '0.5rem' }}
                                   >
-                                    {relativeTime}
+                                    {relTime}
                                   </span>
                                 )}
                               </div>
@@ -931,7 +670,6 @@ export function InboxViewer({ allInboxes }) {
                 )}
               </div>
 
-              {/* New messages button */}
               {hasNewMessages && (
                 <div style={{
                   position: 'absolute',
@@ -955,7 +693,6 @@ export function InboxViewer({ allInboxes }) {
                       fontWeight: 600,
                       cursor: 'pointer',
                       boxShadow: '0 4px 12px rgba(249, 115, 22, 0.4)',
-                      transition: 'transform 0.15s ease',
                     }}
                   >
                     <ArrowDown style={{ height: '12px', width: '12px' }} />
@@ -965,8 +702,13 @@ export function InboxViewer({ allInboxes }) {
               )}
             </>
           ) : (
-            // No agent selected state
-            <div className="flex flex-col items-center justify-center" style={{ height: '100%' }}>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+            }}>
               <div style={{
                 background: 'linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(251, 146, 60, 0.06))',
                 padding: '1rem',
@@ -975,28 +717,26 @@ export function InboxViewer({ allInboxes }) {
               }}>
                 <User style={{ height: '36px', width: '36px', color: '#6b7280' }} />
               </div>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-gray-400" style={{ marginBottom: 0 }}>
                 {selectedTeam ? 'Select an agent to view messages' : 'Select a team to get started'}
               </p>
             </div>
           )}
         </div>
       </div>
-      )}
 
-      {/* Responsive: stack on small screens */}
       <style>{`
         @media (max-width: 768px) {
-          .card > div:first-child {
+          .inbox-viewer-grid {
             grid-template-columns: 1fr !important;
             height: auto !important;
           }
-          .card > div:first-child > div:first-child {
+          .inbox-viewer-grid > div:first-child {
             border-right: none !important;
             border-bottom: 1px solid rgba(55, 65, 81, 0.6);
             max-height: 200px;
           }
-          .card > div:first-child > div:last-child {
+          .inbox-viewer-grid > div:last-child {
             min-height: 400px;
           }
         }

@@ -41,12 +41,16 @@ describe('InboxViewer Component', () => {
 
   it('renders team names from allInboxes keys', () => {
     render(<InboxViewer allInboxes={sampleInboxes} />);
-    expect(screen.getByText('my-team')).toBeInTheDocument();
+    // Team name appears in sidebar and possibly in agent header
+    const teamElements = screen.getAllByText('my-team');
+    expect(teamElements.length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders agent names within expanded team', () => {
     render(<InboxViewer allInboxes={sampleInboxes} />);
-    expect(screen.getByText('agent-1')).toBeInTheDocument();
+    // Agent name appears in sidebar and in the thread header
+    const agentElements = screen.getAllByText('agent-1');
+    expect(agentElements.length).toBeGreaterThanOrEqual(1);
   });
 
   it('shows unread badge when messages have read:false', () => {
@@ -117,7 +121,11 @@ describe('InboxViewer Component', () => {
 
   it('shows message count for selected agent', () => {
     render(<InboxViewer allInboxes={sampleInboxes} />);
-    expect(screen.getByText(/1\s*message\b/)).toBeInTheDocument();
+    // The message count text may be split across text nodes; use a function matcher
+    const messageCountEl = screen.getByText((content, element) => {
+      return element?.tagName === 'P' && element?.textContent?.includes('1 message');
+    });
+    expect(messageCountEl).toBeInTheDocument();
   });
 
   it('renders the message sender name in the thread', () => {
@@ -131,8 +139,8 @@ describe('InboxViewer Component', () => {
     expect(screen.getByText('hello')).toBeInTheDocument();
   });
 
-  it('renders the global search input', () => {
+  it('renders the search input', () => {
     render(<InboxViewer allInboxes={sampleInboxes} />);
-    expect(screen.getByPlaceholderText('Search all messages...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search messages...')).toBeInTheDocument();
   });
 });
