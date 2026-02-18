@@ -63,7 +63,7 @@ app.use('/api/', (req, res, next) => {
   next();
 });
 
-app.use(express.json());
+app.use(express.json({ limit: '10kb' }));
 
 // Serve pre-built frontend from dist/ (used when installed as global npm package)
 app.use(express.static(path.join(__dirname, 'dist')));
@@ -442,7 +442,8 @@ async function getAgentOutputs() {
     for (const file of files) {
       if (file.endsWith('.output')) {
         try {
-          const filePath = path.join(TEMP_TASKS_DIR, file);
+          const sanitizedFile = sanitizeFileName(file);
+          const filePath = validatePath(path.join(TEMP_TASKS_DIR, sanitizedFile), TEMP_TASKS_DIR);
           const content = await fs.readFile(filePath, 'utf8');
           const stats = await fs.stat(filePath);
 
@@ -859,7 +860,7 @@ app.get('/api/teams', async (req, res) => {
 
     res.type('json').send(body);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -874,51 +875,19 @@ app.get('/api/teams/:teamName', async (req, res) => {
 
     res.json({ config, tasks });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // Get team inbox messages
 app.get('/api/teams/:teamName/inboxes', async (req, res) => {
   try {
-    const teamName = sanitizeProjectPath(req.params.teamName);
-    const inboxesDir = path.join(TEAMS_DIR, teamName, 'inboxes');
-
-    // Check if inboxes directory exists
-    try {
-      await fs.access(inboxesDir);
-    } catch {
-      return res.json({ inboxes: [] });
-    }
-
-    // Read all inbox files
-    const files = await fs.readdir(inboxesDir);
-    const inboxFiles = files.filter(f => f.endsWith('.json'));
-
-    const inboxes = {};
-
-    for (const file of inboxFiles) {
-      const agentName = file.replace('.json', '');
-      const filePath = path.join(inboxesDir, file);
-
-      try {
-        const content = await fs.readFile(filePath, 'utf8');
-        const data = JSON.parse(content);
-        // Handle both array format (data is array) and object format (data.messages)
-        const messages = Array.isArray(data) ? data : (data.messages || []);
-        inboxes[agentName] = {
-          messages: messages,
-          messageCount: messages.length
-        };
-      } catch (error) {
-        console.error(`Error reading inbox ${file}:`, error.message);
-        inboxes[agentName] = { messages: [], messageCount: 0, error: error.message };
-      }
-    }
-
+    const teamName = sanitizeTeamName(req.params.teamName);
+    const inboxes = await readTeamInboxes(teamName);
     res.json({ inboxes });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error fetching team inboxes:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -946,7 +915,7 @@ app.get('/api/teams/:teamName/inboxes/:agentName', async (req, res) => {
       throw error;
     }
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -976,7 +945,7 @@ app.get('/api/teams/:teamName/tasks', async (req, res) => {
     res.json({ tasks: paginatedTasks, count, page, limit, totalPages, status: statusFilter });
   } catch (error) {
     console.error('Error fetching team tasks:', error.message);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -1000,7 +969,7 @@ app.get('/api/archive', async (req, res) => {
             filename: file,
             ...data.summary,
             archivedAt: data.archivedAt,
-            fullPath: filePath
+            // fullPath intentionally excluded (would leak server filesystem paths)
           });
         }
       }
@@ -1027,16 +996,27 @@ app.get('/api/archive', async (req, res) => {
 // Get specific archived team details
 app.get('/api/archive/:filename', async (req, res) => {
   try {
-    const filename = req.params.filename;
-    const filePath = path.join(ARCHIVE_DIR, filename);
+    const filename = sanitizeFileName(req.params.filename);
+    const filePath = validatePath(path.join(ARCHIVE_DIR, filename), ARCHIVE_DIR);
 
-    const content = await fs.readFile(filePath, 'utf8');
-    const data = JSON.parse(content);
+    let content;
+    try {
+      content = await fs.readFile(filePath, 'utf8');
+    } catch (readError) {
+      return res.status(404).json({ error: 'Archive not found' });
+    }
+
+    let data;
+    try {
+      data = JSON.parse(content);
+    } catch {
+      return res.status(500).json({ error: 'Archive file is corrupt' });
+    }
 
     res.json(data);
   } catch (error) {
-    console.error('Error fetching archive:', error);
-    res.status(404).json({ error: 'Archive not found' });
+    console.error('Error fetching archive:', error.message);
+    res.status(400).json({ error: 'Invalid archive filename' });
   }
 });
 
@@ -1045,8 +1025,10 @@ app.get('/api/health', (req, res) => {
     status: 'healthy',
     timestamp: new Date().toISOString(),
     watchers: {
-      teams: TEAMS_DIR,
-      tasks: TASKS_DIR
+      teams: !!teamWatcher,
+      tasks: !!taskWatcher,
+      inboxes: !!inboxWatcher,
+      outputs: !!outputWatcher
     }
   });
 });
@@ -1059,7 +1041,7 @@ app.get('/api/stats', async (req, res) => {
     res.set('Cache-Control', 'public, max-age=5');
     res.json({ stats, timestamp: new Date().toISOString() });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -1069,7 +1051,7 @@ app.get('/api/team-history', async (req, res) => {
     const history = await getTeamHistory();
     res.json({ history });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -1080,7 +1062,7 @@ app.get('/api/inboxes', async (req, res) => {
     res.set('Cache-Control', 'public, max-age=2');
     res.json({ inboxes: allInboxes });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -1129,7 +1111,7 @@ app.get('/api/inboxes/messages', async (req, res) => {
     res.json({ messages: paginatedMessages, count, page, limit, totalPages });
   } catch (error) {
     console.error('Error fetching paginated inboxes:', error.message);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -1139,7 +1121,7 @@ app.get('/api/agent-outputs', async (req, res) => {
     const outputs = await getAgentOutputs();
     res.json({ outputs });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -1181,7 +1163,7 @@ app.get('/api/sessions', async (req, res) => {
     const sessions = await getSessionHistory(projectPath);
     res.json({ sessions });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -1281,7 +1263,7 @@ app.get('/api/search', searchLimiter, async (req, res) => {
     res.json({ teams: matchedTeams, agents: matchedAgents, tasks: matchedTasks, messages: matchedMessages });
   } catch (error) {
     console.error('Search error:', error.message);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -1333,7 +1315,7 @@ app.get('/api/metrics', async (req, res) => {
     });
   } catch (error) {
     console.error('Metrics error:', error.message);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -1398,7 +1380,7 @@ app.get('/api/agents', async (req, res) => {
     res.json({ agents });
   } catch (error) {
     console.error('Agents error:', error.message);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -1457,7 +1439,7 @@ app.get('/api/stats/live', async (req, res) => {
     });
   } catch (error) {
     console.error('Stats/live error:', error.message);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -1524,6 +1506,15 @@ app.use((err, req, res, next) => {
 // SPA fallback — serve index.html for all non-API routes (Express 5 compatible)
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
+// Global error handlers — prevent crashes from async watcher callbacks
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception:', err);
+  process.exit(1);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled promise rejection:', reason);
 });
 
 // Start server
