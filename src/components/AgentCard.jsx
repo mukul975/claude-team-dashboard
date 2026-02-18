@@ -1,9 +1,20 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Bot, Crown, Cpu, Zap } from 'lucide-react';
+import { Bot, Crown, Cpu, Zap, Copy, Check } from 'lucide-react';
+import { copyToClipboard } from '../utils/clipboard';
 
 export function AgentCard({ agent, isLead }) {
   const [isHovered, setIsHovered] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (!agent.agentId) return;
+    const success = await copyToClipboard(agent.agentId);
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   return (
     <div
@@ -125,15 +136,36 @@ export function AgentCard({ agent, isLead }) {
               </div>
             )}
 
-            <p
-              className="text-xs font-mono truncate"
-              style={{
-                color: 'rgba(156, 163, 175, 0.8)'
-              }}
-              title={agent.agentId}
-            >
-              ID: {agent.agentId?.substring(0, 12)}...
-            </p>
+            <div className="mt-2 flex items-center justify-between gap-3">
+              <p
+                className="text-xs font-mono truncate"
+                style={{
+                  color: 'rgba(156, 163, 175, 0.8)'
+                }}
+                title={agent.agentId}
+              >
+                ID: {agent.agentId?.substring(0, 12)}...
+              </p>
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium bg-claude-orange text-white shadow-sm hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-claude-orange focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors"
+                title="Copy agent ID"
+                aria-label={copied ? 'Agent ID copied' : 'Copy agent ID'}
+              >
+                {copied ? (
+                  <>
+                    <Check className="h-3 w-3" />
+                    <span>Copied</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-3 w-3" />
+                    <span>Copy ID</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
