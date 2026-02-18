@@ -60,7 +60,16 @@ export function useWebSocket(url) {
             setAllInboxes(prev => ({ ...prev, [message.teamName]: message.inboxes }));
           }
           if (message.type === 'task_update' && message.data) setTeams(message.data);
-          if (message.type === 'teams_update' && message.data) setTeams(message.data);
+          if (message.type === 'teams_update' && message.data) {
+            setTeams(message.data);
+            if (message.removedTeam) {
+              setAllInboxes(prev => {
+                const next = { ...prev };
+                delete next[message.removedTeam];
+                return next;
+              });
+            }
+          }
           if (message.type === 'agent_outputs_update') setAgentOutputs(message.outputs);
         } catch (err) {
           console.error('Error parsing WebSocket message:', err);

@@ -692,6 +692,23 @@ function setupWatchers() {
       console.error('[TEAM] Watcher error:', error);
     });
 
+  // Watch for team directory deletions (TeamDelete removes the whole dir, not just config.json)
+  // chokidar fires 'unlinkDir' instead of 'unlink' when a directory is removed
+  chokidar.watch(TEAMS_DIR, { ...watchOptions, depth: 0 })
+    .on('unlinkDir', async (dirPath) => {
+      if (path.resolve(dirPath) === path.resolve(TEAMS_DIR)) return; // ignore root dir
+      const teamName = path.basename(dirPath);
+      console.log(`🗑️ Team directory removed: ${teamName}`);
+      teamLifecycle.delete(teamName);
+      const updatedTeams = await getActiveTeams();
+      broadcast({
+        type: 'teams_update',
+        data: updatedTeams,
+        stats: calculateTeamStats(updatedTeams),
+        removedTeam: teamName
+      });
+    });
+
   // Watch inbox files — ~/.claude/teams/*/inboxes/*.json
   inboxWatcher = chokidar.watch(path.join(TEAMS_DIR, '*/inboxes/*.json'), watchOptions);
 
