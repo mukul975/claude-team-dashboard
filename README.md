@@ -99,9 +99,9 @@ Export any team's tasks and inbox messages as **JSON or CSV** directly from the 
 
 Works as a **Progressive Web App** — add to your home screen, get an app icon, and keep viewing cached data when the server is temporarily unreachable.
 
-### 🔒 **Password Auth — Always On**
+### 🔒 **Enterprise-Grade Security**
 
-The dashboard always requires a password. Set `DASHBOARD_PASSWORD` to use your own, or let the server auto-generate one and print it to the console on startup. Uses `crypto.timingSafeEqual` to prevent timing attacks. Token stored in `sessionStorage`.
+Audited by 6 security specialists. OWASP scrypt password hashing, auth rate limiting, token rotation, tight CSP, CORP/COOP, Permissions-Policy, strict input validation on every route, WebSocket heartbeat + rate limiting, and `followSymlinks: false` on all file watchers. Zero npm vulnerabilities.
 
 </td>
 </tr>
@@ -724,27 +724,47 @@ The lifecycle tracking is powered by three independent watchers:
 
 ### Security Features
 
-**Password Auth (always on)**: The server requires `DASHBOARD_PASSWORD` to start — exits with a clear error if not set. Uses `crypto.timingSafeEqual` for constant-time comparison and issues a 256-bit random token stored in `sessionStorage`.
+The dashboard was audited by a team of 6 security specialists. Every layer has been hardened:
 
-**Path Sanitization**: All team names and file paths are sanitized to prevent path traversal attacks:
-```javascript
-// Only allows: a-zA-Z0-9_-
-// Rejects: ../, ./, path separators, control characters
-```
+#### 🔐 Authentication
+- **First-time setup screen** — set your password in the browser on first run; stored as an `scrypt` hash (`N=16384, r=8, p=1` — OWASP recommended) in `~/.claude/dashboard.key` (`chmod 600`)
+- **Token rotation** — a fresh 256-bit random token is issued on every successful login
+- **Timing-safe comparison** — `crypto.timingSafeEqual` used for both password and token validation (prevents timing attacks)
+- **Auth rate limiter** — max 5 login/setup attempts per IP per 15 minutes (separate from the global limiter)
+- **sessionStorage** — token clears on tab close; acceptable tradeoff for a localhost tool
+- **Key file permission check** — warns on startup if `dashboard.key` is world-readable
 
-**Validation**: Archive file paths and inbox paths are validated against their base directories before any read:
-```javascript
-validatePath(filePath, ARCHIVE_DIR)
-validatePath(inboxPath, TEAMS_DIR)
-```
+#### 🛡️ HTTP Security Headers
+- **CSP** — strict allowlist: `default-src 'self'`, explicit `connect-src`/`img-src`/`font-src`, `frame-ancestors 'none'`, `object-src 'none'`
+- **CORP / COOP** — `Cross-Origin-Resource-Policy: same-origin`, `Cross-Origin-Opener-Policy: same-origin`
+- **HSTS** — `max-age=31536000; includeSubDomains`
+- **Referrer-Policy** — `strict-origin-when-cross-origin`
+- **Permissions-Policy** — `camera=(), microphone=(), geolocation=(), payment=(), usb=()`
+- **Helmet** — `noSniff`, `frameguard: deny`, `xssFilter` all enabled
 
-**Error Response Hardening**: The global error handler never leaks internal error details or stack traces to clients — always returns a generic `"Internal server error"` message.
+#### 🔍 Input Validation
+- **Strict sanitization** — `sanitizeTeamName()`, `sanitizeAgentName()`, `sanitizeFileName()` enforce `[a-zA-Z0-9_.-]` allowlist with 100-char max on every route param
+- **Exact-match validation** — every parameterized route returns 400 if sanitized value ≠ original (catches partial encoding attacks)
+- **Content-Type enforcement** — POST requests without `application/json` get 415
+- **Body type checking** — rejects arrays, nulls, and non-object bodies on all POST endpoints
+- **ReDoS-safe search** — uses `String.indexOf()` not regex; 200-char query limit
 
-**Rate Limiting**: App-level rate limiter on all `/api/` routes plus a stricter limiter on search endpoints.
+#### 🔌 WebSocket
+- **Token always required** — connection closed with 4001 if no valid token in query string
+- **Ping/pong heartbeat** — 30s interval, 10s pong timeout; dead clients terminated
+- **Per-connection rate limit** — 50 messages/sec max; exceeding closes with code 1008
+- **Message size limit** — 64 KB max; exceeding closes with code 1009
+- **Connection audit log** — IP logged on connect/disconnect/error
 
-**Helmet**: Security headers applied at app level (CSP, X-Frame-Options, HSTS, etc.).
+#### 📁 File System
+- **`validatePath()` on every fs call** — uses `path.resolve()` to block all path traversal
+- **No symlink following** — `followSymlinks: false` on all 5 chokidar watchers
+- **Log injection prevention** — team names sanitized before appearing in log output
 
-**CORS**: Restricted to `localhost:3001` and `localhost:5173` only — no wildcard origins.
+#### 🌐 Network
+- **CORS** — restricted to `localhost:3001` and `localhost:5173` only; no wildcard origins
+- **Rate limiting** — global limiter on all `/api/` routes
+- **Error hardening** — global error handler never leaks stack traces or internal messages
 
 **Read-Only**: The dashboard never modifies Claude Code files — it only reads and archives data.
 
@@ -775,8 +795,10 @@ validatePath(inboxPath, TEAMS_DIR)
 
 ### ✅ Recently Shipped
 
-- [x] **Mandatory password auth** — server exits if `DASHBOARD_PASSWORD` is not set; login screen with `crypto.timingSafeEqual` timing-safe comparison, Bearer token middleware on all API routes, WebSocket token validation, and `sessionStorage` persistence
-- [x] **Tailwind v4 + code splitting** — `@tailwindcss/vite` installed; 4 heavy components (`AgentNetworkGraph`, `TaskDependencyGraph`, `AnalyticsPanel`, `ArchiveViewer`) now lazy-loaded, cutting initial JS bundle by ~50 kB
+- [x] **Full security audit (6-expert team)** — OWASP scrypt auth, auth rate limiting, token rotation, tight CSP, CORP/COOP, Permissions-Policy, strict input validation on every route, WebSocket heartbeat + rate limiting + size limits, `followSymlinks: false` on all watchers, 0 npm vulnerabilities
+- [x] **First-time setup flow** — open dashboard → set your password in the browser → hash stored in `~/.claude/dashboard.key` → login on every subsequent visit; WebSocket reconnects immediately after login (no backoff delay)
+- [x] **Password auth (always on)** — scrypt hash with OWASP params, timing-safe comparison, token rotation, 5-attempt rate limit per IP
+- [x] **Tailwind v4 + code splitting** — `@tailwindcss/vite` installed; 4 heavy components lazy-loaded, cutting initial JS bundle by ~50 kB
 - [x] **Expanded test suite** — 223 tests across 15 files covering all 4 custom hooks, key components, and utility functions
 - [x] **Full accessibility audit** — 50+ buttons with `aria-label`, interactive divs with `role`/`tabIndex`/`onKeyDown`, `aria-live` on status components, `role="alert"` on error states, focus management in modals
 - [x] **Security hardening** — server.js: fixed wrong sanitizer on inbox route, patched error message leakage in global handler, added path validation on archive listing, consistent error responses across all endpoints
