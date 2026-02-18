@@ -101,7 +101,9 @@ function MessageContent({ text }) {
   }
 
   if (parsed && typeof parsed === 'object') {
-    const summary = parsed.summary || parsed.content || parsed.message;
+    const rawSummary = parsed.summary || parsed.content || parsed.message;
+    // Fall back to natural-language parser for structured messages (task_assignment, idle_notification, etc.)
+    const summary = rawSummary || parseMessageToNatural(text).text;
     return (
       <div>
         {summary && (
