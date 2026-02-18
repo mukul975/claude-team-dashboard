@@ -514,10 +514,73 @@ async function getSessionHistory(projectPath) {
   }
 }
 
+// Read all inboxes for a specific team
+async function readTeamInboxes(teamName) {
+  try {
+    const sanitizedName = sanitizeTeamName(teamName);
+    const inboxesDir = path.join(TEAMS_DIR, sanitizedName, 'inboxes');
+    const validatedDir = validatePath(inboxesDir, TEAMS_DIR);
+
+    await fs.access(validatedDir);
+    const files = await fs.readdir(validatedDir);
+    const inboxes = {};
+
+    await Promise.all(
+      files
+        .filter(f => f.endsWith('.json'))
+        .map(async (file) => {
+          try {
+            const sanitizedFile = sanitizeFileName(file);
+            const filePath = path.join(validatedDir, sanitizedFile);
+            const validatedPath = validatePath(filePath, TEAMS_DIR);
+            const content = await fs.readFile(validatedPath, 'utf8');
+            const data = JSON.parse(content);
+            const messages = Array.isArray(data) ? data : (data.messages || []);
+            const agentName = path.basename(sanitizedFile, '.json');
+            inboxes[agentName] = { messages, messageCount: messages.length };
+          } catch (err) {
+            console.error(`Error reading inbox ${file}:`, err.message);
+          }
+        })
+    );
+
+    return inboxes;
+  } catch (error) {
+    if (error.code === 'ENOENT') return {};
+    console.error(`Error reading inboxes for team ${teamName}:`, error.message);
+    return {};
+  }
+}
+
+// Read all inboxes across all active teams
+async function readAllInboxes() {
+  try {
+    await fs.access(TEAMS_DIR);
+    const teamNames = await fs.readdir(TEAMS_DIR);
+    const allInboxes = {};
+
+    await Promise.all(
+      teamNames.map(async (teamName) => {
+        const inboxes = await readTeamInboxes(teamName);
+        if (Object.keys(inboxes).length > 0) {
+          allInboxes[teamName] = inboxes;
+        }
+      })
+    );
+
+    return allInboxes;
+  } catch (error) {
+    if (error.code === 'ENOENT') return {};
+    console.error('Error reading all inboxes:', error.message);
+    return {};
+  }
+}
+
 // Watch for file system changes
 let teamWatcher = null;
 let taskWatcher = null;
 let outputWatcher = null;
+let inboxWatcher = null;
 
 function setupWatchers() {
   console.log('\n🔍 Setting up file watchers to track changes...');
@@ -532,8 +595,8 @@ function setupWatchers() {
     awaitWriteFinish: config.WATCH_CONFIG.AWAIT_WRITE_FINISH
   };
 
-  // Watch teams directory - watch all JSON files recursively
-  teamWatcher = chokidar.watch(path.join(TEAMS_DIR, '**/*.json'), watchOptions);
+  // Watch team config files only (not inbox files — those have their own watcher)
+  teamWatcher = chokidar.watch(path.join(TEAMS_DIR, '*/config.json'), watchOptions);
 
   teamWatcher
     .on('ready', () => {
@@ -541,13 +604,11 @@ function setupWatchers() {
     })
     .on('add', async (filePath) => {
       const teamName = path.basename(path.dirname(filePath));
-      if (path.basename(filePath) === 'config.json') {
-        console.log(`🎉 New team created: ${teamName}`);
-        teamLifecycle.set(teamName, {
-          created: Date.now(),
-          lastSeen: Date.now()
-        });
-      }
+      console.log(`🎉 New team created: ${teamName}`);
+      teamLifecycle.set(teamName, {
+        created: Date.now(),
+        lastSeen: Date.now()
+      });
       const teams = await getActiveTeams();
       broadcast({ type: 'teams_update', data: teams, stats: calculateTeamStats(teams) });
     })
@@ -562,29 +623,72 @@ function setupWatchers() {
     })
     .on('unlink', async (filePath) => {
       const teamName = path.basename(path.dirname(filePath));
-      if (path.basename(filePath) === 'config.json') {
-        console.log(`👋 Team completed: ${teamName} - archiving for reference...`);
+      console.log(`👋 Team completed: ${teamName} - archiving for reference...`);
 
-        // Try to get team data before it's gone
-        const teams = await getActiveTeams();
-        const teamData = teams.find(t => t.name === teamName);
-
-        if (teamData) {
-          await archiveTeam(teamName, teamData);
-          const lifecycle = teamLifecycle.get(teamName);
-          if (lifecycle) {
-            const duration = Math.round((Date.now() - lifecycle.created) / 1000 / 60);
-            console.log(`   📊 Team "${teamName}" was active for ${duration} minutes`);
-          }
-        }
-
-        teamLifecycle.delete(teamName);
-      }
+      // Try to get team data before it's gone
       const teams = await getActiveTeams();
-      broadcast({ type: 'teams_update', data: teams, stats: calculateTeamStats(teams) });
+      const teamData = teams.find(t => t.name === teamName);
+
+      if (teamData) {
+        await archiveTeam(teamName, teamData);
+        const lifecycle = teamLifecycle.get(teamName);
+        if (lifecycle) {
+          const duration = Math.round((Date.now() - lifecycle.created) / 1000 / 60);
+          console.log(`   📊 Team "${teamName}" was active for ${duration} minutes`);
+        }
+      }
+
+      teamLifecycle.delete(teamName);
+      const updatedTeams = await getActiveTeams();
+      broadcast({ type: 'teams_update', data: updatedTeams, stats: calculateTeamStats(updatedTeams) });
     })
     .on('error', error => {
       console.error('[TEAM] Watcher error:', error);
+    });
+
+  // Watch inbox files — ~/.claude/teams/*/inboxes/*.json
+  inboxWatcher = chokidar.watch(path.join(TEAMS_DIR, '*/inboxes/*.json'), watchOptions);
+
+  inboxWatcher
+    .on('ready', () => {
+      console.log('   ✓ Inbox watcher is ready - tracking all agent messages');
+    })
+    .on('add', async (filePath) => {
+      // filePath: ~/.claude/teams/<team>/inboxes/<agent>.json
+      const agentName = path.basename(filePath, '.json');
+      const teamName = path.basename(path.dirname(path.dirname(filePath)));
+      console.log(`📬 New inbox: ${teamName}/${agentName}`);
+      try {
+        const inboxes = await readTeamInboxes(teamName);
+        broadcast({ type: 'inbox_update', teamName, inboxes });
+      } catch (err) {
+        console.error('[INBOX] Error on add:', err.message);
+      }
+    })
+    .on('change', async (filePath) => {
+      const agentName = path.basename(filePath, '.json');
+      const teamName = path.basename(path.dirname(path.dirname(filePath)));
+      console.log(`💬 Message received: ${teamName} → ${agentName}`);
+      try {
+        const inboxes = await readTeamInboxes(teamName);
+        broadcast({ type: 'inbox_update', teamName, inboxes });
+      } catch (err) {
+        console.error('[INBOX] Error on change:', err.message);
+      }
+    })
+    .on('unlink', async (filePath) => {
+      const agentName = path.basename(filePath, '.json');
+      const teamName = path.basename(path.dirname(path.dirname(filePath)));
+      console.log(`🗑️ Inbox removed: ${teamName}/${agentName}`);
+      try {
+        const inboxes = await readTeamInboxes(teamName);
+        broadcast({ type: 'inbox_update', teamName, inboxes });
+      } catch (err) {
+        console.error('[INBOX] Error on unlink:', err.message);
+      }
+    })
+    .on('error', error => {
+      console.error('[INBOX] Watcher error:', error);
     });
 
   // Watch tasks directory - watch all JSON files recursively
@@ -649,13 +753,15 @@ wss.on('connection', async (ws) => {
     const stats = calculateTeamStats(teams);
     const teamHistory = await getTeamHistory();
     const agentOutputs = await getAgentOutputs();
+    const allInboxes = await readAllInboxes();
 
     ws.send(JSON.stringify({
       type: 'initial_data',
       data: teams,
       stats,
       teamHistory,
-      agentOutputs
+      agentOutputs,
+      allInboxes
     }));
   } catch (error) {
     console.error('Error sending initial data:', error);
@@ -843,6 +949,16 @@ app.get('/api/team-history', async (req, res) => {
   }
 });
 
+// Get all inboxes across all teams
+app.get('/api/inboxes', async (req, res) => {
+  try {
+    const allInboxes = await readAllInboxes();
+    res.json({ inboxes: allInboxes });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get agent outputs
 app.get('/api/agent-outputs', async (req, res) => {
   try {
@@ -930,6 +1046,7 @@ function setupGracefulShutdown() {
       if (teamWatcher) await teamWatcher.close();
       if (taskWatcher) await taskWatcher.close();
       if (outputWatcher) await outputWatcher.close();
+      if (inboxWatcher) await inboxWatcher.close();
       console.log('   ✓ Stopped monitoring files');
     } catch (error) {
       console.error('Error closing watchers:', error.message);
@@ -954,8 +1071,9 @@ server.listen(config.PORT, () => {
   console.log(`   You can view it at: http://localhost:${config.PORT}`);
   console.log(`\n📡 Real-time updates enabled - your teams will sync automatically`);
   console.log(`\n👀 Watching for activity:`);
-  console.log(`   Teams: ${TEAMS_DIR}`);
-  console.log(`   Tasks: ${TASKS_DIR}`);
+  console.log(`   Teams:   ${TEAMS_DIR}`);
+  console.log(`   Tasks:   ${TASKS_DIR}`);
+  console.log(`   Inboxes: ${path.join(TEAMS_DIR, '*/inboxes/*.json')}`);
   setupWatchers();
   setupGracefulShutdown();
 });
