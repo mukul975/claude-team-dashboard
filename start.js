@@ -1,18 +1,21 @@
 #!/usr/bin/env node
 const { spawn } = require('child_process');
+const path = require('path');
 
 console.log('Starting Claude Agent Dashboard...\n');
 
 // Start backend server
-const server = spawn('node', ['server.js'], {
+const server = spawn('node', [path.join(__dirname, 'server.js')], {
   stdio: 'inherit',
-  shell: true
+  shell: true,
+  cwd: __dirname
 });
 
 // Start frontend dev server
 const client = spawn('npx', ['vite'], {
   stdio: 'inherit',
-  shell: true
+  shell: true,
+  cwd: __dirname
 });
 
 // Handle process termination
