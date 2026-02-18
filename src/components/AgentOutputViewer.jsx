@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Terminal, Maximize2, Minimize2, Download, RefreshCw, AlertCircle } from 'lucide-react';
+import { SkeletonOutputViewer } from './SkeletonLoader';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 dayjs.extend(relativeTime);
@@ -124,18 +125,23 @@ export function AgentOutputViewer({ agentOutputs }) {
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
+  if ((!localOutputs || localOutputs.length === 0) && isRefreshing) {
+    return <SkeletonOutputViewer />;
+  }
+
   if (!localOutputs || localOutputs.length === 0) {
     return (
       <div className="card">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Terminal className="h-5 w-5 text-claude-orange" />
-            <h3 className="text-lg font-semibold text-white">Agent Output Stream</h3>
+            <h3 className="text-lg font-semibold" style={{ color: 'var(--text-heading)' }}>Agent Output Stream</h3>
           </div>
           <button
             onClick={handleManualRefresh}
             disabled={isRefreshing}
-            className="p-2 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors disabled:opacity-50"
+            className="p-2 rounded-lg transition-colors disabled:opacity-50"
+            style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)' }}
             aria-label="Refresh outputs"
             title="Refresh outputs"
           >
@@ -144,7 +150,7 @@ export function AgentOutputViewer({ agentOutputs }) {
         </div>
 
         {refreshError && (
-          <div className="mb-4 p-3 rounded-lg bg-red-900/20 border border-red-500/30 flex items-start gap-2">
+          <div className="mb-4 p-3 rounded-lg flex items-start gap-2" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
             <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="text-sm text-red-400 font-medium">Failed to load outputs</p>
@@ -153,13 +159,9 @@ export function AgentOutputViewer({ agentOutputs }) {
           </div>
         )}
 
-        <div className="text-center py-12 text-gray-400">
+        <div className="text-center py-12" style={{ color: 'var(--text-muted)' }}>
           <Terminal className="h-16 w-16 mx-auto mb-3 opacity-50" />
-          <p className="text-sm">No agent outputs available</p>
-          <p className="text-xs mt-1">Real-time teammate outputs will stream here</p>
-          {isRefreshing && (
-            <p className="text-xs mt-2 text-claude-orange">Loading outputs...</p>
-          )}
+          <p className="text-sm">No agent outputs yet. Agent activity will appear here.</p>
         </div>
       </div>
     );
@@ -171,7 +173,7 @@ export function AgentOutputViewer({ agentOutputs }) {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Terminal className="h-5 w-5 text-claude-orange animate-pulse" />
-          <h3 className="text-lg font-semibold text-white">Agent Output Stream</h3>
+          <h3 className="text-lg font-semibold" style={{ color: 'var(--text-heading)' }}>Agent Output Stream</h3>
           <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-full border border-green-500/30 flex items-center gap-1">
             <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse"></span>
             LIVE
@@ -182,7 +184,8 @@ export function AgentOutputViewer({ agentOutputs }) {
           <button
             onClick={handleManualRefresh}
             disabled={isRefreshing}
-            className="p-2 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)' }}
             aria-label="Refresh outputs"
             title="Refresh outputs"
           >
@@ -193,8 +196,9 @@ export function AgentOutputViewer({ agentOutputs }) {
             className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
               autoScroll
                 ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                : ''
             }`}
+            style={!autoScroll ? { background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)' } : {}}
             aria-label={autoScroll ? "Auto-scroll enabled" : "Enable auto-scroll"}
             title={autoScroll ? "Auto-scroll enabled" : "Enable auto-scroll"}
           >
@@ -203,7 +207,8 @@ export function AgentOutputViewer({ agentOutputs }) {
           <button
             onClick={downloadOutput}
             disabled={!selectedOutput}
-            className="p-2 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)' }}
             aria-label="Download agent output"
             title="Download agent output"
           >
@@ -211,7 +216,8 @@ export function AgentOutputViewer({ agentOutputs }) {
           </button>
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="p-2 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors"
+            className="p-2 rounded-lg transition-colors"
+            style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)' }}
             aria-label={isExpanded ? 'Minimize output viewer' : 'Maximize output viewer'}
             aria-expanded={isExpanded}
             title={isExpanded ? 'Minimize' : 'Maximize'}
@@ -227,7 +233,7 @@ export function AgentOutputViewer({ agentOutputs }) {
 
       {/* Error Display */}
       {refreshError && (
-        <div className="mb-4 p-3 rounded-lg bg-yellow-900/20 border border-yellow-500/30 flex items-start gap-2">
+        <div className="mb-4 p-3 rounded-lg flex items-start gap-2" style={{ background: 'rgba(234, 179, 8, 0.1)', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
           <AlertCircle className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="text-sm text-yellow-400 font-medium">Connection Issue</p>
@@ -240,7 +246,7 @@ export function AgentOutputViewer({ agentOutputs }) {
 
       {/* Output Selector */}
       <div className="mb-4">
-        <label className="block text-sm text-gray-400 mb-2">Select Agent Output:</label>
+        <label className="block text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>Select Agent Output:</label>
         <div className="flex gap-2 overflow-x-auto pb-2">
           {localOutputs.map((output, index) => (
             <button
@@ -249,11 +255,12 @@ export function AgentOutputViewer({ agentOutputs }) {
               className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
                 selectedOutput?.taskId === output.taskId
                   ? 'bg-claude-orange text-white shadow-lg'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  : ''
               }`}
-              style={{
-                animation: `fadeInScale 0.3s ease-out ${index * 0.05}s backwards`
-              }}
+              style={selectedOutput?.taskId !== output.taskId
+                ? { background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', animation: `fadeInScale 0.3s ease-out ${index * 0.05}s backwards` }
+                : { animation: `fadeInScale 0.3s ease-out ${index * 0.05}s backwards` }
+              }
             >
               <div className="flex items-center gap-2">
                 <Terminal className="h-4 w-4" />
@@ -271,18 +278,18 @@ export function AgentOutputViewer({ agentOutputs }) {
       {selectedOutput && (
         <>
           {/* Output Info */}
-          <div className="mb-3 p-3 rounded-lg bg-gray-700/30 border border-gray-600/50">
+          <div className="mb-3 p-3 rounded-lg" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-4">
-                <span className="text-gray-400">
-                  Task ID: <span className="text-white font-mono">{selectedOutput.taskId}</span>
+                <span style={{ color: 'var(--text-muted)' }}>
+                  Task ID: <span className="font-mono" style={{ color: 'var(--text-primary)' }}>{selectedOutput.taskId}</span>
                 </span>
-                <span className="text-gray-400">
-                  Size: <span className="text-white">{formatSize(selectedOutput.size)}</span>
+                <span style={{ color: 'var(--text-muted)' }}>
+                  Size: <span style={{ color: 'var(--text-primary)' }}>{formatSize(selectedOutput.size)}</span>
                 </span>
               </div>
-              <span className="text-gray-400">
-                Updated: <span className="text-white">{dayjs(selectedOutput.lastModified).fromNow()}</span>
+              <span style={{ color: 'var(--text-muted)' }}>
+                Updated: <span style={{ color: 'var(--text-primary)' }}>{dayjs(selectedOutput.lastModified).fromNow()}</span>
               </span>
             </div>
           </div>
@@ -290,9 +297,10 @@ export function AgentOutputViewer({ agentOutputs }) {
           {/* Terminal Output */}
           <div
             ref={outputRef}
-            className={`font-mono text-sm bg-gray-900 rounded-lg p-4 overflow-auto border border-gray-700 ${
+            className={`font-mono text-sm rounded-lg p-4 overflow-auto ${
               isExpanded ? 'h-[calc(100vh-300px)]' : 'h-[500px]'
             }`}
+            style={{ background: 'var(--code-bg)', border: '1px solid var(--code-border)' }}
             onScroll={(e) => {
               const { scrollTop, scrollHeight, clientHeight } = e.target;
               const isAtBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 10;
@@ -302,17 +310,17 @@ export function AgentOutputViewer({ agentOutputs }) {
             }}
           >
             {selectedOutput.content ? (
-              <pre className="text-green-400 whitespace-pre-wrap break-words">
+              <pre className="whitespace-pre-wrap break-words" style={{ color: 'var(--text-primary)' }}>
                 {selectedOutput.content}
               </pre>
             ) : (
-              <div className="text-gray-500 text-center py-12">
+              <div className="text-center py-12" style={{ color: 'var(--text-muted)' }}>
                 <Terminal className="h-12 w-12 mx-auto mb-3 opacity-50" />
                 <p className="text-sm font-medium mb-2">No output content available</p>
-                <p className="text-xs text-gray-600 max-w-md mx-auto">
+                <p className="text-xs max-w-md mx-auto" style={{ color: 'var(--text-muted)' }}>
                   This task output is empty. Agent outputs will appear here when agents write to their output streams during task execution.
                 </p>
-                <p className="text-xs text-gray-600 mt-2">
+                <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
                   Empty outputs are normal for agents that complete tasks quickly without verbose logging.
                 </p>
               </div>
@@ -320,7 +328,7 @@ export function AgentOutputViewer({ agentOutputs }) {
           </div>
 
           {/* Footer Info */}
-          <div className="mt-3 text-xs text-gray-400 text-center flex items-center justify-center gap-2">
+          <div className="mt-3 text-xs text-center flex items-center justify-center gap-2" style={{ color: 'var(--text-muted)' }}>
             <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse"></span>
             <span>
               Real-time output from Claude Code agent • Updates via WebSocket

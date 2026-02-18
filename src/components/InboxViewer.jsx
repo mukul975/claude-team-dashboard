@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { Inbox, Users, Search, ChevronDown, ChevronRight, ArrowDown, MessageSquare, User } from 'lucide-react';
+import { Inbox, Users, Search, ChevronDown, ChevronRight, ArrowDown, MessageSquare, User, Filter, X, Calendar, SortAsc, SortDesc, Download } from 'lucide-react';
+import { SkeletonInboxViewer } from './SkeletonLoader';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import { parseMessageToNatural } from '../utils/messageParser';
+import { exportToCSV } from '../utils/exportUtils';
 
 dayjs.extend(relativeTime);
 
@@ -57,7 +60,7 @@ function renderBoldMarkdown(text) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return parts.map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={i} className="text-white font-semibold">{part.slice(2, -2)}</strong>;
+      return <strong key={i} className="font-semibold" style={{ color: 'var(--text-heading)' }}>{part.slice(2, -2)}</strong>;
     }
     return <span key={i}>{part}</span>;
   });
@@ -67,7 +70,7 @@ function MessageContent({ text }) {
   const [expanded, setExpanded] = useState(false);
 
   if (!text || text.trim() === '') {
-    return <p className="text-sm text-gray-400" style={{ fontStyle: 'italic', marginBottom: 0 }}>Empty message</p>;
+    return <p className="text-sm" style={{ fontStyle: 'italic', marginBottom: 0, color: 'var(--text-muted)' }}>Empty message</p>;
   }
 
   let parsed = null;
@@ -78,10 +81,11 @@ function MessageContent({ text }) {
     } catch (e) {
       return (
         <pre
-          className="text-xs text-gray-300"
+          className="text-xs"
           style={{
-            background: 'rgba(15, 23, 42, 0.7)',
-            border: '1px solid rgba(55, 65, 81, 0.5)',
+            color: 'var(--text-secondary)',
+            background: 'var(--code-bg)',
+            border: '1px solid var(--code-border)',
             maxHeight: '200px',
             overflowY: 'auto',
             overflowX: 'auto',
@@ -101,31 +105,33 @@ function MessageContent({ text }) {
     return (
       <div>
         {summary && (
-          <p className="text-sm text-gray-200" style={{ lineHeight: 1.6, marginBottom: '0.25rem' }}>
+          <p className="text-sm" style={{ lineHeight: 1.6, marginBottom: '0.25rem', color: 'var(--text-primary)' }}>
             {renderBoldMarkdown(String(summary))}
           </p>
         )}
         <button
           onClick={() => setExpanded(!expanded)}
-          className="text-xs text-gray-500"
+          className="text-xs"
           style={{
+            color: 'var(--text-muted)',
             background: 'none',
             border: 'none',
             cursor: 'pointer',
             padding: 0,
             transition: 'color 0.15s ease',
           }}
-          onMouseEnter={e => { e.target.style.color = '#d1d5db'; }}
-          onMouseLeave={e => { e.target.style.color = '#6b7280'; }}
+          onMouseEnter={e => { e.target.style.color = 'var(--text-primary)'; }}
+          onMouseLeave={e => { e.target.style.color = 'var(--text-muted)'; }}
         >
           {expanded ? 'Hide raw data' : 'Show raw data'}
         </button>
         {expanded && (
           <pre
-            className="text-xs text-gray-400"
+            className="text-xs"
             style={{
-              background: 'rgba(15, 23, 42, 0.7)',
-              border: '1px solid rgba(55, 65, 81, 0.5)',
+              color: 'var(--text-muted)',
+              background: 'var(--code-bg)',
+              border: '1px solid var(--code-border)',
               maxHeight: '200px',
               overflowY: 'auto',
               overflowX: 'auto',
@@ -143,7 +149,7 @@ function MessageContent({ text }) {
   }
 
   return (
-    <p className="text-sm text-gray-200" style={{ lineHeight: 1.6, marginBottom: 0 }}>
+    <p className="text-sm" style={{ lineHeight: 1.6, marginBottom: 0, color: 'var(--text-primary)' }}>
       {renderBoldMarkdown(text)}
     </p>
   );
@@ -167,18 +173,56 @@ function getTeamUnreadCount(teamData) {
   return count;
 }
 
-export function InboxViewer({ allInboxes }) {
-  const [selectedTeam, setSelectedTeam] = useState(null);
-  const [expandedTeams, setExpandedTeams] = useState({});
+export function InboxViewer({ allInboxes, initialTeam = null, loading }) {
+  const [selectedTeam, setSelectedTeam] = useState(initialTeam);
+  const [expandedTeams, setExpandedTeams] = useState(initialTeam ? { [initialTeam]: true } : {});
   const [selectedAgent, setSelectedAgent] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [hasNewMessages, setHasNewMessages] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Advanced filter state with localStorage persistence
+  const [dateRange, setDateRange] = useState(() => {
+    try { return localStorage.getItem('inbox_dateRange') || 'all'; } catch { return 'all'; }
+  });
+  const [senderFilter, setSenderFilter] = useState(() => {
+    try { return localStorage.getItem('inbox_senderFilter') || 'all'; } catch { return 'all'; }
+  });
+  const [typeFilter, setTypeFilter] = useState(() => {
+    try { return localStorage.getItem('inbox_typeFilter') || 'all'; } catch { return 'all'; }
+  });
+  const [sortOrder, setSortOrder] = useState(() => {
+    try { return localStorage.getItem('inbox_sortOrder') || 'newest'; } catch { return 'newest'; }
+  });
+
+  // Persist filter state to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('inbox_dateRange', dateRange);
+      localStorage.setItem('inbox_senderFilter', senderFilter);
+      localStorage.setItem('inbox_typeFilter', typeFilter);
+      localStorage.setItem('inbox_sortOrder', sortOrder);
+    } catch { /* localStorage not available */ }
+  }, [dateRange, senderFilter, typeFilter, sortOrder]);
+
   const messagesContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const prevMessageCountRef = useRef(0);
 
   const teamNames = allInboxes ? Object.keys(allInboxes) : [];
+
+  // When initialTeam changes externally (e.g. "View Inboxes" from TeamCard), update selection
+  useEffect(() => {
+    if (initialTeam && allInboxes?.[initialTeam]) {
+      setSelectedTeam(initialTeam);
+      setExpandedTeams(prev => ({ ...prev, [initialTeam]: true }));
+      const agents = Object.keys(allInboxes[initialTeam] || {});
+      if (agents.length > 0) {
+        setSelectedAgent(agents[0]);
+      }
+    }
+  }, [initialTeam, allInboxes]);
 
   useEffect(() => {
     if (teamNames.length > 0 && !selectedTeam) {
@@ -235,16 +279,120 @@ export function InboxViewer({ allInboxes }) {
     prevMessageCountRef.current = allInboxes?.[teamName]?.[agentName]?.messages?.length || 0;
   };
 
-  const filteredMessages = searchQuery.trim()
-    ? currentMessages.filter(msg => {
-        const q = searchQuery.toLowerCase();
-        return (
-          (msg.text && msg.text.toLowerCase().includes(q)) ||
-          (msg.from && msg.from.toLowerCase().includes(q)) ||
-          (msg.summary && msg.summary.toLowerCase().includes(q))
-        );
-      })
-    : currentMessages;
+  // Collect all messages from the current team (for sender dropdown)
+  const allTeamMessages = useMemo(() => {
+    if (!selectedTeam || !allInboxes?.[selectedTeam]) return [];
+    const msgs = [];
+    Object.values(allInboxes[selectedTeam]).forEach(agentData => {
+      if (agentData?.messages) {
+        msgs.push(...agentData.messages);
+      }
+    });
+    return msgs;
+  }, [allInboxes, selectedTeam]);
+
+  // Unique senders from team messages
+  const uniqueSenders = useMemo(() => {
+    const senders = new Set();
+    allTeamMessages.forEach(msg => {
+      if (msg.from) senders.add(msg.from);
+    });
+    return Array.from(senders).sort();
+  }, [allTeamMessages]);
+
+  // Classify message type using parseMessageToNatural
+  const getMessageType = useCallback((msg) => {
+    const natural = parseMessageToNatural(msg.text, msg.summary);
+    const t = natural.type;
+    // Map parser types to our filter categories
+    if (t === 'system') return 'system';
+    if (t === 'status') {
+      // Check if it's idle specifically
+      try {
+        const parsed = JSON.parse(msg.text);
+        if (parsed.type === 'idle_notification') return 'idle';
+      } catch { /* not JSON */ }
+      return 'message';
+    }
+    if (t === 'completion' || t === 'assignment') return 'task_update';
+    if (t === 'coordination' || t === 'question') return 'message';
+    return 'message';
+  }, []);
+
+  // Active filter count
+  const activeFilterCount = [
+    dateRange !== 'all' ? 1 : 0,
+    senderFilter !== 'all' ? 1 : 0,
+    typeFilter !== 'all' ? 1 : 0,
+    sortOrder !== 'newest' ? 1 : 0,
+  ].reduce((a, b) => a + b, 0);
+
+  const clearAllFilters = () => {
+    setDateRange('all');
+    setSenderFilter('all');
+    setTypeFilter('all');
+    setSortOrder('newest');
+  };
+
+  // Apply all filters: search + date range + sender + type + sort
+  const filteredMessages = useMemo(() => {
+    let msgs = [...currentMessages];
+
+    // Text search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      msgs = msgs.filter(msg =>
+        (msg.text && msg.text.toLowerCase().includes(q)) ||
+        (msg.from && msg.from.toLowerCase().includes(q)) ||
+        (msg.summary && msg.summary.toLowerCase().includes(q))
+      );
+    }
+
+    // Date range filter
+    if (dateRange !== 'all') {
+      const now = dayjs();
+      let cutoff;
+      if (dateRange === 'today') cutoff = now.startOf('day');
+      else if (dateRange === '7days') cutoff = now.subtract(7, 'day');
+      else if (dateRange === '30days') cutoff = now.subtract(30, 'day');
+      if (cutoff) {
+        msgs = msgs.filter(msg => msg.timestamp && dayjs(msg.timestamp).isAfter(cutoff));
+      }
+    }
+
+    // Sender filter
+    if (senderFilter !== 'all') {
+      msgs = msgs.filter(msg => msg.from === senderFilter);
+    }
+
+    // Type filter
+    if (typeFilter !== 'all') {
+      msgs = msgs.filter(msg => getMessageType(msg) === typeFilter);
+    }
+
+    // Sort
+    if (sortOrder === 'oldest') {
+      msgs.sort((a, b) => {
+        const ta = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+        const tb = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+        return ta - tb;
+      });
+    } else {
+      msgs.sort((a, b) => {
+        const ta = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+        const tb = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+        return tb - ta;
+      });
+    }
+
+    return msgs;
+  }, [currentMessages, searchQuery, dateRange, senderFilter, typeFilter, sortOrder, getMessageType]);
+
+  const filtersAreActive = activeFilterCount > 0 || searchQuery.trim();
+
+  if (loading) {
+    return <SkeletonInboxViewer />;
+  }
 
   if (!allInboxes || teamNames.length === 0) {
     return (
@@ -262,13 +410,13 @@ export function InboxViewer({ allInboxes }) {
             borderRadius: '16px',
             marginBottom: '1rem'
           }}>
-            <Inbox style={{ height: '48px', width: '48px', color: '#6b7280' }} />
+            <Inbox style={{ height: '48px', width: '48px', color: '#6b7280' }} aria-hidden="true" />
           </div>
-          <h3 className="text-lg font-semibold text-white" style={{ marginBottom: '0.5rem' }}>
-            No Active Teams
+          <h3 className="text-lg font-semibold" style={{ marginBottom: '0.5rem', color: 'var(--text-heading)' }}>
+            No Inbox Messages Yet
           </h3>
-          <p className="text-sm text-gray-400" style={{ textAlign: 'center', maxWidth: '300px', marginBottom: 0 }}>
-            When agent teams start communicating, their inboxes will appear here for monitoring.
+          <p className="text-sm" style={{ textAlign: 'center', maxWidth: '300px', marginBottom: 0, color: 'var(--text-secondary)' }}>
+            No inbox messages yet. Messages will appear here when agents communicate.
           </p>
         </div>
       </div>
@@ -287,21 +435,21 @@ export function InboxViewer({ allInboxes }) {
       }}>
         {/* LEFT PANEL */}
         <div style={{
-          borderRight: '1px solid rgba(55, 65, 81, 0.6)',
+          borderRight: '1px solid var(--border-color)',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          background: 'rgba(15, 23, 42, 0.4)',
+          background: 'var(--bg-secondary)',
         }}>
           <div style={{
             padding: '1rem 1rem 0.75rem 1rem',
-            borderBottom: '1px solid rgba(55, 65, 81, 0.5)',
+            borderBottom: '1px solid var(--border-color)',
           }}>
             <div className="flex items-center gap-2" style={{ marginBottom: '0.25rem' }}>
-              <Inbox style={{ height: '18px', width: '18px', color: '#ff8a3d' }} />
-              <span className="text-sm font-semibold text-white">Inboxes</span>
+              <Inbox style={{ height: '18px', width: '18px', color: '#ff8a3d' }} aria-hidden="true" />
+              <span className="text-sm font-semibold" style={{ color: 'var(--text-heading)' }}>Inboxes</span>
             </div>
-            <p className="text-xs text-gray-500" style={{ marginBottom: 0 }}>
+            <p className="text-xs" style={{ marginBottom: 0, color: 'var(--text-muted)' }}>
               {teamNames.length} team{teamNames.length !== 1 ? 's' : ''}
             </p>
           </div>
@@ -345,15 +493,15 @@ export function InboxViewer({ allInboxes }) {
                     aria-expanded={isExpanded}
                   >
                     {isExpanded ? (
-                      <ChevronDown style={{ height: '14px', width: '14px', color: '#9ca3af', flexShrink: 0 }} />
+                      <ChevronDown style={{ height: '14px', width: '14px', color: '#9ca3af', flexShrink: 0 }} aria-hidden="true" />
                     ) : (
-                      <ChevronRight style={{ height: '14px', width: '14px', color: '#9ca3af', flexShrink: 0 }} />
+                      <ChevronRight style={{ height: '14px', width: '14px', color: '#9ca3af', flexShrink: 0 }} aria-hidden="true" />
                     )}
-                    <Users style={{ height: '14px', width: '14px', color: '#ff8a3d', flexShrink: 0 }} />
-                    <span className="text-sm text-white truncate" style={{ flex: 1, textAlign: 'left' }}>
+                    <Users style={{ height: '14px', width: '14px', color: '#ff8a3d', flexShrink: 0 }} aria-hidden="true" />
+                    <span className="text-sm truncate" style={{ flex: 1, textAlign: 'left', color: 'var(--text-primary)' }}>
                       {teamName}
                     </span>
-                    <span className="text-xs text-gray-500" style={{ flexShrink: 0 }}>
+                    <span className="text-xs" style={{ flexShrink: 0, color: 'var(--text-muted)' }}>
                       {agentNames.length}
                     </span>
                     {teamUnread > 0 && (
@@ -426,12 +574,12 @@ export function InboxViewer({ allInboxes }) {
                               style={{
                                 flex: 1,
                                 textAlign: 'left',
-                                color: isSelected ? '#ffffff' : '#d1d5db',
+                                color: isSelected ? 'var(--text-heading)' : 'var(--text-primary)',
                               }}
                             >
                               {agentName}
                             </span>
-                            <span className="text-xs text-gray-500" style={{ flexShrink: 0 }}>
+                            <span className="text-xs" style={{ flexShrink: 0, color: 'var(--text-muted)' }}>
                               {msgCount}
                             </span>
                             {agentUnread > 0 && (
@@ -460,7 +608,7 @@ export function InboxViewer({ allInboxes }) {
 
                   {isExpanded && agentNames.length === 0 && (
                     <div style={{ padding: '0.5rem 0.5rem 0.5rem 2rem' }}>
-                      <p className="text-xs text-gray-500" style={{ fontStyle: 'italic', marginBottom: 0 }}>No inboxes yet</p>
+                      <p className="text-xs" style={{ fontStyle: 'italic', marginBottom: 0, color: 'var(--text-muted)' }}>No inboxes yet</p>
                     </div>
                   )}
                 </div>
@@ -481,7 +629,7 @@ export function InboxViewer({ allInboxes }) {
             <>
               <div style={{
                 padding: '0.75rem 1rem',
-                borderBottom: '1px solid rgba(55, 65, 81, 0.5)',
+                borderBottom: '1px solid var(--border-color)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -503,64 +651,309 @@ export function InboxViewer({ allInboxes }) {
                     {getInitials(selectedAgent)}
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-white" style={{ marginBottom: 0 }}>
-                      {selectedAgent} <span className="text-gray-500 font-normal">@</span> <span className="text-gray-400 font-normal">{selectedTeam}</span>
+                    <h4 className="text-sm font-semibold" style={{ marginBottom: 0, color: 'var(--text-heading)' }}>
+                      {selectedAgent} <span style={{ color: 'var(--text-muted)' }} className="font-normal">@</span> <span style={{ color: 'var(--text-secondary)' }} className="font-normal">{selectedTeam}</span>
                     </h4>
-                    <p className="text-xs text-gray-500" style={{ marginBottom: 0 }}>
+                    <p className="text-xs" style={{ marginBottom: 0, color: 'var(--text-muted)' }}>
                       {currentAgentData.messageCount || currentMessages.length} message{(currentAgentData.messageCount || currentMessages.length) !== 1 ? 's' : ''}
                     </p>
                   </div>
                 </div>
-                {getUnreadCount(currentAgentData) > 0 && (
-                  <span style={{
-                    background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.15))',
-                    border: '1px solid rgba(59, 130, 246, 0.4)',
-                    color: '#93c5fd',
-                    fontSize: '0.6875rem',
-                    fontWeight: 600,
-                    padding: '0.25rem 0.625rem',
-                    borderRadius: '6px',
-                  }}>
-                    {getUnreadCount(currentAgentData)} unread
-                  </span>
-                )}
+                <div className="flex items-center gap-2">
+                  {getUnreadCount(currentAgentData) > 0 && (
+                    <span style={{
+                      background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.15))',
+                      border: '1px solid rgba(59, 130, 246, 0.4)',
+                      color: '#93c5fd',
+                      fontSize: '0.6875rem',
+                      fontWeight: 600,
+                      padding: '0.25rem 0.625rem',
+                      borderRadius: '6px',
+                    }}>
+                      {getUnreadCount(currentAgentData)} unread
+                    </span>
+                  )}
+                  <button
+                    onClick={() => {
+                      const data = filteredMessages.map(msg => ({
+                        team: selectedTeam,
+                        agent: selectedAgent,
+                        from: msg.from || '',
+                        message: (msg.text || '').replace(/\n/g, ' '),
+                        timestamp: msg.timestamp || ''
+                      }));
+                      exportToCSV(data, `inbox-${selectedTeam}-${selectedAgent}`);
+                    }}
+                    title="Export messages as CSV"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      padding: '0.25rem 0.5rem',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--tab-inactive-bg)',
+                      color: 'var(--text-muted)',
+                      fontSize: '0.6875rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.borderColor = 'rgba(249, 115, 22, 0.5)';
+                      e.currentTarget.style.color = '#fb923c';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.borderColor = 'var(--border-color)';
+                      e.currentTarget.style.color = 'var(--text-muted)';
+                    }}
+                  >
+                    <Download style={{ height: '12px', width: '12px' }} aria-hidden="true" />
+                    CSV
+                  </button>
+                </div>
               </div>
 
               <div style={{
                 padding: '0.5rem 1rem',
-                borderBottom: '1px solid rgba(55, 65, 81, 0.3)',
+                borderBottom: '1px solid var(--border-color)',
                 flexShrink: 0,
               }}>
-                <div style={{ position: 'relative' }}>
-                  <Search style={{
-                    position: 'absolute',
-                    left: '0.625rem',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    height: '14px',
-                    width: '14px',
-                    color: '#6b7280',
-                  }} />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    placeholder="Search messages..."
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <div style={{ position: 'relative', flex: 1 }}>
+                    <Search style={{
+                      position: 'absolute',
+                      left: '0.625rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      height: '14px',
+                      width: '14px',
+                      color: 'var(--text-muted)',
+                    }} aria-hidden="true" />
+                    <label htmlFor="inbox-search" className="sr-only">Search messages</label>
+                    <input
+                      id="inbox-search"
+                      type="text"
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      placeholder="Search messages..."
+                      style={{
+                        width: '100%',
+                        padding: '0.375rem 0.625rem 0.375rem 2rem',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-primary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.8125rem',
+                        outline: 'none',
+                        transition: 'border-color 0.15s ease',
+                      }}
+                      onFocus={e => { e.target.style.borderColor = 'rgba(249, 115, 22, 0.5)'; }}
+                      onBlur={e => { e.target.style.borderColor = 'var(--border-color)'; }}
+                    />
+                  </div>
+                  <button
+                    onClick={() => setShowFilters(prev => !prev)}
                     style={{
-                      width: '100%',
-                      padding: '0.375rem 0.625rem 0.375rem 2rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      padding: '0.375rem 0.625rem',
                       borderRadius: '6px',
-                      border: '1px solid rgba(55, 65, 81, 0.5)',
-                      background: 'rgba(17, 24, 39, 0.6)',
-                      color: '#e5e7eb',
-                      fontSize: '0.8125rem',
-                      outline: 'none',
-                      transition: 'border-color 0.15s ease',
+                      border: `1px solid ${showFilters || activeFilterCount > 0 ? 'rgba(249, 115, 22, 0.5)' : 'var(--border-color)'}`,
+                      background: showFilters || activeFilterCount > 0
+                        ? 'rgba(249, 115, 22, 0.1)'
+                        : 'var(--tab-inactive-bg)',
+                      color: showFilters || activeFilterCount > 0 ? '#fb923c' : 'var(--text-muted)',
+                      fontSize: '0.75rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      flexShrink: 0,
                     }}
-                    onFocus={e => { e.target.style.borderColor = 'rgba(249, 115, 22, 0.5)'; }}
-                    onBlur={e => { e.target.style.borderColor = 'rgba(55, 65, 81, 0.5)'; }}
-                  />
+                  >
+                    <Filter style={{ height: '13px', width: '13px' }} aria-hidden="true" />
+                    Filters
+                    {activeFilterCount > 0 && (
+                      <span style={{
+                        background: 'linear-gradient(135deg, #f97316, #fb923c)',
+                        color: 'white',
+                        fontSize: '0.5625rem',
+                        fontWeight: 700,
+                        minWidth: '16px',
+                        height: '16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '8px',
+                        padding: '0 4px',
+                      }}>
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </button>
                 </div>
+
+                {/* Advanced Filters Panel */}
+                {showFilters && (
+                  <div style={{
+                    marginTop: '0.5rem',
+                    padding: '0.625rem',
+                    background: 'var(--bg-primary)',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.5rem',
+                  }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'flex-end' }}>
+                      {/* Date Range */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', minWidth: '120px' }}>
+                        <label className="text-xs" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-muted)' }}>
+                          <Calendar style={{ height: '10px', width: '10px' }} aria-hidden="true" /> Date Range
+                        </label>
+                        <select
+                          value={dateRange}
+                          onChange={e => setDateRange(e.target.value)}
+                          style={{
+                            padding: '0.3rem 0.5rem',
+                            borderRadius: '5px',
+                            border: '1px solid var(--border-color)',
+                            background: 'var(--bg-primary)',
+                            color: 'var(--text-primary)',
+                            fontSize: '0.75rem',
+                            outline: 'none',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <option value="all">All time</option>
+                          <option value="today">Today</option>
+                          <option value="7days">Last 7 days</option>
+                          <option value="30days">Last 30 days</option>
+                        </select>
+                      </div>
+
+                      {/* Sender */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', minWidth: '130px' }}>
+                        <label className="text-xs" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-muted)' }}>
+                          <User style={{ height: '10px', width: '10px' }} aria-hidden="true" /> Sender
+                        </label>
+                        <select
+                          value={senderFilter}
+                          onChange={e => setSenderFilter(e.target.value)}
+                          style={{
+                            padding: '0.3rem 0.5rem',
+                            borderRadius: '5px',
+                            border: '1px solid var(--border-color)',
+                            background: 'var(--bg-primary)',
+                            color: 'var(--text-primary)',
+                            fontSize: '0.75rem',
+                            outline: 'none',
+                            cursor: 'pointer',
+                            maxWidth: '160px',
+                          }}
+                        >
+                          <option value="all">All senders</option>
+                          {uniqueSenders.map(s => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Message Type */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', minWidth: '120px' }}>
+                        <label className="text-xs" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-muted)' }}>
+                          <MessageSquare style={{ height: '10px', width: '10px' }} aria-hidden="true" /> Type
+                        </label>
+                        <select
+                          value={typeFilter}
+                          onChange={e => setTypeFilter(e.target.value)}
+                          style={{
+                            padding: '0.3rem 0.5rem',
+                            borderRadius: '5px',
+                            border: '1px solid var(--border-color)',
+                            background: 'var(--bg-primary)',
+                            color: 'var(--text-primary)',
+                            fontSize: '0.75rem',
+                            outline: 'none',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <option value="all">All types</option>
+                          <option value="message">Messages</option>
+                          <option value="idle">Idle</option>
+                          <option value="task_update">Task Updates</option>
+                          <option value="system">System</option>
+                        </select>
+                      </div>
+
+                      {/* Sort */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', minWidth: '120px' }}>
+                        <label className="text-xs" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-muted)' }}>
+                          {sortOrder === 'newest'
+                            ? <SortDesc style={{ height: '10px', width: '10px' }} aria-hidden="true" />
+                            : <SortAsc style={{ height: '10px', width: '10px' }} aria-hidden="true" />
+                          } Sort
+                        </label>
+                        <select
+                          value={sortOrder}
+                          onChange={e => setSortOrder(e.target.value)}
+                          style={{
+                            padding: '0.3rem 0.5rem',
+                            borderRadius: '5px',
+                            border: '1px solid var(--border-color)',
+                            background: 'var(--bg-primary)',
+                            color: 'var(--text-primary)',
+                            fontSize: '0.75rem',
+                            outline: 'none',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <option value="newest">Newest first</option>
+                          <option value="oldest">Oldest first</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Clear filters + active count */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      {activeFilterCount > 0 ? (
+                        <span className="text-xs" style={{ color: '#fb923c' }}>
+                          {activeFilterCount} filter{activeFilterCount !== 1 ? 's' : ''} active
+                        </span>
+                      ) : (
+                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>No filters active</span>
+                      )}
+                      {activeFilterCount > 0 && (
+                        <button
+                          onClick={clearAllFilters}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            padding: '0.2rem 0.5rem',
+                            borderRadius: '5px',
+                            border: '1px solid rgba(239, 68, 68, 0.4)',
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            color: '#f87171',
+                            fontSize: '0.6875rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <X style={{ height: '10px', width: '10px' }} aria-hidden="true" /> Clear filters
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Filtered message count when filters are active */}
+                {filtersAreActive && (
+                  <div style={{ marginTop: '0.375rem' }}>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                      {filteredMessages.length} message{filteredMessages.length !== 1 ? 's' : ''} found
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div
@@ -581,12 +974,12 @@ export function InboxViewer({ allInboxes }) {
                     justifyContent: 'center',
                     paddingTop: '4rem',
                   }}>
-                    <MessageSquare style={{ height: '40px', width: '40px', color: '#4b5563', marginBottom: '0.75rem' }} />
-                    <p className="text-sm text-gray-400" style={{ marginBottom: 0 }}>
-                      {searchQuery.trim() ? 'No messages match your search' : 'No messages yet'}
+                    <MessageSquare style={{ height: '40px', width: '40px', color: '#4b5563', marginBottom: '0.75rem' }} aria-hidden="true" />
+                    <p className="text-sm" style={{ marginBottom: 0, color: 'var(--text-secondary)' }}>
+                      {filtersAreActive ? 'No messages match your filters' : 'No messages yet'}
                     </p>
-                    {!searchQuery.trim() && (
-                      <p className="text-xs text-gray-500" style={{ marginTop: '0.25rem', marginBottom: 0 }}>
+                    {!filtersAreActive && (
+                      <p className="text-xs" style={{ marginTop: '0.25rem', marginBottom: 0, color: 'var(--text-muted)' }}>
                         Messages to this agent will appear here
                       </p>
                     )}
@@ -608,8 +1001,8 @@ export function InboxViewer({ allInboxes }) {
                             borderRadius: '0 8px 8px 0',
                             borderLeft: `4px solid ${borderColor}`,
                             background: isUnread
-                              ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.85))'
-                              : 'linear-gradient(135deg, rgba(30, 41, 59, 0.5), rgba(15, 23, 42, 0.45))',
+                              ? 'var(--tab-inactive-bg)'
+                              : 'var(--bg-card)',
                             transition: 'background 0.15s ease',
                             maxHeight: '200px',
                             overflowY: 'auto',
@@ -646,14 +1039,14 @@ export function InboxViewer({ allInboxes }) {
 
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div className="flex items-center justify-between" style={{ marginBottom: '0.25rem' }}>
-                                <span className="text-xs font-semibold text-white">
+                                <span className="text-xs font-semibold" style={{ color: 'var(--text-heading)' }}>
                                   {msg.from || 'Unknown'}
                                 </span>
                                 {timestamp && (
                                   <span
-                                    className="text-xs text-gray-500"
+                                    className="text-xs"
                                     title={fullTime}
-                                    style={{ flexShrink: 0, marginLeft: '0.5rem' }}
+                                    style={{ flexShrink: 0, marginLeft: '0.5rem', color: 'var(--text-muted)' }}
                                   >
                                     {relTime}
                                   </span>
@@ -695,7 +1088,7 @@ export function InboxViewer({ allInboxes }) {
                       boxShadow: '0 4px 12px rgba(249, 115, 22, 0.4)',
                     }}
                   >
-                    <ArrowDown style={{ height: '12px', width: '12px' }} />
+                    <ArrowDown style={{ height: '12px', width: '12px' }} aria-hidden="true" />
                     New messages
                   </button>
                 </div>
@@ -715,9 +1108,9 @@ export function InboxViewer({ allInboxes }) {
                 borderRadius: '16px',
                 marginBottom: '0.75rem',
               }}>
-                <User style={{ height: '36px', width: '36px', color: '#6b7280' }} />
+                <User style={{ height: '36px', width: '36px', color: '#6b7280' }} aria-hidden="true" />
               </div>
-              <p className="text-sm text-gray-400" style={{ marginBottom: 0 }}>
+              <p className="text-sm" style={{ marginBottom: 0, color: 'var(--text-secondary)' }}>
                 {selectedTeam ? 'Select an agent to view messages' : 'Select a team to get started'}
               </p>
             </div>
@@ -733,7 +1126,7 @@ export function InboxViewer({ allInboxes }) {
           }
           .inbox-viewer-grid > div:first-child {
             border-right: none !important;
-            border-bottom: 1px solid rgba(55, 65, 81, 0.6);
+            border-bottom: 1px solid var(--border-color);
             max-height: 200px;
           }
           .inbox-viewer-grid > div:last-child {

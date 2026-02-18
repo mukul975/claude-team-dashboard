@@ -331,6 +331,226 @@ export function SkeletonGrid({ columns = 3, rows = 2, Component = SkeletonCard }
 }
 
 /**
+ * SkeletonArchiveCard - Archive card skeleton
+ * Use for: ArchiveViewer loading state
+ */
+export function SkeletonArchiveCard({ lines = 3, height = 'h-4' }) {
+  return (
+    <div className="card animate-pulse border-l-4 border-l-purple-500/30">
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="skeleton-animated h-6 w-1/3 rounded" />
+            <div className="skeleton-animated h-5 w-12 rounded-full" />
+          </div>
+          <div className="skeleton-animated h-4 w-full rounded mb-1" />
+          <div className="skeleton-animated h-4 w-4/5 rounded" />
+        </div>
+        <div className="skeleton-animated w-9 h-9 rounded-lg ml-4 flex-shrink-0" />
+      </div>
+      <div className="flex flex-wrap gap-3 mb-4">
+        <div className="skeleton-animated h-9 w-36 rounded-lg" />
+        <div className="skeleton-animated h-9 w-28 rounded-lg" />
+        <div className="skeleton-animated h-9 w-32 rounded-lg" />
+      </div>
+      {Array.from({ length: lines }).map((_, i) => (
+        <div key={i} className={`${height} skeleton-animated rounded mb-2`} style={{ width: `${85 - i * 10}%` }} />
+      ))}
+    </div>
+  );
+}
+
+/**
+ * SkeletonOutputViewer - Agent output viewer skeleton
+ * Use for: AgentOutputViewer loading state
+ */
+export function SkeletonOutputViewer() {
+  return (
+    <div className="card animate-pulse">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div className="skeleton-animated w-5 h-5 rounded" />
+          <div className="skeleton-animated h-6 w-40 rounded" />
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="skeleton-animated w-8 h-8 rounded-lg" />
+          <div className="skeleton-animated w-24 h-8 rounded-lg" />
+          <div className="skeleton-animated w-8 h-8 rounded-lg" />
+        </div>
+      </div>
+      <div className="mb-4">
+        <div className="skeleton-animated h-4 w-32 rounded mb-2" />
+        <div className="flex gap-2">
+          <div className="skeleton-animated h-16 w-32 rounded-lg" />
+          <div className="skeleton-animated h-16 w-32 rounded-lg" />
+          <div className="skeleton-animated h-16 w-32 rounded-lg" />
+        </div>
+      </div>
+      <div className="bg-gray-900 rounded-lg p-4 border border-gray-700 h-[300px]">
+        <div className="space-y-2">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="skeleton-animated h-4 rounded" style={{ width: `${Math.random() * 40 + 40}%` }} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * SkeletonTeamHistoryRow - Team history row skeleton
+ * Use for: TeamHistory loading state
+ */
+export function SkeletonTeamHistoryRow() {
+  return (
+    <div className="border border-gray-700/50 rounded-xl overflow-hidden animate-pulse">
+      <div className="p-4 bg-gray-700/30">
+        <div className="flex items-start gap-3">
+          <div className="skeleton-animated w-5 h-5 rounded mt-1 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="skeleton-animated h-5 w-40 rounded" />
+              <div className="skeleton-animated h-5 w-14 rounded-full" />
+            </div>
+            <div className="flex items-center gap-4 mb-2">
+              <div className="skeleton-animated h-3 w-24 rounded" />
+              <div className="skeleton-animated h-3 w-20 rounded" />
+              <div className="skeleton-animated h-3 w-28 rounded" />
+            </div>
+            <div className="w-full bg-gray-600 rounded-full h-2">
+              <div className="skeleton-animated h-2 rounded-full" style={{ width: '60%' }} />
+            </div>
+            <div className="skeleton-animated h-3 w-36 rounded mt-1" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * SkeletonInboxViewer - Inbox viewer skeleton
+ * Use for: InboxViewer loading state (two-panel layout)
+ */
+export function SkeletonInboxViewer() {
+  return (
+    <div className="card animate-pulse" style={{ padding: 0, overflow: 'hidden' }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '280px 1fr',
+        height: '600px',
+      }}>
+        {/* Left panel skeleton */}
+        <div style={{
+          borderRight: '1px solid rgba(55, 65, 81, 0.6)',
+          background: 'rgba(15, 23, 42, 0.4)',
+          padding: '1rem',
+        }}>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="skeleton-animated w-5 h-5 rounded" />
+            <div className="skeleton-animated h-5 w-16 rounded" />
+          </div>
+          <div className="space-y-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-2 p-2 rounded-lg">
+                <div className="skeleton-animated w-4 h-4 rounded flex-shrink-0" />
+                <div className="skeleton-animated w-4 h-4 rounded flex-shrink-0" />
+                <div className="skeleton-animated h-4 rounded flex-1" />
+                <div className="skeleton-animated w-5 h-5 rounded-full flex-shrink-0" />
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* Right panel skeleton */}
+        <div style={{ padding: '1rem' }}>
+          <div className="flex items-center gap-3 mb-6 pb-3" style={{ borderBottom: '1px solid rgba(55, 65, 81, 0.5)' }}>
+            <div className="skeleton-animated w-8 h-8 rounded-full flex-shrink-0" />
+            <div className="space-y-1 flex-1">
+              <div className="skeleton-animated h-4 w-40 rounded" />
+              <div className="skeleton-animated h-3 w-24 rounded" />
+            </div>
+          </div>
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-start gap-3 p-3 rounded-lg" style={{ borderLeft: '4px solid rgba(75, 85, 99, 0.4)' }}>
+                <div className="skeleton-animated w-7 h-7 rounded-full flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="skeleton-animated h-3 w-24 rounded" />
+                    <div className="skeleton-animated h-3 w-16 rounded" />
+                  </div>
+                  <div className="skeleton-animated h-4 w-full rounded" />
+                  <div className="skeleton-animated h-4 rounded" style={{ width: `${70 - i * 8}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * SkeletonActivityTimeline - Activity feed timeline skeleton
+ * Use for: ActivityFeed loading state
+ */
+export function SkeletonActivityTimeline({ count = 4 }) {
+  return (
+    <div
+      className="rounded-2xl p-6 animate-pulse"
+      style={{
+        background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%)',
+        border: '1px solid rgba(249, 115, 22, 0.15)',
+      }}
+    >
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="skeleton-animated w-10 h-10 rounded-xl" />
+          <div className="skeleton-animated h-6 w-28 rounded" />
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="skeleton-animated w-20 h-8 rounded-lg" />
+          <div className="skeleton-animated w-20 h-7 rounded-full" />
+        </div>
+      </div>
+      <div className="relative">
+        <div
+          className="absolute left-5 top-0 bottom-0 w-0.5"
+          style={{ background: 'rgba(75, 85, 99, 0.3)' }}
+        />
+        <div className="space-y-3">
+          {Array.from({ length: count }).map((_, i) => (
+            <div key={i} className="relative pl-14">
+              <div
+                className="absolute left-0 top-1 p-2 rounded-xl"
+                style={{ background: 'rgba(75, 85, 99, 0.2)', border: '2px solid rgba(75, 85, 99, 0.3)' }}
+              >
+                <div className="skeleton-animated w-5 h-5 rounded" />
+              </div>
+              <div
+                className="rounded-xl p-4"
+                style={{
+                  background: 'rgba(30, 41, 59, 0.6)',
+                  border: '1px solid rgba(75, 85, 99, 0.3)',
+                  borderLeft: '3px solid rgba(75, 85, 99, 0.4)',
+                }}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="skeleton-animated h-4 w-16 rounded" />
+                  <div className="skeleton-animated h-3 w-20 rounded" />
+                </div>
+                <div className="skeleton-animated h-4 rounded" style={{ width: `${80 - i * 10}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
  * SkeletonBadge - Badge skeleton
  * Use for: Status badges
  */

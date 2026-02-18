@@ -75,13 +75,13 @@ export function RealTimeMessages({ allInboxes = {} }) {
 
   const getMessageColor = (type) => {
     switch (type) {
-      case 'status':      return 'border-blue-500/40 bg-blue-900/10';
-      case 'completion':  return 'border-green-500/40 bg-green-900/10';
-      case 'coordination':return 'border-purple-500/40 bg-purple-900/10';
-      case 'question':    return 'border-yellow-500/40 bg-yellow-900/10';
-      case 'assignment':  return 'border-cyan-500/40 bg-cyan-900/10';
-      case 'system':      return 'border-gray-600/50 bg-gray-700/20';
-      default:            return 'border-gray-600/50 bg-gray-700/20';
+      case 'status':      return 'border-blue-500/40 bg-blue-500/10';
+      case 'completion':  return 'border-green-500/40 bg-green-500/10';
+      case 'coordination':return 'border-purple-500/40 bg-purple-500/10';
+      case 'question':    return 'border-yellow-500/40 bg-yellow-500/10';
+      case 'assignment':  return 'border-cyan-500/40 bg-cyan-500/10';
+      case 'system':      return 'border-gray-500/30 bg-gray-500/10';
+      default:            return 'border-gray-500/30 bg-gray-500/10';
     }
   };
 
@@ -102,15 +102,15 @@ export function RealTimeMessages({ allInboxes = {} }) {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Radio className="h-5 w-5 text-claude-orange" />
-          <h3 className="text-lg font-semibold text-white">Agent Inter-Communication</h3>
+          <Radio aria-hidden="true" className="h-5 w-5 text-claude-orange" />
+          <h3 className="text-lg font-semibold" style={{ color: 'var(--text-heading)' }}>Agent Inter-Communication</h3>
           {!hasWsData && fetchedInboxes && (
-            <span className="text-xs text-gray-500">(from API)</span>
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>(from API)</span>
           )}
         </div>
         <div className="flex items-center gap-2">
           {loading && (
-            <RefreshCw className="h-3 w-3 text-gray-400 animate-spin" />
+            <RefreshCw aria-hidden="true" className="h-3 w-3 animate-spin" style={{ color: 'var(--text-muted)' }} />
           )}
           <span className="live-stats-indicator">
             <span className={`h-2 w-2 rounded-full ${hasWsData ? 'bg-green-400 animate-pulse' : 'bg-gray-500'}`}></span>
@@ -135,21 +135,21 @@ export function RealTimeMessages({ allInboxes = {} }) {
       </div>
 
       {/* Messages Stream */}
-      <div className="flex-1 overflow-y-auto space-y-2" style={{ minHeight: 0 }}>
+      <div className="flex-1 overflow-y-auto space-y-2" style={{ minHeight: 0 }} aria-live="polite" aria-label="Real-time agent messages">
         {fetchError ? (
-          <div className="text-center py-12 text-gray-400">
-            <MessageCircle className="h-16 w-16 mx-auto mb-3 opacity-50" />
+          <div className="text-center py-12" style={{ color: 'var(--text-muted)' }}>
+            <MessageCircle aria-hidden="true" className="h-16 w-16 mx-auto mb-3 opacity-50" />
             <p className="text-sm text-red-400">Failed to load messages</p>
-            <p className="text-xs mt-1 text-gray-500">{fetchError}</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{fetchError}</p>
           </div>
         ) : loading ? (
-          <div className="text-center py-12 text-gray-400">
-            <RefreshCw className="h-10 w-10 mx-auto mb-3 opacity-50 animate-spin" />
+          <div className="text-center py-12" style={{ color: 'var(--text-muted)' }}>
+            <RefreshCw aria-hidden="true" className="h-10 w-10 mx-auto mb-3 opacity-50 animate-spin" />
             <p className="text-sm">Loading messages...</p>
           </div>
         ) : filteredMessages.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
-            <MessageCircle className="h-16 w-16 mx-auto mb-3 opacity-50" />
+          <div className="text-center py-12" style={{ color: 'var(--text-muted)' }}>
+            <MessageCircle aria-hidden="true" className="h-16 w-16 mx-auto mb-3 opacity-50" />
             <p className="text-sm">No messages yet</p>
             <p className="text-xs mt-1">Agent communication will stream here in real-time</p>
           </div>
@@ -164,18 +164,18 @@ export function RealTimeMessages({ allInboxes = {} }) {
                 <span className="text-xl flex-shrink-0 mt-0.5">{getTypeIcon(msg.type)}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                    <span className="text-xs font-semibold text-white bg-gray-700 px-2 py-0.5 rounded">
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded" style={{ color: 'var(--text-heading)', background: 'var(--bg-secondary)' }}>
                       {msg.from}
                     </span>
-                    <ArrowRight className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
-                    <span className="text-sm text-gray-300 font-medium">{msg.to}</span>
-                    <span className="text-xs text-gray-500 ml-auto">
+                    <ArrowRight aria-hidden="true" className="h-3.5 w-3.5 flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
+                    <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>{msg.to}</span>
+                    <span className="text-xs ml-auto" style={{ color: 'var(--text-muted)' }}>
                       {dayjs(msg.timestamp).fromNow()}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-200 leading-relaxed break-words">{msg.message}</p>
+                  <p className="text-sm leading-relaxed break-words" style={{ color: 'var(--text-primary)' }}>{msg.message}</p>
                   <div className="mt-1.5 flex items-center gap-2">
-                    <span className="text-xs text-gray-500">Team: {msg.team}</span>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Team: {msg.team}</span>
                     {!msg.read && (
                       <span className="text-xs bg-blue-500/30 text-blue-300 px-1.5 py-0.5 rounded-full">
                         New
@@ -190,25 +190,25 @@ export function RealTimeMessages({ allInboxes = {} }) {
       </div>
 
       {/* Stats Footer */}
-      <div className="pt-4 mt-4 border-t border-gray-700">
+      <div className="pt-4 mt-4" style={{ borderTop: '1px solid var(--border-color)' }}>
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <div className="text-xl font-bold text-blue-400">
               {allMessages.filter(m => m.type === 'status').length}
             </div>
-            <div className="text-xs text-gray-400">Status</div>
+            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Status</div>
           </div>
           <div>
             <div className="text-xl font-bold text-green-400">
               {allMessages.filter(m => m.type === 'completion').length}
             </div>
-            <div className="text-xs text-gray-400">Completions</div>
+            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Completions</div>
           </div>
           <div>
             <div className="text-xl font-bold text-purple-400">
               {allMessages.filter(m => m.type === 'coordination').length}
             </div>
-            <div className="text-xs text-gray-400">Coordination</div>
+            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Coordination</div>
           </div>
         </div>
       </div>

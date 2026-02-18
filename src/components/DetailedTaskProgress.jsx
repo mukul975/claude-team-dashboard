@@ -18,20 +18,20 @@ export function DetailedTaskProgress({ tasks }) {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-claude-orange" />
-          <h3 className="text-lg font-semibold text-white">Task Progress Details</h3>
+          <h3 className="text-lg font-semibold" style={{ color: 'var(--text-heading)' }}>Task Progress Details</h3>
         </div>
-        <span className="text-2xl font-bold text-white">{completionPercentage}%</span>
+        <span className="text-2xl font-bold" style={{ color: 'var(--text-heading)' }}>{completionPercentage}%</span>
       </div>
 
       {/* Overall Progress Bar */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-gray-400">Overall Completion</span>
-          <span className="text-sm text-white font-semibold">
+          <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Overall Completion</span>
+          <span className="text-sm font-semibold" style={{ color: 'var(--text-heading)' }}>
             {completedTasks.length} / {tasks.length} tasks
           </span>
         </div>
-        <div className="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
+        <div className="w-full rounded-full h-3 overflow-hidden" style={{ background: 'var(--bg-secondary)' }}>
           <div
             className="h-3 rounded-full transition-all duration-500"
             style={{
@@ -52,13 +52,13 @@ export function DetailedTaskProgress({ tasks }) {
               <Clock className="h-4 w-4 text-yellow-400" />
             </div>
             <div>
-              <div className="text-sm font-semibold text-white">Pending Tasks</div>
-              <div className="text-xs text-gray-400">Waiting to start</div>
+              <div className="text-sm font-semibold" style={{ color: 'var(--text-heading)' }}>Pending Tasks</div>
+              <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Waiting to start</div>
             </div>
           </div>
           <div className="text-right">
             <div className="text-xl font-bold text-yellow-400">{pendingTasks.length}</div>
-            <div className="text-xs text-gray-400">
+            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
               {tasks.length > 0 ? Math.round((pendingTasks.length / tasks.length) * 100) : 0}%
             </div>
           </div>
@@ -71,13 +71,13 @@ export function DetailedTaskProgress({ tasks }) {
               <div className="h-4 w-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
             </div>
             <div>
-              <div className="text-sm font-semibold text-white">In Progress</div>
-              <div className="text-xs text-gray-400">Currently working</div>
+              <div className="text-sm font-semibold" style={{ color: 'var(--text-heading)' }}>In Progress</div>
+              <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Currently working</div>
             </div>
           </div>
           <div className="text-right">
             <div className="text-xl font-bold text-blue-400">{inProgressTasks.length}</div>
-            <div className="text-xs text-gray-400">
+            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
               {tasks.length > 0 ? Math.round((inProgressTasks.length / tasks.length) * 100) : 0}%
             </div>
           </div>
@@ -90,13 +90,13 @@ export function DetailedTaskProgress({ tasks }) {
               <CheckCircle className="h-4 w-4 text-green-400" />
             </div>
             <div>
-              <div className="text-sm font-semibold text-white">Completed</div>
-              <div className="text-xs text-gray-400">Successfully finished</div>
+              <div className="text-sm font-semibold" style={{ color: 'var(--text-heading)' }}>Completed</div>
+              <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Successfully finished</div>
             </div>
           </div>
           <div className="text-right">
             <div className="text-xl font-bold text-green-400">{completedTasks.length}</div>
-            <div className="text-xs text-gray-400">{completionPercentage}%</div>
+            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{completionPercentage}%</div>
           </div>
         </div>
 
@@ -108,13 +108,13 @@ export function DetailedTaskProgress({ tasks }) {
                 <AlertCircle className="h-4 w-4 text-red-400" />
               </div>
               <div>
-                <div className="text-sm font-semibold text-white">Blocked</div>
-                <div className="text-xs text-gray-400">Waiting on dependencies</div>
+                <div className="text-sm font-semibold" style={{ color: 'var(--text-heading)' }}>Blocked</div>
+                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Waiting on dependencies</div>
               </div>
             </div>
             <div className="text-right">
               <div className="text-xl font-bold text-red-400">{blockedTasks.length}</div>
-              <div className="text-xs text-gray-400">
+              <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
                 {tasks.length > 0 ? Math.round((blockedTasks.length / tasks.length) * 100) : 0}%
               </div>
             </div>

@@ -1,25 +1,140 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { Users, ChevronDown, ChevronUp, Activity, Clock, CheckCircle, Loader, Mail } from 'lucide-react';
+import { Users, ChevronDown, ChevronUp, Activity, Clock, CheckCircle, Loader, Mail, Inbox } from 'lucide-react';
 import { AgentCard } from './AgentCard';
 import { TaskList } from './TaskList';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 dayjs.extend(relativeTime);
 
-export function TeamCard({ team, inboxes = {} }) {
+/**
+ * Derives the latest message timestamp for a given agent from the team inbox data.
+ * Searches allInboxes[teamName][agentName].messages for the most recent timestamp.
+ */
+function getLatestTimestamp(allInboxes, teamName, agentName) {
+  const teamInboxes = allInboxes[teamName];
+  if (!teamInboxes) return null;
+
+  // Check direct agent inbox
+  const agentInbox = teamInboxes[agentName];
+  let latest = null;
+
+  if (agentInbox) {
+    const messages = Array.isArray(agentInbox) ? agentInbox : (agentInbox.messages || []);
+    for (const msg of messages) {
+      const ts = msg.timestamp || msg.createdAt || msg.date || msg.sentAt;
+      if (ts) {
+        const d = new Date(ts);
+        if (!isNaN(d.getTime()) && (!latest || d > latest)) {
+          latest = d;
+        }
+      }
+    }
+  }
+
+  // Also scan all inboxes for messages from this agent (sender field)
+  for (const [, inbox] of Object.entries(teamInboxes)) {
+    const messages = Array.isArray(inbox) ? inbox : (inbox.messages || []);
+    for (const msg of messages) {
+      if (msg.from === agentName || msg.sender === agentName || msg.agentName === agentName) {
+        const ts = msg.timestamp || msg.createdAt || msg.date || msg.sentAt;
+        if (ts) {
+          const d = new Date(ts);
+          if (!isNaN(d.getTime()) && (!latest || d > latest)) {
+            latest = d;
+          }
+        }
+      }
+    }
+  }
+
+  return latest;
+}
+
+function getAgentStatus(latestTimestamp) {
+  if (!latestTimestamp) return { status: 'idle', color: '#6b7280', label: 'Idle', dot: 'bg-gray-500' };
+
+  const now = new Date();
+  const diffMs = now - latestTimestamp;
+  const diffMin = diffMs / 60000;
+
+  if (diffMin <= 5) {
+    return { status: 'active', color: '#22c55e', label: 'Active', dot: 'bg-green-500', pulse: true };
+  } else if (diffMin <= 30) {
+    return { status: 'recent', color: '#eab308', label: 'Recent', dot: 'bg-yellow-500', pulse: false };
+  }
+  return { status: 'idle', color: '#6b7280', label: 'Idle', dot: 'bg-gray-500', pulse: false };
+}
+
+function formatLastActive(latestTimestamp) {
+  if (!latestTimestamp) return 'No activity recorded';
+  const now = new Date();
+  const diffMs = now - latestTimestamp;
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return 'Active just now';
+  if (diffMin < 60) return `Last active: ${diffMin} min ago`;
+  const diffHours = Math.floor(diffMin / 60);
+  if (diffHours < 24) return `Last active: ${diffHours}h ago`;
+  return `Last active: ${Math.floor(diffHours / 24)}d ago`;
+}
+
+function TaskCompletionRing({ completed, total, size = 36 }) {
+  const strokeWidth = 3;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const progress = total > 0 ? completed / total : 0;
+  const offset = circumference - progress * circumference;
+
+  return (
+    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="transform -rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="rgba(75, 85, 99, 0.5)"
+          strokeWidth={strokeWidth}
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={progress >= 0.75 ? '#22c55e' : progress >= 0.4 ? '#eab308' : '#f97316'}
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+        />
+      </svg>
+      <span className="absolute text-[9px] font-bold text-white">
+        {total > 0 ? Math.round(progress * 100) : 0}%
+      </span>
+    </div>
+  );
+}
+
+export function TeamCard({ team, inboxes = {}, allInboxes = {}, onNavigateToInboxes }) {
   const [isExpanded, setIsExpanded] = useState(true);
 
   const { name, config, tasks, lastUpdated } = team;
   const members = config.members || [];
-  const lead = members.find(m => m.name === config.leadName);
+  // Detect this team's lead per team: config.leadName → agentType contains 'lead'/'manager'/'coordinator' → member named 'team-lead' → first member
+  const lead = members.find(m => m.name === config.leadName)
+    || members.find(m => /lead|manager|coordinator/i.test(m.agentType || ''))
+    || members.find(m => m.name === 'team-lead')
+    || members[0]
+    || null;
 
   const inboxEntries = Object.values(inboxes);
   const totalMessages = inboxEntries.reduce((total, agentInbox) => {
-    return total + (agentInbox.messages || []).length;
+    return total + (Array.isArray(agentInbox) ? agentInbox.length : (agentInbox.messages || []).length);
   }, 0);
   const unreadCount = inboxEntries.reduce((total, agentInbox) => {
-    return total + (agentInbox.messages || []).filter(m => m.read === false).length;
+    const msgs = Array.isArray(agentInbox) ? agentInbox : (agentInbox.messages || []);
+    return total + msgs.filter(m => m.read === false).length;
   }, 0);
 
   const taskStats = {
@@ -28,12 +143,58 @@ export function TeamCard({ team, inboxes = {} }) {
     completed: tasks.filter(t => t.status === 'completed').length
   };
 
+  // Compute agent statuses from real message timestamps
+  const agentStatuses = useMemo(() => {
+    const statuses = {};
+    for (const member of members) {
+      const latestTs = getLatestTimestamp(allInboxes, name, member.name);
+      statuses[member.name] = {
+        ...getAgentStatus(latestTs),
+        latestTimestamp: latestTs,
+        tooltipText: formatLastActive(latestTs)
+      };
+    }
+    return statuses;
+  }, [allInboxes, name, members]);
+
+  // Team health: % of agents active in last 30 min
+  const teamHealth = useMemo(() => {
+    if (members.length === 0) return 0;
+    const activeCount = members.filter(m => {
+      const s = agentStatuses[m.name];
+      return s && (s.status === 'active' || s.status === 'recent');
+    }).length;
+    return Math.round((activeCount / members.length) * 100);
+  }, [members, agentStatuses]);
+
+  const healthBarColor = teamHealth > 60 ? '#22c55e' : teamHealth >= 30 ? '#eab308' : '#ef4444';
+
   return (
     <div className="card border-l-4 border-l-claude-orange">
+      {/* Team Health Bar */}
+      <div className="flex items-center gap-3 mb-4 p-3 rounded-lg" style={{ background: 'rgba(31, 41, 55, 0.6)' }}>
+        <div className="flex items-center gap-2 shrink-0">
+          <Activity className="h-4 w-4" style={{ color: healthBarColor }} aria-hidden="true" />
+          <span className="text-sm font-semibold text-white">Team Health:</span>
+          <span className="text-sm font-bold" style={{ color: healthBarColor }}>{teamHealth}%</span>
+        </div>
+        <div className="flex-1 h-2.5 rounded-full bg-gray-700/70 overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-700 ease-out"
+            style={{
+              width: `${teamHealth}%`,
+              background: `linear-gradient(90deg, ${healthBarColor}, ${healthBarColor}dd)`,
+              boxShadow: `0 0 8px ${healthBarColor}66`
+            }}
+          />
+        </div>
+        <TaskCompletionRing completed={taskStats.completed} total={tasks.length} />
+      </div>
+
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="bg-claude-orange/20 p-2 rounded-lg">
-            <Users className="h-6 w-6 text-claude-orange" />
+            <Users className="h-6 w-6 text-claude-orange" aria-hidden="true" />
           </div>
           <div>
             <h3 className="text-xl font-bold text-white flex items-center">
@@ -56,35 +217,44 @@ export function TeamCard({ team, inboxes = {} }) {
           aria-expanded={isExpanded}
         >
           {isExpanded ? (
-            <ChevronUp className="h-5 w-5 text-gray-400" />
+            <ChevronUp className="h-5 w-5 text-gray-400" aria-hidden="true" />
           ) : (
-            <ChevronDown className="h-5 w-5 text-gray-400" />
+            <ChevronDown className="h-5 w-5 text-gray-400" aria-hidden="true" />
           )}
         </button>
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
         <div className="flex items-center gap-2 bg-gray-700/50 px-3 py-1 rounded-full">
-          <Users className="h-4 w-4 text-gray-400" />
+          <Users className="h-4 w-4 text-gray-400" aria-hidden="true" />
           <span className="text-sm text-gray-300">{members.length} agents</span>
         </div>
         <div className="flex items-center gap-2 bg-gray-700/50 px-3 py-1 rounded-full">
-          <Activity className="h-4 w-4 text-gray-400" />
+          <Activity className="h-4 w-4 text-gray-400" aria-hidden="true" />
           <span className="text-sm text-gray-300">{tasks.length} tasks</span>
         </div>
         <div className="flex items-center gap-2 bg-gray-700/50 px-3 py-1 rounded-full">
-          <Clock className="h-4 w-4 text-gray-400" />
+          <Clock className="h-4 w-4 text-gray-400" aria-hidden="true" />
           <span className="text-sm text-gray-300">
             {dayjs(new Date(lastUpdated)).fromNow()}
           </span>
         </div>
         {totalMessages > 0 && (
           <div className="flex items-center gap-2 bg-gray-700/50 px-3 py-1 rounded-full">
-            <Mail className="h-4 w-4 text-gray-400" />
+            <Mail className="h-4 w-4 text-gray-400" aria-hidden="true" />
             <span className="text-sm text-gray-300">
               {totalMessages} messages{unreadCount > 0 ? `, ${unreadCount} unread` : ''}
             </span>
           </div>
+        )}
+        {onNavigateToInboxes && (
+          <button
+            onClick={() => onNavigateToInboxes(name)}
+            className="flex items-center gap-2 bg-claude-orange/20 hover:bg-claude-orange/30 text-claude-orange px-3 py-1 rounded-full transition-colors text-sm font-medium"
+          >
+            <Inbox className="h-4 w-4" aria-hidden="true" />
+            View Inboxes
+          </button>
         )}
       </div>
 
@@ -107,24 +277,24 @@ export function TeamCard({ team, inboxes = {} }) {
         <div className="space-y-6 mt-6">
           <div>
             <h4 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-              <Users className="h-5 w-5" />
+              <Users className="h-5 w-5" aria-hidden="true" />
               Team Members
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {lead && (
-                <AgentCard agent={lead} isLead={true} />
+                <AgentCard agent={lead} isLead={true} agentStatus={agentStatuses[lead.name]} />
               )}
               {members
-                .filter(m => m.name !== config.leadName)
+                .filter(m => m !== lead)
                 .map((agent, index) => (
-                  <AgentCard key={index} agent={agent} isLead={false} />
+                  <AgentCard key={index} agent={agent} isLead={false} agentStatus={agentStatuses[agent.name]} />
                 ))}
             </div>
           </div>
 
           <div>
             <h4 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-              <Activity className="h-5 w-5" />
+              <Activity className="h-5 w-5" aria-hidden="true" />
               Tasks
             </h4>
             <TaskList tasks={tasks} />
@@ -152,5 +322,7 @@ TeamCard.propTypes = {
         read: PropTypes.bool
       }))
     })
-  )
+  ),
+  allInboxes: PropTypes.object,
+  onNavigateToInboxes: PropTypes.func
 };

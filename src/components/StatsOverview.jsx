@@ -1,10 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Users, ListTodo, Clock, CheckCircle, AlertCircle, MessageSquare, Bell } from 'lucide-react';
 import { useCounterAnimation } from '../hooks/useCounterAnimation';
 
+const HISTORY_KEY = 'dashboard-stats-history';
+const MAX_HISTORY = 10;
+
+function Sparkline({ data, color, width = 48, height = 20 }) {
+  if (!data || data.length < 2) return null;
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  const points = data.map((v, i) => [
+    (i / (data.length - 1)) * width,
+    height - ((v - min) / range) * height
+  ]);
+  const d = points.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+  return (
+    <svg width={width} height={height} style={{ display: 'block' }} aria-hidden="true">
+      <path d={d} fill="none" stroke={color} strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+function getStatsHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (_) { /* ignore parse errors */ }
+  return [];
+}
+
+function saveStatsHistory(history) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  } catch (_) { /* ignore quota errors */ }
+}
+
 export function StatsOverview({ stats, allInboxes = {} }) {
   const [isVisible, setIsVisible] = useState(false);
+  const [statsHistory, setStatsHistory] = useState(() => getStatsHistory());
+  const lastSnapshotRef = useRef(null);
 
   useEffect(() => {
     setIsVisible(true);
@@ -29,6 +65,34 @@ export function StatsOverview({ stats, allInboxes = {} }) {
 
   const animatedTotalMessages = useCounterAnimation(totalMessages, 1000); // lgtm[js/invocation-of-non-function]
   const animatedUnreadMessages = useCounterAnimation(unreadMessages, 1000); // lgtm[js/invocation-of-non-function]
+
+  // Track stats history in localStorage
+  const appendHistory = useCallback((currentStats, msgTotal, msgUnread) => {
+    if (!currentStats) return;
+    const snapshot = {
+      totalTeams: currentStats.totalTeams ?? 0,
+      totalAgents: currentStats.totalAgents ?? 0,
+      totalTasks: currentStats.totalTasks ?? 0,
+      pendingTasks: currentStats.pendingTasks ?? 0,
+      inProgressTasks: currentStats.inProgressTasks ?? 0,
+      completedTasks: currentStats.completedTasks ?? 0,
+      blockedTasks: currentStats.blockedTasks ?? 0,
+      totalMessages: msgTotal,
+      unreadMessages: msgUnread
+    };
+    const fingerprint = JSON.stringify(snapshot);
+    if (lastSnapshotRef.current === fingerprint) return;
+    lastSnapshotRef.current = fingerprint;
+    const history = getStatsHistory();
+    history.push(snapshot);
+    const trimmed = history.slice(-MAX_HISTORY);
+    saveStatsHistory(trimmed);
+    setStatsHistory(trimmed);
+  }, []);
+
+  useEffect(() => {
+    appendHistory(stats, totalMessages, unreadMessages);
+  }, [stats, totalMessages, unreadMessages, appendHistory]);
 
   if (!stats) return null;
 
@@ -125,9 +189,9 @@ export function StatsOverview({ stats, allInboxes = {} }) {
     <div
       className="rounded-2xl p-6 mb-6"
       style={{
-        background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%)',
-        border: '1px solid rgba(249, 115, 22, 0.15)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+        background: 'var(--bg-card-gradient)',
+        border: '1px solid var(--border-color)',
+        boxShadow: 'var(--card-shadow)',
         backdropFilter: 'blur(16px)'
       }}
     >
@@ -143,19 +207,19 @@ export function StatsOverview({ stats, allInboxes = {} }) {
               style={{
                 background: stat.gradient,
                 border: `1px solid ${stat.borderColor}`,
-                boxShadow: `0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08)`,
+                boxShadow: 'var(--card-shadow)',
                 opacity: isVisible ? 1 : 0,
                 transform: isVisible ? 'translateY(0)' : 'translateY(10px)',
                 transitionDelay: `${index * 80}ms`
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
-                e.currentTarget.style.boxShadow = `0 8px 24px ${stat.glowColor}, inset 0 1px 0 rgba(255, 255, 255, 0.12)`;
+                e.currentTarget.style.boxShadow = `0 8px 24px ${stat.glowColor}`;
                 e.currentTarget.style.borderColor = stat.borderColor;
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08)';
+                e.currentTarget.style.boxShadow = '';
                 e.currentTarget.style.borderColor = stat.borderColor;
               }}
             >
@@ -163,12 +227,13 @@ export function StatsOverview({ stats, allInboxes = {} }) {
               <div
                 className="inline-flex p-2.5 rounded-lg mb-3 transition-transform duration-300 group-hover:scale-110"
                 style={{
-                  background: 'rgba(0, 0, 0, 0.2)',
-                  boxShadow: `0 2px 8px ${stat.glowColor}, inset 0 1px 0 rgba(255, 255, 255, 0.1)`,
+                  background: 'var(--bg-secondary)',
+                  boxShadow: `0 2px 8px ${stat.glowColor}`,
                   border: `1px solid ${stat.borderColor}`
                 }}
               >
                 <Icon
+                  aria-hidden="true"
                   className="h-5 w-5"
                   style={{
                     color: stat.iconColor,
@@ -182,9 +247,9 @@ export function StatsOverview({ stats, allInboxes = {} }) {
                 <p
                   className={`text-3xl font-extrabold tabular-nums ${stat.extraClass || ''}`}
                   style={{
-                    color: stat.extraClass ? undefined : '#ffffff',
+                    color: stat.extraClass ? undefined : 'var(--text-heading)',
                     letterSpacing: '-0.03em',
-                    textShadow: `0 2px 4px rgba(0, 0, 0, 0.3), 0 0 12px ${stat.glowColor}`,
+                    textShadow: `0 0 12px ${stat.glowColor}`,
                     lineHeight: 1
                   }}
                 >
@@ -196,12 +261,43 @@ export function StatsOverview({ stats, allInboxes = {} }) {
               <p
                 className="text-xs font-semibold uppercase tracking-wider"
                 style={{
-                  color: 'rgba(209, 213, 219, 0.7)',
+                  color: 'var(--text-secondary)',
                   letterSpacing: '0.05em'
                 }}
               >
                 {stat.label}
               </p>
+
+              {/* Sparkline & Trend */}
+              {(() => {
+                const historyData = statsHistory.map(h => h[stat.key] ?? 0);
+                const len = historyData.length;
+                let trendArrow = null;
+                let changeText = null;
+                if (len >= 2) {
+                  const prev = historyData[len - 2];
+                  const curr = historyData[len - 1];
+                  const diff = curr - prev;
+                  const pct = prev !== 0 ? Math.abs((diff / prev) * 100).toFixed(0) : (diff !== 0 ? 100 : 0);
+                  if (diff > 0) {
+                    trendArrow = <span style={{ color: '#4ade80', fontSize: '11px', fontWeight: 700 }}>{'\u2191'}</span>;
+                    changeText = <span style={{ color: '#4ade80', fontSize: '10px', marginLeft: '2px' }}>{pct}%</span>;
+                  } else if (diff < 0) {
+                    trendArrow = <span style={{ color: '#f87171', fontSize: '11px', fontWeight: 700 }}>{'\u2193'}</span>;
+                    changeText = <span style={{ color: '#f87171', fontSize: '10px', marginLeft: '2px' }}>{pct}%</span>;
+                  } else {
+                    trendArrow = <span style={{ color: '#9ca3af', fontSize: '11px', fontWeight: 700 }}>{'\u2192'}</span>;
+                    changeText = <span style={{ color: '#9ca3af', fontSize: '10px', marginLeft: '2px' }}>0%</span>;
+                  }
+                }
+                return (
+                  <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '4px', minHeight: '20px' }}>
+                    <Sparkline data={historyData.length >= 2 ? historyData : null} color={stat.iconColor} />
+                    {trendArrow}
+                    {changeText}
+                  </div>
+                );
+              })()}
 
               {/* Hover Glow Effect */}
               <div

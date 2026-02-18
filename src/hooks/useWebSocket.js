@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 
 /**
- * WebSocket hook with structured per-type state
+ * WebSocket hook with structured per-type state, exponential backoff,
+ * and online/offline awareness.
  * @param {string} url - WebSocket URL to connect to
  * @returns {Object} Typed WebSocket state
  */
@@ -14,18 +15,33 @@ export function useWebSocket(url) {
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState(null);
   const [lastRawMessage, setLastRawMessage] = useState(null);
+  const [connectionStatus, setConnectionStatus] = useState('connecting');
+
   const wsRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
   const reconnectAttempts = useRef(0);
+  const isPausedRef = useRef(false);
+  const urlRef = useRef(url);
+  urlRef.current = url;
 
   const connect = useCallback(() => {
+    if (isPausedRef.current) return;
+
     try {
-      const ws = new WebSocket(url);
+      if (wsRef.current) {
+        wsRef.current.onclose = null;
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+
+      setConnectionStatus(reconnectAttempts.current > 0 ? 'reconnecting' : 'connecting');
+      const ws = new WebSocket(urlRef.current);
       wsRef.current = ws;
 
       ws.onopen = () => {
         console.log('WebSocket connected');
         setIsConnected(true);
+        setConnectionStatus('connected');
         setError(null);
         reconnectAttempts.current = 0;
       };
@@ -35,7 +51,6 @@ export function useWebSocket(url) {
           const message = JSON.parse(event.data);
           setLastRawMessage(message);
 
-          // Dispatch by message type
           if (message.data) setTeams(message.data);
           if (message.stats) setStats(message.stats);
           if (message.teamHistory) setTeamHistory(message.teamHistory);
@@ -55,6 +70,7 @@ export function useWebSocket(url) {
       ws.onerror = (err) => {
         console.error('WebSocket error:', err);
         setError('Connection error');
+        setConnectionStatus('error');
       };
 
       ws.onclose = () => {
@@ -62,33 +78,79 @@ export function useWebSocket(url) {
         setIsConnected(false);
         wsRef.current = null;
 
-        // Attempt to reconnect with exponential backoff
+        if (!navigator.onLine) {
+          setConnectionStatus('offline');
+          isPausedRef.current = true;
+          return;
+        }
+
+        setConnectionStatus('reconnecting');
+
         const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
         reconnectAttempts.current++;
 
+        console.log(`Reconnecting in ${delay}ms (attempt ${reconnectAttempts.current})...`);
+
         reconnectTimeoutRef.current = setTimeout(() => {
-          console.log(`Attempting to reconnect (attempt ${reconnectAttempts.current})...`);
           connect();
         }, delay);
       };
     } catch (err) {
       console.error('Error creating WebSocket:', err);
       setError('Failed to connect');
+      setConnectionStatus('error');
     }
-  }, [url]);
+  }, []);
 
   useEffect(() => {
     connect();
 
+    const handleOnline = () => {
+      console.log('Browser is online, reconnecting WebSocket...');
+      isPausedRef.current = false;
+      reconnectAttempts.current = 0;
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      connect();
+    };
+
+    const handleOffline = () => {
+      console.log('Browser is offline, pausing WebSocket reconnect...');
+      isPausedRef.current = true;
+      setConnectionStatus('offline');
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
     return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
       if (wsRef.current) {
+        wsRef.current.onclose = null;
         wsRef.current.close();
       }
     };
   }, [connect]);
 
-  return { teams, stats, teamHistory, agentOutputs, allInboxes, isConnected, error, lastRawMessage };
+  return {
+    teams,
+    stats,
+    teamHistory,
+    agentOutputs,
+    allInboxes,
+    isConnected,
+    error,
+    lastRawMessage,
+    connectionStatus,
+    reconnectAttempts: reconnectAttempts.current,
+  };
 }

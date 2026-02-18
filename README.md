@@ -64,6 +64,14 @@ See tasks as they flow through your agent team. **Progress bars**, status badges
 
 Debug coordination issues instantly. Watch agents communicate in real time with **full message history** and **conversation threads**.
 
+### 🌗 **Full Light & Dark Mode**
+
+Pixel-perfect theming with CSS custom properties. Every component — cards, charts, modals, toasts — adapts instantly when you toggle the theme.
+
+### ⌨️ **Keyboard-First Navigation**
+
+Command palette (`⌘K`), tab shortcuts (`⌘1-8`), and a shortcuts modal (`?`) so you never have to touch the mouse.
+
 </td>
 <td width="50%">
 
@@ -77,7 +85,15 @@ Track CPU, memory, and network usage across your agent infrastructure. Catch per
 
 ### 🔔 **Smart Alerts & Notifications**
 
-Instant desktop notifications for task completions, errors, and state changes. **Never miss critical events**.
+Instant desktop notifications for task completions, errors, and state changes. Full **notification center** with grouping, mark-read, and tab navigation.
+
+### 📤 **One-Click Data Export**
+
+Export any team's tasks and inbox messages as **JSON or CSV** directly from the header. Full data portability built-in.
+
+### 📱 **PWA — Installable & Offline-Ready**
+
+Works as a **Progressive Web App** — add to your home screen, get an app icon, and keep viewing cached data when the server is temporarily unreachable.
 
 </td>
 </tr>
@@ -714,15 +730,25 @@ validatePath(filePath, ARCHIVE_DIR)
 
 ## 🗺️ Roadmap
 
+### ✅ Recently Shipped
+
+- [x] **Light / Dark mode** — Full CSS-variable-based theme system; every component, card, chart, modal, and toast adapts instantly
+- [x] **Export reports** — CSV & JSON export for tasks and inbox messages via the header Export menu
+- [x] **Performance analytics** — Analytics panel with historical charts, team comparison, and performance scoring
+- [x] **Keyboard shortcuts** — Command palette (`⌘K`), tab hotkeys (`⌘1–8`), shortcuts reference modal (`?`)
+- [x] **Notification center** — Grouped notification tray (Just Now / Today / Earlier) with mark-read, clear-all, and direct tab navigation
+- [x] **PWA support** — Installable progressive web app with offline caching via Service Worker
+- [x] **Agent network graph** — Live D3 force-directed graph of inter-agent communication flows
+- [x] **Task dependency graph** — Visual map of which tasks block which across the whole team
+- [x] **Team comparison** — Side-by-side performance view across multiple active teams
+- [x] **Skeleton loaders** — Smooth loading states instead of blank panels on first connect
+
 ### 🎯 Planned Features
 
 - [ ] **Multi-project workspace** — Switch between multiple Claude projects in one dashboard
-- [ ] **Performance analytics** — Historical charts, trends, bottleneck detection
 - [ ] **Custom alerts** — Webhook integrations (Slack, Discord, email)
-- [ ] **Theme switcher** — Dark/light mode with custom color schemes
-- [ ] **Export reports** — PDF/CSV exports for task summaries and metrics
 - [ ] **Plugin system** — Extensible architecture for custom visualizations
-- [ ] **Docker deployment** — One-command containerized setup
+- [ ] **Docker deployment** — One-command containerised setup
 - [ ] **Agent replay** — Rewind and replay agent sessions for debugging
 - [ ] **Collaborative mode** — Share dashboards with team members
 

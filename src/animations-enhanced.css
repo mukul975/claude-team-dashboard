@@ -927,3 +927,26 @@
     transform: rotate(0deg) scale(1);
   }
 }
+
+/* ==========================================
+   ACTIVITY FEED ANIMATIONS
+   ========================================== */
+
+@keyframes slideInFromTop {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.activity-item-enter {
+  animation: slideInFromTop 0.25s ease-out both;
+}
+
+@keyframes activityFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0.4; }
+}
+
+.activity-item-fading {
+  opacity: 0.4;
+  transition: opacity 0.3s ease;
+}

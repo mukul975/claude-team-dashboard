@@ -18,7 +18,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "test:e2e": "playwright test"
   },
   "keywords": [
     "claude",
@@ -35,15 +36,20 @@
   "dependencies": {
     "body-parser": "^2.2.2",
     "chokidar": "^5.0.0",
+    "compression": "^1.8.1",
     "cors": "^2.8.6",
+    "d3": "^7.9.0",
     "dayjs": "^1.11.19",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
     "helmet": "^8.1.0",
     "prop-types": "^15.8.1",
+    "react-hot-toast": "^2.6.0",
+    "recharts": "^3.7.0",
     "ws": "^8.19.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",

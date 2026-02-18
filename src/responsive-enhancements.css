@@ -4,14 +4,63 @@
    ======================================== */
 
 /* ==========================================
+   MISSING RESPONSIVE UTILITY CLASSES
+   These are used in JSX but were not defined
+   ========================================== */
+
+/* lg:hidden - hide on large screens (used for hamburger menu) */
+@media (min-width: 1024px) {
+  .lg\:hidden {
+    display: none !important;
+  }
+}
+
+/* hidden md:flex - show as flex from md breakpoint (used for docs link) */
+.hidden.md\:flex {
+  display: none;
+}
+@media (min-width: 768px) {
+  .hidden.md\:flex {
+    display: flex !important;
+  }
+}
+
+/* lg:grid-cols-2 */
+@media (min-width: 1024px) {
+  .lg\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* md:grid-cols-4 - used in StatsOverview */
+@media (min-width: 768px) {
+  .md\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* lg:grid-cols-8 - used in StatsOverview */
+@media (min-width: 1024px) {
+  .lg\:grid-cols-8 {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+
+/* ==========================================
    MOBILE OPTIMIZATIONS (< 640px)
    ========================================== */
 
-@media (max-width: 640px) {
+@media (max-width: 639px) {
+  /* Container padding tighter on mobile */
+  .container {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
   /* Reduced card border radius for mobile */
   .card, .stat-card {
     border-radius: 16px !important;
-    padding: 1.25rem !important;
+    padding: 1rem !important;
   }
 
   /* Message cards optimized for mobile */
@@ -29,12 +78,43 @@
       0 0 20px rgba(249, 115, 22, 0.08);
   }
 
+  /* Stack all multi-column grids to single column on mobile */
+  .grid.lg\:grid-cols-2,
+  .grid.lg\:grid-cols-3 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* StatsOverview grid: 2 columns on mobile instead of collapsing */
+  .grid.md\:grid-cols-4.lg\:grid-cols-8 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  /* Tab navigation: horizontal scroll with no visible scrollbar */
+  nav[role="tablist"] .flex {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none; /* Firefox */
+  }
+
+  nav[role="tablist"] .flex::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+  }
+
+  nav[role="tablist"] button {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    padding: 0.375rem 0.625rem;
+    min-height: 40px;
+    min-width: auto;
+    scroll-snap-align: start;
+  }
+
   /* Optimized buttons for touch */
   button, .btn {
     min-height: 44px;
     min-width: 44px;
-    padding: 12px 20px;
-    border-radius: 10px;
   }
 
   /* Filter buttons for mobile touch */
@@ -93,6 +173,11 @@
     font-size: 1.875rem; /* 30px */
   }
 
+  /* text-3xl reduction on mobile */
+  .text-3xl {
+    font-size: 1.5rem !important;
+  }
+
   /* Reduce spacing */
   .gap-6 {
     gap: 1rem; /* 16px */
@@ -115,12 +200,6 @@
     animation: none;
   }
 
-  /* Touch-friendly spacing */
-  nav[role="tablist"] button {
-    padding: 12px 16px;
-    min-width: auto;
-  }
-
   /* Mobile-specific utility classes */
   .mobile-stack {
     display: flex;
@@ -134,13 +213,53 @@
   .section-divider::before {
     animation-duration: 3s;
   }
+
+  /* Footer: stack vertically on mobile */
+  footer .flex.items-center.justify-between {
+    flex-direction: column;
+    gap: 0.75rem;
+    text-align: center;
+  }
+
+  /* Header padding tighter on mobile */
+  header .container {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  header .container .py-4 {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  /* Header title smaller on mobile */
+  header h1.text-2xl {
+    font-size: 1.25rem !important;
+  }
+
+  /* Header subtitle hidden on very small screens */
+  header h1 + p {
+    font-size: 0.7rem;
+  }
+
+  /* Logo icon smaller on mobile */
+  header .p-3.rounded-xl {
+    padding: 0.5rem;
+  }
+}
+
+/* text-3xl reduction on tablet too */
+@media (max-width: 768px) {
+  .text-3xl {
+    font-size: 1.5rem !important;
+  }
 }
 
 /* ==========================================
-   TABLET OPTIMIZATIONS (641px - 1024px)
+   TABLET OPTIMIZATIONS (640px - 1024px)
    ========================================== */
 
-@media (min-width: 641px) and (max-width: 1024px) {
+@media (min-width: 640px) and (max-width: 1024px) {
   /* Medium card styling */
   .card, .stat-card {
     border-radius: 18px !important;

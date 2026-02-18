@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Archive, Calendar, Users, CheckCircle, Clock, TrendingUp, ChevronDown, ChevronUp, Package, FileText } from 'lucide-react';
+import { SkeletonArchiveCard } from './SkeletonLoader';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import duration from 'dayjs/plugin/duration';
@@ -62,13 +63,10 @@ export function ArchiveViewer() {
 
   if (loading) {
     return (
-      <div className="card">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <Package className="h-12 w-12 text-gray-500 mx-auto mb-3 animate-pulse" />
-            <p className="text-gray-400">Loading archived teams...</p>
-          </div>
-        </div>
+      <div className="space-y-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <SkeletonArchiveCard key={i} lines={2} />
+        ))}
       </div>
     );
   }
@@ -96,7 +94,7 @@ export function ArchiveViewer() {
             No Archived Teams Yet
           </h3>
           <p className="text-gray-400">
-            When your agent teams complete their work, they'll be archived here for reference
+            No archived teams yet. Teams are archived when they complete.
           </p>
         </div>
       </div>

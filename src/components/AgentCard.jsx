@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Bot, Crown, Cpu, Zap } from 'lucide-react';
 
-export function AgentCard({ agent, isLead }) {
+export function AgentCard({ agent, isLead, agentStatus }) {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -51,6 +51,7 @@ export function AgentCard({ agent, isLead }) {
             {isLead ? (
               <Crown
                 className="h-6 w-6"
+                aria-hidden="true"
                 style={{
                   color: '#facc15',
                   filter: 'drop-shadow(0 0 8px rgba(234, 179, 8, 0.6))'
@@ -59,6 +60,7 @@ export function AgentCard({ agent, isLead }) {
             ) : (
               <Bot
                 className="h-6 w-6"
+                aria-hidden="true"
                 style={{
                   color: '#60a5fa',
                   filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))'
@@ -83,6 +85,20 @@ export function AgentCard({ agent, isLead }) {
           {/* Agent Details */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
+              {agentStatus && (
+                <div className="relative group/status" title={agentStatus.tooltipText}>
+                  <span
+                    className={`inline-block w-2.5 h-2.5 rounded-full shrink-0 ${agentStatus.pulse ? 'animate-pulse' : ''}`}
+                    style={{
+                      backgroundColor: agentStatus.color,
+                      boxShadow: agentStatus.pulse ? `0 0 8px ${agentStatus.color}` : 'none'
+                    }}
+                  />
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-xs text-gray-200 rounded whitespace-nowrap opacity-0 group-hover/status:opacity-100 transition-opacity pointer-events-none z-20 border border-gray-700">
+                    {agentStatus.tooltipText}
+                  </div>
+                </div>
+              )}
               <h5
                 className="text-white font-bold text-lg truncate"
                 style={{
@@ -104,7 +120,7 @@ export function AgentCard({ agent, isLead }) {
                     textShadow: '0 0 10px rgba(234, 179, 8, 0.4)'
                   }}
                 >
-                  <Zap className="h-3 w-3" />
+                  <Zap className="h-3 w-3" aria-hidden="true" />
                   Lead
                 </span>
               )}
@@ -118,7 +134,7 @@ export function AgentCard({ agent, isLead }) {
                   border: '1px solid rgba(75, 85, 99, 0.3)'
                 }}
               >
-                <Cpu className="h-4 w-4 text-gray-400" />
+                <Cpu className="h-4 w-4 text-gray-400" aria-hidden="true" />
                 <span className="text-sm text-gray-300 truncate font-medium">
                   {agent.agentType}
                 </span>
@@ -159,5 +175,13 @@ AgentCard.propTypes = {
     agentType: PropTypes.string,
     model: PropTypes.string
   }).isRequired,
-  isLead: PropTypes.bool
+  isLead: PropTypes.bool,
+  agentStatus: PropTypes.shape({
+    status: PropTypes.string,
+    color: PropTypes.string,
+    label: PropTypes.string,
+    dot: PropTypes.string,
+    pulse: PropTypes.bool,
+    tooltipText: PropTypes.string
+  })
 };

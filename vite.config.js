@@ -15,21 +15,29 @@ export default defineConfig({
   ],
   server: {
     port: 5173,
-    host: '127.0.0.1',
+    host: 'localhost',
     strictPort: false,
+    hmr: { host: 'localhost' },
     proxy: {
       '/api': {
         target: 'http://localhost:3001',
         changeOrigin: true
+      },
+      '/ws': {
+        target: 'ws://localhost:3001',
+        ws: true
       }
     }
   },
   build: {
+    chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {
         manualChunks: {
-          'react-vendor': ['react', 'react-dom'],
-          'icons': ['lucide-react']
+          'icons': ['lucide-react'],
+          'charts': ['recharts'],
+          'd3-core': ['d3'],
+          'utils': ['dayjs', 'react-hot-toast']
         }
       }
     }

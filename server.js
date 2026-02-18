@@ -8,6 +8,8 @@ const cors = require('cors');
 const os = require('os');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const compression = require('compression');
+const crypto = require('crypto');
 const config = require('./config');
 
 const app = express();
@@ -40,6 +42,27 @@ app.use(cors({
   origin: config.CORS_ORIGINS,
   credentials: true
 }));
+
+// Gzip compression for all responses
+app.use(compression({ level: 6, threshold: 1024 }));
+
+// Request duration logging for API routes
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    if (req.path.startsWith('/api/')) {
+      console.log(`${req.method} ${req.path} ${res.statusCode} ${Date.now()-start}ms`);
+    }
+  });
+  next();
+});
+
+// Explicit Content-Type for all API responses
+app.use('/api/', (req, res, next) => {
+  res.set('Content-Type', 'application/json; charset=utf-8');
+  next();
+});
+
 app.use(express.json());
 
 // Serve pre-built frontend from dist/ (used when installed as global npm package)
@@ -280,6 +303,23 @@ async function readTasks(teamName) {
     }
     return [];
   }
+}
+
+// In-memory cache for expensive operations
+const cache = new Map();
+const CACHE_TTL = 5000; // 5 seconds
+
+function getCached(key, fn) {
+  const cached = cache.get(key);
+  if (cached && Date.now() - cached.time < CACHE_TTL) return cached.value;
+  const value = fn();
+  cache.set(key, { value, time: Date.now() });
+  return value;
+}
+
+// Cached wrapper for getActiveTeams
+function getCachedActiveTeams() {
+  return getCached('activeTeams', () => getActiveTeams());
 }
 
 // Get all active teams
@@ -787,9 +827,20 @@ wss.on('connection', async (ws) => {
 // REST API endpoints
 app.get('/api/teams', async (req, res) => {
   try {
-    const teams = await getActiveTeams();
+    const teams = await getCachedActiveTeams();
     const stats = calculateTeamStats(teams);
-    res.json({ teams, stats });
+    const body = JSON.stringify({ teams, stats });
+
+    // ETag support — hash the response body for conditional requests
+    const etag = '"' + crypto.createHash('md5').update(body).digest('hex') + '"';
+    res.set('ETag', etag);
+    res.set('Cache-Control', 'public, max-age=5');
+
+    if (req.headers['if-none-match'] === etag) {
+      return res.status(304).end();
+    }
+
+    res.type('json').send(body);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -882,9 +933,42 @@ app.get('/api/teams/:teamName/inboxes/:agentName', async (req, res) => {
   }
 });
 
-// Get archived teams
+// Get paginated tasks for a specific team
+app.get('/api/teams/:teamName/tasks', async (req, res) => {
+  try {
+    const teamName = req.params.teamName;
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(200, Math.max(1, parseInt(req.query.limit) || 50));
+    const statusFilter = req.query.status || 'all';
+
+    const tasks = await readTasks(teamName);
+
+    // Filter by status if specified
+    const validStatuses = ['pending', 'in_progress', 'completed'];
+    const filteredTasks = statusFilter === 'all'
+      ? tasks
+      : validStatuses.includes(statusFilter)
+        ? tasks.filter(t => t.status === statusFilter)
+        : tasks;
+
+    const count = filteredTasks.length;
+    const totalPages = Math.ceil(count / limit);
+    const start = (page - 1) * limit;
+    const paginatedTasks = filteredTasks.slice(start, start + limit);
+
+    res.json({ tasks: paginatedTasks, count, page, limit, totalPages, status: statusFilter });
+  } catch (error) {
+    console.error('Error fetching team tasks:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get archived teams (paginated)
 app.get('/api/archive', async (req, res) => {
   try {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
+
     const archives = [];
 
     try {
@@ -911,7 +995,12 @@ app.get('/api/archive', async (req, res) => {
     // Sort by archived date (newest first)
     archives.sort((a, b) => new Date(b.archivedAt) - new Date(a.archivedAt));
 
-    res.json({ archives, count: archives.length });
+    const count = archives.length;
+    const totalPages = Math.ceil(count / limit);
+    const start = (page - 1) * limit;
+    const paginatedArchives = archives.slice(start, start + limit);
+
+    res.json({ archives: paginatedArchives, count, page, limit, totalPages });
   } catch (error) {
     console.error('Error fetching archives:', error);
     res.status(500).json({ error: 'Failed to fetch archived teams' });
@@ -945,6 +1034,18 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Pre-computed stats endpoint
+app.get('/api/stats', async (req, res) => {
+  try {
+    const teams = await getCachedActiveTeams();
+    const stats = calculateTeamStats(teams);
+    res.set('Cache-Control', 'public, max-age=5');
+    res.json({ stats, timestamp: new Date().toISOString() });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get team history
 app.get('/api/team-history', async (req, res) => {
   try {
@@ -959,8 +1060,58 @@ app.get('/api/team-history', async (req, res) => {
 app.get('/api/inboxes', async (req, res) => {
   try {
     const allInboxes = await readAllInboxes();
+    res.set('Cache-Control', 'public, max-age=2');
     res.json({ inboxes: allInboxes });
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get paginated messages across all teams (or specific team)
+app.get('/api/inboxes/messages', async (req, res) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(200, Math.max(1, parseInt(req.query.limit) || 50));
+    const teamFilter = req.query.team || null;
+
+    let allInboxes;
+    if (teamFilter) {
+      const inboxes = await readTeamInboxes(teamFilter);
+      allInboxes = Object.keys(inboxes).length > 0 ? { [teamFilter]: inboxes } : {};
+    } else {
+      allInboxes = await readAllInboxes();
+    }
+
+    // Flatten all messages into a single array with metadata
+    const allMessages = [];
+    for (const [teamName, teamInboxes] of Object.entries(allInboxes)) {
+      for (const [agentName, inbox] of Object.entries(teamInboxes)) {
+        for (const msg of (inbox.messages || [])) {
+          const text = typeof msg === 'string' ? msg : (msg.message || msg.content || msg.text || '');
+          const timestamp = msg.timestamp || null;
+          allMessages.push({
+            team: teamName,
+            agent: agentName,
+            message: text.substring(0, 500),
+            timestamp,
+            _sortTime: timestamp ? new Date(timestamp).getTime() : 0
+          });
+        }
+      }
+    }
+
+    // Sort newest first
+    allMessages.sort((a, b) => b._sortTime - a._sortTime);
+
+    // Remove internal sort key
+    const count = allMessages.length;
+    const totalPages = Math.ceil(count / limit);
+    const start = (page - 1) * limit;
+    const paginatedMessages = allMessages.slice(start, start + limit).map(({ _sortTime, ...rest }) => rest);
+
+    res.json({ messages: paginatedMessages, count, page, limit, totalPages });
+  } catch (error) {
+    console.error('Error fetching paginated inboxes:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
@@ -1017,6 +1168,282 @@ app.get('/api/sessions', async (req, res) => {
   }
 });
 
+// Search rate limiter — 10 requests per minute per IP
+const searchLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: 'Too many search requests, please try again shortly.',
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+// GET /api/search?q=query — search across teams, agents, tasks, messages
+app.get('/api/search', searchLimiter, async (req, res) => {
+  try {
+    const q = req.query.q;
+    if (!q || typeof q !== 'string' || q.trim().length < 2) {
+      return res.status(400).json({ error: 'Query parameter "q" is required and must be at least 2 characters.' });
+    }
+
+    const query = q.trim().toLowerCase();
+    const MAX_RESULTS = 5;
+
+    // Optional types filter: ?types=teams,tasks,messages,agents (default: all)
+    const validTypes = ['teams', 'tasks', 'messages', 'agents'];
+    const typesParam = req.query.types;
+    const enabledTypes = typesParam
+      ? typesParam.split(',').map(t => t.trim().toLowerCase()).filter(t => validTypes.includes(t))
+      : validTypes;
+
+    const teams = await getCachedActiveTeams();
+    const allInboxes = enabledTypes.includes('messages') ? await readAllInboxes() : {};
+
+    // Search teams by name or config.description
+    const matchedTeams = !enabledTypes.includes('teams') ? [] : teams
+      .filter(t =>
+        t.name.toLowerCase().includes(query) ||
+        (t.config.description && t.config.description.toLowerCase().includes(query))
+      )
+      .slice(0, MAX_RESULTS)
+      .map(t => ({ name: t.name, description: t.config.description || null, memberCount: (t.config.members || []).length }));
+
+    // Search agents by member.name across all teams
+    const matchedAgents = [];
+    if (enabledTypes.includes('agents')) {
+      const seenAgents = new Set();
+      for (const team of teams) {
+        for (const member of (team.config.members || [])) {
+          if (member.name && member.name.toLowerCase().includes(query) && !seenAgents.has(member.name)) {
+            seenAgents.add(member.name);
+            matchedAgents.push({ name: member.name, team: team.name, agentType: member.agentType || null });
+            if (matchedAgents.length >= MAX_RESULTS) break;
+          }
+        }
+        if (matchedAgents.length >= MAX_RESULTS) break;
+      }
+    }
+
+    // Search tasks by subject or description
+    const matchedTasks = [];
+    if (enabledTypes.includes('tasks')) {
+      for (const team of teams) {
+        for (const task of (team.tasks || [])) {
+          if (
+            (task.subject && task.subject.toLowerCase().includes(query)) ||
+            (task.description && task.description.toLowerCase().includes(query))
+          ) {
+            matchedTasks.push({ id: task.id, subject: task.subject, status: task.status, team: team.name });
+            if (matchedTasks.length >= MAX_RESULTS) break;
+          }
+        }
+        if (matchedTasks.length >= MAX_RESULTS) break;
+      }
+    }
+
+    // Search messages by message text from inboxes
+    const matchedMessages = [];
+    for (const [teamName, teamInboxes] of Object.entries(allInboxes)) {
+      for (const [agentName, inbox] of Object.entries(teamInboxes)) {
+        for (const msg of (inbox.messages || [])) {
+          const text = typeof msg === 'string' ? msg : (msg.message || msg.content || msg.text || '');
+          if (text.toLowerCase().includes(query)) {
+            matchedMessages.push({
+              team: teamName,
+              agent: agentName,
+              preview: text.substring(0, 200),
+              timestamp: msg.timestamp || null
+            });
+            if (matchedMessages.length >= MAX_RESULTS) break;
+          }
+        }
+        if (matchedMessages.length >= MAX_RESULTS) break;
+      }
+      if (matchedMessages.length >= MAX_RESULTS) break;
+    }
+
+    res.json({ teams: matchedTeams, agents: matchedAgents, tasks: matchedTasks, messages: matchedMessages });
+  } catch (error) {
+    console.error('Search error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/metrics — aggregate metrics across all teams
+app.get('/api/metrics', async (req, res) => {
+  try {
+    const teams = await getCachedActiveTeams();
+    const allInboxes = await readAllInboxes();
+
+    const now = Date.now();
+    const thirtyMinutesAgo = now - 30 * 60 * 1000;
+    const twentyFourHoursAgo = now - 24 * 60 * 60 * 1000;
+
+    let totalMessages = 0;
+    const activeAgentSet = new Set();
+    const teamsWithActivitySet = new Set();
+
+    for (const [teamName, teamInboxes] of Object.entries(allInboxes)) {
+      for (const [agentName, inbox] of Object.entries(teamInboxes)) {
+        const messages = inbox.messages || [];
+        totalMessages += messages.length;
+
+        for (const msg of messages) {
+          const ts = msg.timestamp ? new Date(msg.timestamp).getTime() : 0;
+          if (ts > thirtyMinutesAgo) {
+            activeAgentSet.add(agentName);
+          }
+          if (ts > twentyFourHoursAgo) {
+            teamsWithActivitySet.add(teamName);
+          }
+        }
+      }
+    }
+
+    let totalAgents = 0;
+    let totalTasks = 0;
+    for (const team of teams) {
+      totalAgents += (team.config.members || []).length;
+      totalTasks += (team.tasks || []).length;
+    }
+
+    res.json({
+      totalTeams: teams.length,
+      totalAgents,
+      totalTasks,
+      totalMessages,
+      activeAgents: activeAgentSet.size,
+      teamsWithActivity: teamsWithActivitySet.size
+    });
+  } catch (error) {
+    console.error('Metrics error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/agents — all unique agents across all teams with stats
+app.get('/api/agents', async (req, res) => {
+  try {
+    const teams = await getCachedActiveTeams();
+    const allInboxes = await readAllInboxes();
+
+    // Build agent map: name -> { teams, messageCount, lastSeen }
+    const agentMap = new Map();
+
+    // Collect agents from team configs
+    for (const team of teams) {
+      for (const member of (team.config.members || [])) {
+        if (!member.name) continue;
+        if (!agentMap.has(member.name)) {
+          agentMap.set(member.name, { name: member.name, teams: [], messageCount: 0, lastSeen: null });
+        }
+        const entry = agentMap.get(member.name);
+        if (!entry.teams.includes(team.name)) {
+          entry.teams.push(team.name);
+        }
+      }
+    }
+
+    // Enrich with inbox data
+    for (const [teamName, teamInboxes] of Object.entries(allInboxes)) {
+      for (const [agentName, inbox] of Object.entries(teamInboxes)) {
+        if (!agentMap.has(agentName)) {
+          agentMap.set(agentName, { name: agentName, teams: [teamName], messageCount: 0, lastSeen: null });
+        }
+        const entry = agentMap.get(agentName);
+        if (!entry.teams.includes(teamName)) {
+          entry.teams.push(teamName);
+        }
+        const messages = inbox.messages || [];
+        entry.messageCount += messages.length;
+
+        for (const msg of messages) {
+          if (msg.timestamp) {
+            const ts = new Date(msg.timestamp).getTime();
+            if (!entry.lastSeen || ts > entry.lastSeen) {
+              entry.lastSeen = ts;
+            }
+          }
+        }
+      }
+    }
+
+    const now = Date.now();
+    const thirtyMinutesAgo = now - 30 * 60 * 1000;
+
+    const agents = Array.from(agentMap.values()).map(a => ({
+      name: a.name,
+      teams: a.teams,
+      messageCount: a.messageCount,
+      lastSeen: a.lastSeen ? new Date(a.lastSeen).toISOString() : null,
+      status: a.lastSeen && a.lastSeen > thirtyMinutesAgo ? 'active' : 'idle'
+    }));
+
+    res.json({ agents });
+  } catch (error) {
+    console.error('Agents error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/stats/live — real-time counts for teams, tasks, messages, agents
+app.get('/api/stats/live', async (req, res) => {
+  try {
+    const teams = await getCachedActiveTeams();
+    const allInboxes = await readAllInboxes();
+
+    let totalMessages = 0;
+    let activeAgents = 0;
+    const now = Date.now();
+    const thirtyMinutesAgo = now - 30 * 60 * 1000;
+    const activeSet = new Set();
+
+    for (const [, teamInboxes] of Object.entries(allInboxes)) {
+      for (const [agentName, inbox] of Object.entries(teamInboxes)) {
+        const messages = inbox.messages || [];
+        totalMessages += messages.length;
+        for (const msg of messages) {
+          const ts = msg.timestamp ? new Date(msg.timestamp).getTime() : 0;
+          if (ts > thirtyMinutesAgo) {
+            activeSet.add(agentName);
+          }
+        }
+      }
+    }
+    activeAgents = activeSet.size;
+
+    let totalAgents = 0;
+    let totalTasks = 0;
+    let pendingTasks = 0;
+    let inProgressTasks = 0;
+    let completedTasks = 0;
+    for (const team of teams) {
+      totalAgents += (team.config.members || []).length;
+      for (const task of (team.tasks || [])) {
+        totalTasks++;
+        if (task.status === 'pending') pendingTasks++;
+        else if (task.status === 'in_progress') inProgressTasks++;
+        else if (task.status === 'completed') completedTasks++;
+      }
+    }
+
+    res.set('Cache-Control', 'public, max-age=2');
+    res.json({
+      teams: teams.length,
+      agents: totalAgents,
+      activeAgents,
+      tasks: totalTasks,
+      pendingTasks,
+      inProgressTasks,
+      completedTasks,
+      messages: totalMessages,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Stats/live error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Graceful shutdown handler
 function setupGracefulShutdown() {
   let isShuttingDown = false;
@@ -1065,6 +1492,17 @@ function setupGracefulShutdown() {
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('SIGINT', () => shutdown('SIGINT'));
 }
+
+// Version endpoint
+app.get('/api/version', (req, res) => {
+  res.json({ version: require('./package.json').version, node: process.version });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('API Error:', err.message);
+  res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
+});
 
 // SPA fallback — serve index.html for all non-API routes (Express 5 compatible)
 app.use((req, res) => {

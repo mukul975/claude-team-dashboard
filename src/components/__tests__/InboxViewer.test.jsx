@@ -26,17 +26,17 @@ describe('InboxViewer Component', () => {
 
   it('renders empty state when allInboxes is empty object', () => {
     render(<InboxViewer allInboxes={{}} />);
-    expect(screen.getByText('No Active Teams')).toBeInTheDocument();
+    expect(screen.getByText('No Inbox Messages Yet')).toBeInTheDocument();
   });
 
   it('renders empty state when allInboxes is null', () => {
     render(<InboxViewer allInboxes={null} />);
-    expect(screen.getByText('No Active Teams')).toBeInTheDocument();
+    expect(screen.getByText('No Inbox Messages Yet')).toBeInTheDocument();
   });
 
   it('renders empty state when allInboxes is undefined', () => {
     render(<InboxViewer />);
-    expect(screen.getByText('No Active Teams')).toBeInTheDocument();
+    expect(screen.getByText('No Inbox Messages Yet')).toBeInTheDocument();
   });
 
   it('renders team names from allInboxes keys', () => {

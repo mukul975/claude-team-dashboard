@@ -53,9 +53,9 @@ export function TeamTimeline({ allInboxes = {}, teams = [] }) {
     <div
       className="rounded-2xl p-6"
       style={{
-        background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%)',
-        border: '1px solid rgba(249, 115, 22, 0.15)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border-color)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
         backdropFilter: 'blur(16px)'
       }}
     >
@@ -81,9 +81,8 @@ export function TeamTimeline({ allInboxes = {}, teams = [] }) {
           <h3
             className="text-lg font-bold"
             style={{
-              color: '#ffffff',
+              color: 'var(--text-heading)',
               letterSpacing: '-0.01em',
-              textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
             }}
           >
             Team Activity Timeline
@@ -94,15 +93,15 @@ export function TeamTimeline({ allInboxes = {}, teams = [] }) {
           {/* Team filter dropdown */}
           <div className="relative">
             <div className="flex items-center">
-              <Filter className="h-3.5 w-3.5 text-gray-400 mr-1.5" />
+              <Filter className="h-3.5 w-3.5 mr-1.5" style={{ color: 'var(--text-muted)' }} />
               <select
                 value={selectedTeam}
                 onChange={(e) => {
                   setSelectedTeam(e.target.value);
                   setVisibleCount(PAGE_SIZE);
                 }}
-                className="appearance-none bg-gray-800/80 text-gray-300 text-xs font-medium pl-2 pr-7 py-1.5 rounded-lg border border-gray-600/50 focus:border-claude-orange focus:outline-none cursor-pointer"
-                style={{ backgroundImage: 'none' }}
+                className="appearance-none text-xs font-medium pl-2 pr-7 py-1.5 rounded-lg focus:border-claude-orange focus:outline-none cursor-pointer"
+                style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', backgroundImage: 'none' }}
                 aria-label="Filter by team"
               >
                 <option value="all">All Teams</option>
@@ -110,7 +109,7 @@ export function TeamTimeline({ allInboxes = {}, teams = [] }) {
                   <option key={name} value={name}>{name}</option>
                 ))}
               </select>
-              <ChevronDown className="h-3 w-3 text-gray-500 -ml-5 pointer-events-none" />
+              <ChevronDown className="h-3 w-3 -ml-5 pointer-events-none" style={{ color: 'var(--text-muted)' }} />
             </div>
           </div>
 
@@ -137,13 +136,13 @@ export function TeamTimeline({ allInboxes = {}, teams = [] }) {
           <div
             className="text-center py-12 rounded-xl"
             style={{
-              background: 'rgba(30, 41, 59, 0.5)',
-              border: '1px dashed rgba(156, 163, 175, 0.2)'
+              background: 'var(--bg-secondary)',
+              border: '1px dashed var(--border-color)'
             }}
           >
-            <Clock className="h-12 w-12 text-gray-600 mx-auto mb-3 opacity-50" />
-            <p className="text-gray-400 text-sm">No team activity yet</p>
-            <p className="text-gray-500 text-xs mt-1">Messages from agent inboxes will appear here</p>
+            <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" style={{ color: 'var(--text-muted)' }} />
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No team activity yet</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Messages from agent inboxes will appear here</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -173,22 +172,23 @@ export function TeamTimeline({ allInboxes = {}, teams = [] }) {
                   <div
                     className={`flex-1 rounded-lg p-3 border-l-2 ${colorBorder}`}
                     style={{
-                      background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.5) 100%)',
-                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03)'
+                      background: 'var(--bg-secondary)',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
                     }}
                   >
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className="text-white font-medium text-sm">{msg.agentName}</span>
-                      <span className="text-gray-500 text-xs">in</span>
+                      <span className="font-medium text-sm" style={{ color: 'var(--text-heading)' }}>{msg.agentName}</span>
+                      <span className="text-xs" style={{ color: 'var(--text-muted)' }}>in</span>
                       <span className="text-xs" style={{ color: '#fb923c' }}>{msg.teamName}</span>
                       <span
-                        className="text-gray-600 text-xs ml-auto"
+                        className="text-xs ml-auto"
+                        style={{ color: 'var(--text-muted)' }}
                         title={msg.timestamp}
                       >
                         {relativeTime}
                       </span>
                     </div>
-                    <p className="text-gray-300 text-sm leading-relaxed">{parsedSummary}</p>
+                    <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{parsedSummary}</p>
                   </div>
                 </div>
               );

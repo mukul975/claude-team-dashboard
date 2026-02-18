@@ -7,6 +7,7 @@ import './animations.css';
 import './polish-enhancements.css';
 import './premium-visual-polish.css';
 import './responsive-enhancements.css';
+import './animations-enhanced.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

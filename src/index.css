@@ -1,3 +1,85 @@
+/* ========================================
+   THEME VARIABLES - Light & Dark Mode
+   ======================================== */
+:root[data-theme="light"] {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-gradient: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(241,245,249,0.9) 100%);
+  --bg-stat-card: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(241,245,249,0.92) 50%, rgba(255,255,255,0.95) 100%);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-heading: #1e293b;
+  --text-muted: #64748b;
+  --border-color: rgba(0,0,0,0.1);
+  --card-shadow: 0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.05);
+  --card-hover-shadow: 0 12px 32px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.08);
+  --header-bg: linear-gradient(135deg, rgba(255,255,255,0.94) 0%, rgba(241,245,249,0.96) 100%);
+  --header-border: rgba(249, 115, 22, 0.12);
+  --header-shadow: 0 4px 24px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.8);
+  --tab-inactive-bg: rgba(241,245,249,0.8);
+  --tab-inactive-text: #475569;
+  --tab-inactive-hover: rgba(226,232,240,0.9);
+  --footer-bg: rgba(241,245,249,0.8);
+  --footer-border: rgba(0,0,0,0.06);
+  --scrollbar-track: rgba(241,245,249,0.8);
+  --scrollbar-thumb: rgba(249,115,22,0.4);
+  --glass-bg: rgba(255,255,255,0.7);
+  --glass-border: rgba(0,0,0,0.08);
+  --code-bg: rgba(241,245,249,0.9);
+  --code-border: rgba(0,0,0,0.08);
+  --badge-text-shadow: none;
+  --inset-highlight: rgba(255,255,255,0.8);
+}
+
+:root[data-theme="dark"] {
+  --bg-primary: #111827;
+  --bg-secondary: #1f2937;
+  --bg-card: #1f2937;
+  --bg-card-gradient: linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.8) 100%);
+  --bg-stat-card: linear-gradient(135deg, rgba(30, 41, 59, 0.88) 0%, rgba(15, 23, 42, 0.85) 50%, rgba(30, 41, 59, 0.88) 100%);
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+  --text-heading: #ffffff;
+  --text-muted: #c4c9d4;
+  --border-color: rgba(255,255,255,0.1);
+  --card-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3);
+  --card-hover-shadow: 0 16px 48px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.35);
+  --header-bg: linear-gradient(135deg, rgba(17, 24, 39, 0.88) 0%, rgba(31, 41, 55, 0.92) 100%);
+  --header-border: rgba(249, 115, 22, 0.25);
+  --header-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --tab-inactive-bg: rgba(55, 65, 81, 0.5);
+  --tab-inactive-text: #d1d5db;
+  --tab-inactive-hover: rgba(55, 65, 81, 0.8);
+  --footer-bg: rgba(31, 41, 55, 0.5);
+  --footer-border: rgba(55, 65, 81, 0.6);
+  --scrollbar-track: rgba(15, 23, 42, 0.5);
+  --scrollbar-thumb: rgba(249, 115, 22, 0.6);
+  --glass-bg: rgba(30, 41, 59, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.15);
+  --code-bg: rgba(15, 23, 42, 0.9);
+  --code-border: rgba(55, 65, 81, 0.5);
+  --badge-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --inset-highlight: rgba(255, 255, 255, 0.08);
+}
+
+/* Notification Item Styles */
+.notif-item {
+  background: transparent;
+  transition: background 0.15s;
+}
+.notif-item:hover {
+  background: var(--tab-inactive-hover);
+}
+.notif-item.unread {
+  background: var(--tab-inactive-bg);
+}
+
+/* Header search input theming */
+.header-search-input::placeholder {
+  color: var(--text-muted);
+}
+
 /* Reset and Base Styles */
 * {
   margin: 0;
@@ -12,12 +94,18 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  scroll-behavior: smooth;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+:root[data-theme="dark"] body {
   background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 25%, #0f1729 50%, #1e2538 75%, #0a0e1a 100%);
   background-size: 400% 400%;
   animation: gradientShift 20s ease infinite;
   color: #e2e8f0;
-  min-height: 100vh;
-  scroll-behavior: smooth;
 }
 
 @keyframes gradientShift {
@@ -41,7 +129,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: -0.025em;
-  color: #ffffff;
+  color: var(--text-heading);
   margin-bottom: 0.5em;
 }
 
@@ -92,7 +180,7 @@ p {
   margin-bottom: 1em;
   line-height: 1.7;
   letter-spacing: -0.011em;
-  color: #d1d5db;
+  color: var(--text-primary);
 }
 
 /* Small text */
@@ -105,7 +193,7 @@ small {
 /* Strong emphasis */
 strong, b {
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-heading);
 }
 
 /* Layout */
@@ -117,13 +205,9 @@ strong, b {
 
 /* Cards - Improved spacing and visual balance with enhanced glassmorphism */
 .card {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.8) 100%);
+  background: var(--bg-card-gradient);
   border-radius: 20px;
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.4),
-    0 2px 8px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 0 1px rgba(255, 255, 255, 0.06);
+  box-shadow: var(--card-shadow);
   padding: 1.75rem; /* 28px - increased for better breathing room */
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
@@ -151,12 +235,8 @@ strong, b {
 
 .card:hover {
   transform: translateY(-4px) scale(1.005);
-  box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.5),
-    0 8px 24px rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(249, 115, 22, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  border-color: rgba(249, 115, 22, 0.3);
+  box-shadow: var(--card-hover-shadow);
+  border-color: var(--border-color);
 }
 
 .card:hover::before {
@@ -164,15 +244,11 @@ strong, b {
 }
 
 .stat-card {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.88) 0%, rgba(15, 23, 42, 0.85) 50%, rgba(30, 41, 59, 0.88) 100%);
+  background: var(--bg-stat-card);
   border-radius: 20px;
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.35),
-    0 2px 8px rgba(0, 0, 0, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 0 1px rgba(255, 255, 255, 0.06);
+  box-shadow: var(--card-shadow);
   padding: 1.5rem; /* 24px - optimized for stat cards */
-  border: 1px solid rgba(55, 65, 81, 0.6);
+  border: 1px solid var(--border-color);
   backdrop-filter: blur(20px) saturate(160%);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
   position: relative;
@@ -435,7 +511,16 @@ strong, b {
    TEXT UTILITIES - Enhanced Typography
    ======================================== */
 
-/* Text Colors - Improved contrast */
+/*
+ * Text Colors - Improved contrast
+ * WCAG 2.2 Contrast Ratios (against dark backgrounds):
+ *   .text-gray-300 (#d1d5db) on #111827: ~11.3:1 (AAA)
+ *   .text-gray-400 (#c4c9d4) on #111827: ~9.6:1  (AAA)
+ *   .text-gray-400 (#c4c9d4) on #1e2538: ~8.2:1  (AAA)
+ *   .text-gray-500 (#a3aab7) on #111827: ~6.5:1  (AA Large + AA Normal)
+ *   .text-white (#ffffff) on #111827:    ~16.8:1 (AAA)
+ * All pass WCAG 2.2 AA minimum (4.5:1 for normal text, 3:1 for large text).
+ */
 .text-white {
   color: #ffffff;
 }
@@ -946,9 +1031,11 @@ button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible,
-textarea:focus-visible {
+textarea:focus-visible,
+[tabindex]:focus-visible {
   outline: 3px solid #f97316;
   outline-offset: 2px;
+  border-radius: 4px;
   box-shadow:
     0 0 0 4px rgba(249, 115, 22, 0.25),
     0 4px 12px rgba(249, 115, 22, 0.3);
@@ -1815,4 +1902,210 @@ nav[role="tablist"] button[aria-selected="true"] .lucide {
       0 3px 12px rgba(239, 68, 68, 0.6),
       0 0 0 2px rgba(15, 23, 42, 1);
   }
+}
+
+/* ========================================
+   THEME TOGGLE BUTTON
+   ======================================== */
+.theme-toggle-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  color: var(--text-primary);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1), inset 0 1px 0 var(--inset-highlight);
+}
+
+.theme-toggle-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+  border-color: rgba(249, 115, 22, 0.4);
+  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.25), inset 0 1px 0 var(--inset-highlight);
+}
+
+.theme-toggle-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.theme-toggle-btn svg {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+}
+
+.theme-toggle-btn:hover svg {
+  transform: rotate(20deg) scale(1.1);
+}
+
+/* ========================================
+   LIGHT THEME OVERRIDES
+   ======================================== */
+:root[data-theme="light"] .card {
+  background: var(--bg-card-gradient);
+  box-shadow: var(--card-shadow);
+  border-color: var(--border-color);
+}
+
+:root[data-theme="light"] .card:hover {
+  box-shadow: var(--card-hover-shadow);
+  border-color: rgba(249, 115, 22, 0.25);
+}
+
+:root[data-theme="light"] .stat-card {
+  background: var(--bg-stat-card);
+  box-shadow: var(--card-shadow);
+  border-color: var(--border-color);
+}
+
+:root[data-theme="light"] .stat-card:hover {
+  box-shadow: var(--card-hover-shadow);
+  border-color: rgba(249, 115, 22, 0.3);
+}
+
+:root[data-theme="light"] h1,
+:root[data-theme="light"] h2,
+:root[data-theme="light"] h3,
+:root[data-theme="light"] h4,
+:root[data-theme="light"] h5,
+:root[data-theme="light"] h6 {
+  color: var(--text-heading);
+}
+
+:root[data-theme="light"] p {
+  color: var(--text-secondary);
+}
+
+:root[data-theme="light"] .text-white {
+  color: var(--text-heading);
+}
+
+:root[data-theme="light"] .text-gray-300,
+:root[data-theme="light"] .text-gray-400,
+:root[data-theme="light"] .text-gray-500 {
+  color: var(--text-secondary);
+}
+
+:root[data-theme="light"] .glass {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+:root[data-theme="light"] .bg-gray-700,
+:root[data-theme="light"] .bg-gray-800 {
+  background: var(--bg-secondary);
+}
+
+:root[data-theme="light"] .bg-gray-700\/50,
+:root[data-theme="light"] .bg-gray-700\/30 {
+  background: rgba(241, 245, 249, 0.8);
+}
+
+:root[data-theme="light"] pre {
+  background: var(--code-bg);
+  border-color: var(--code-border);
+}
+
+:root[data-theme="light"] :not(pre) > code {
+  background: rgba(249, 115, 22, 0.08);
+  border-color: rgba(249, 115, 22, 0.15);
+}
+
+:root[data-theme="light"] .message-card {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: var(--border-color);
+}
+
+:root[data-theme="light"] .message-text {
+  color: var(--text-primary);
+  text-shadow: none;
+}
+
+:root[data-theme="light"] .badge {
+  text-shadow: var(--badge-text-shadow);
+}
+
+:root[data-theme="light"] ::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+:root[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, var(--scrollbar-thumb) 0%, rgba(251, 146, 60, 0.35) 100%);
+}
+
+:root[data-theme="light"] * {
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+:root[data-theme="light"] .surface-elevated {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: var(--border-color);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+:root[data-theme="light"] .skeleton-shimmer {
+  background: linear-gradient(90deg, rgba(226,232,240,0.5) 0%, rgba(241,245,249,0.8) 50%, rgba(226,232,240,0.5) 100%);
+  background-size: 200% 100%;
+}
+
+:root[data-theme="light"] .skeleton-message {
+  background: rgba(241,245,249,0.7);
+  border-color: var(--border-color);
+}
+
+:root[data-theme="light"] strong,
+:root[data-theme="light"] b {
+  color: var(--text-heading);
+}
+
+:root[data-theme="light"] .text-claude-orange {
+  text-shadow: none;
+}
+
+:root[data-theme="light"] .text-blue-400,
+:root[data-theme="light"] .text-purple-400,
+:root[data-theme="light"] .text-cyan-400,
+:root[data-theme="light"] .text-green-400,
+:root[data-theme="light"] .text-red-400,
+:root[data-theme="light"] .text-yellow-400 {
+  text-shadow: none;
+}
+
+:root[data-theme="light"] .gradient-text {
+  filter: none;
+}
+
+:root[data-theme="light"] ::selection {
+  background: rgba(249, 115, 22, 0.2);
+  color: #0f172a;
+}
+
+:root[data-theme="light"] .hover-glow:hover {
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.2), 0 4px 12px rgba(249, 115, 22, 0.1);
+}
+
+/* ========================================
+   THEME-AWARE TAB & TOGGLE CLASSES
+   ======================================== */
+.tab-btn-inactive {
+  background: var(--tab-inactive-bg);
+  color: var(--tab-inactive-text);
+}
+.tab-btn-inactive:hover {
+  background: var(--tab-inactive-hover);
+  color: var(--text-heading);
+}
+
+.toggle-btn-inactive {
+  color: var(--text-secondary);
+}
+.toggle-btn-inactive:hover {
+  color: var(--text-heading);
+  background: var(--tab-inactive-hover);
 }

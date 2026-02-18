@@ -1,0 +1,15 @@
+{
+  "name": "Claude Code Agent Dashboard",
+  "short_name": "AgentDash",
+  "description": "Real-time monitoring dashboard for Claude Code agent teams",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#f97316",
+  "orientation": "any",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "categories": ["productivity", "developer tools"]
+}

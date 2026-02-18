@@ -12,11 +12,12 @@ export class ErrorBoundary extends React.Component {
   }
 
   static getDerivedStateFromError(error) {
-    return { hasError: true };
+    return { hasError: true, error };
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('Error caught by boundary:', error, errorInfo);
+    const name = this.props.name || 'Unknown Component';
+    console.error(`[ErrorBoundary] "${name}" crashed:`, error, errorInfo);
     this.setState({
       error,
       errorInfo
@@ -37,6 +38,45 @@ export class ErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
+      // Panel-level fallback when a name prop is provided
+      if (this.props.name) {
+        return (
+          <div className="card p-6 border border-red-500/30">
+            <div className="flex items-start gap-3 mb-4">
+              <AlertCircle className="h-6 w-6 text-red-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-lg font-semibold text-white">
+                  {this.props.name} encountered an error
+                </h3>
+                {this.state.error && (
+                  <p className="text-sm text-gray-400 mt-1 break-words">
+                    {this.state.error.message || this.state.error.toString()}
+                  </p>
+                )}
+              </div>
+            </div>
+            {this.state.errorInfo && (
+              <details className="mb-4">
+                <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-300">
+                  Component Stack
+                </summary>
+                <pre className="text-xs text-gray-400 mt-2 overflow-x-auto bg-gray-800 rounded p-2">
+                  {this.state.errorInfo.componentStack}
+                </pre>
+              </details>
+            )}
+            <button
+              onClick={this.handleReset}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              Try Again
+            </button>
+          </div>
+        );
+      }
+
+      // Full-page fallback for app-level boundary (no name prop)
       return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-6">
           <div className="max-w-2xl w-full">
