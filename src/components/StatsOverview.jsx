@@ -187,15 +187,16 @@ export function StatsOverview({ stats, allInboxes = {} }) {
 
   return (
     <div
-      className="rounded-2xl p-6 mb-6"
+      className="p-6 mb-6"
       style={{
+        borderRadius: '16px',
         background: 'var(--bg-card-gradient)',
         border: '1px solid var(--border-color)',
         boxShadow: 'var(--card-shadow)',
         backdropFilter: 'blur(16px)'
       }}
     >
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))' }}>
         {statCards.map((stat, index) => {
           const Icon = stat.icon;
           const value = animatedValuesMap[stat.key];
@@ -203,33 +204,45 @@ export function StatsOverview({ stats, allInboxes = {} }) {
           return (
             <div
               key={stat.key}
-              className="relative group rounded-xl p-4 transition-all duration-300"
+              role="group"
+              aria-label={`${stat.label}: ${value}`}
+              className="rounded-lg p-4"
               style={{
+                position: 'relative',
+                overflow: 'hidden',
                 background: stat.gradient,
                 border: `1px solid ${stat.borderColor}`,
                 boxShadow: 'var(--card-shadow)',
                 opacity: isVisible ? 1 : 0,
                 transform: isVisible ? 'translateY(0)' : 'translateY(10px)',
-                transitionDelay: `${index * 80}ms`
+                transition: 'all 0.3s ease',
+                transitionDelay: `${index * 80}ms`,
+                borderRadius: '12px'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
                 e.currentTarget.style.boxShadow = `0 8px 24px ${stat.glowColor}`;
                 e.currentTarget.style.borderColor = stat.borderColor;
+                const iconBox = e.currentTarget.querySelector('[data-icon-box]');
+                if (iconBox) iconBox.style.transform = 'scale(1.1)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0) scale(1)';
                 e.currentTarget.style.boxShadow = '';
                 e.currentTarget.style.borderColor = stat.borderColor;
+                const iconBox = e.currentTarget.querySelector('[data-icon-box]');
+                if (iconBox) iconBox.style.transform = 'scale(1)';
               }}
             >
-              {/* Icon */}
               <div
-                className="inline-flex p-2.5 rounded-lg mb-3 transition-transform duration-300 group-hover:scale-110"
+                data-icon-box
+                className="inline-flex rounded-lg mb-3"
                 style={{
+                  padding: '10px',
                   background: 'var(--bg-secondary)',
                   boxShadow: `0 2px 8px ${stat.glowColor}`,
-                  border: `1px solid ${stat.borderColor}`
+                  border: `1px solid ${stat.borderColor}`,
+                  transition: 'transform 0.3s ease'
                 }}
               >
                 <Icon
@@ -242,22 +255,21 @@ export function StatsOverview({ stats, allInboxes = {} }) {
                 />
               </div>
 
-              {/* Value */}
               <div className="mb-1">
                 <p
-                  className={`text-3xl font-extrabold tabular-nums ${stat.extraClass || ''}`}
+                  className="text-3xl font-extrabold"
                   style={{
-                    color: stat.extraClass ? undefined : 'var(--text-heading)',
+                    color: stat.extraClass === 'text-red-400' ? '#f87171' : 'var(--text-heading)',
                     letterSpacing: '-0.03em',
                     textShadow: `0 0 12px ${stat.glowColor}`,
-                    lineHeight: 1
+                    lineHeight: 1,
+                    fontVariantNumeric: 'tabular-nums'
                   }}
                 >
                   {value}
                 </p>
               </div>
 
-              {/* Label */}
               <p
                 className="text-xs font-semibold uppercase tracking-wider"
                 style={{
@@ -268,7 +280,6 @@ export function StatsOverview({ stats, allInboxes = {} }) {
                 {stat.label}
               </p>
 
-              {/* Sparkline & Trend */}
               {(() => {
                 const historyData = statsHistory.map(h => h[stat.key] ?? 0);
                 const len = historyData.length;
@@ -299,18 +310,26 @@ export function StatsOverview({ stats, allInboxes = {} }) {
                 );
               })()}
 
-              {/* Hover Glow Effect */}
               <div
-                className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
                 style={{
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: '12px',
+                  opacity: 0,
+                  transition: 'opacity 0.5s ease',
+                  pointerEvents: 'none',
                   background: `radial-gradient(circle at center, ${stat.glowColor}, transparent 70%)`
                 }}
               />
 
-              {/* Top Border Accent */}
               <div
-                className="absolute top-0 left-0 right-0 h-1 rounded-t-xl"
                 style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: '4px',
+                  borderRadius: '12px 12px 0 0',
                   background: `linear-gradient(90deg, transparent, ${stat.iconColor}, transparent)`,
                   opacity: 0.6
                 }}

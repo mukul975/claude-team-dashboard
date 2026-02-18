@@ -329,6 +329,7 @@ export function NotificationCenter({
               onClick={markAllRead}
               className="font-medium"
               style={{ color: '#e8750a', transition: 'opacity 0.15s' }}
+              aria-label="Mark all notifications as read"
               title="Mark all as read"
               onMouseEnter={e => e.target.style.opacity = '0.7'}
               onMouseLeave={e => e.target.style.opacity = '1'}
@@ -340,6 +341,7 @@ export function NotificationCenter({
               onClick={clearAll}
               className="font-medium"
               style={{ color: 'var(--text-muted)', transition: 'color 0.15s' }}
+              aria-label="Clear all notifications"
               title="Clear all notifications"
               onMouseEnter={e => e.target.style.color = '#ef4444'}
               onMouseLeave={e => e.target.style.color = 'var(--text-muted)'}

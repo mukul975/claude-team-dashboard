@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Trophy, Users, AlertTriangle, Crown, TrendingDown, Zap, Clock, ShieldAlert, CheckCircle } from 'lucide-react';
+import { Trophy, Users, AlertTriangle, Crown, TrendingDown, ShieldAlert, CheckCircle } from 'lucide-react';
 
 function getMessageCount(teamInbox) {
   let count = 0;
@@ -402,7 +402,7 @@ export function TeamPerformancePanel({ teams = [], allInboxes = {} }) {
             <div className="flex items-center gap-3 p-3 rounded-lg" style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.2)' }}>
               <Crown className="h-5 w-5 text-yellow-400 flex-shrink-0" />
               <div>
-                <div className="text-xs text-yellow-400/70 font-medium">Most Active Agent</div>
+                <div className="text-xs font-medium" style={{ color: 'rgba(250,204,21,0.7)' }}>Most Active Agent</div>
                 <div className="text-sm font-semibold" style={{ color: 'var(--text-heading)' }}>{topAgent.name}</div>
                 <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{topAgent.count} messages</div>
               </div>
@@ -412,7 +412,7 @@ export function TeamPerformancePanel({ teams = [], allInboxes = {} }) {
             <div className="flex items-center gap-3 p-3 rounded-lg" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
               <TrendingDown className="h-5 w-5 text-red-400 flex-shrink-0" />
               <div>
-                <div className="text-xs text-red-400/70 font-medium">Needs Attention</div>
+                <div className="text-xs font-medium" style={{ color: 'rgba(248,113,113,0.7)' }}>Needs Attention</div>
                 <div className="text-sm font-semibold" style={{ color: 'var(--text-heading)' }}>{slowestTeam.name}</div>
                 <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{slowestTeam.completionRate.toFixed(0)}% ({slowestTeam.completedTasks}/{slowestTeam.totalTasks})</div>
               </div>

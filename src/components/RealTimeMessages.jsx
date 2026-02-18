@@ -129,6 +129,8 @@ export function RealTimeMessages({ allInboxes = {} }) {
             className={`filter-button whitespace-nowrap ${
               filter === f ? 'filter-button-active' : 'filter-button-inactive'
             }`}
+            aria-label={`Filter by ${f}`}
+            aria-pressed={filter === f}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)}
           </button>

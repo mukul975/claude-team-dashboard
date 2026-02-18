@@ -254,6 +254,7 @@ export function TeamCard({ team, inboxes = {}, allInboxes = {}, onNavigateToInbo
             style={{ background: 'rgba(232,117,10,0.2)' }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(232,117,10,0.3)'}
             onMouseLeave={e => e.currentTarget.style.background = 'rgba(232,117,10,0.2)'}
+            aria-label={`View inboxes for team ${name}`}
           >
             <Inbox className="h-4 w-4" aria-hidden="true" />
             View Inboxes

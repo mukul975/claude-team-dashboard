@@ -113,6 +113,8 @@ function MessageContent({ text }) {
         )}
         <button
           onClick={() => setExpanded(!expanded)}
+          aria-label={expanded ? 'Hide raw JSON data' : 'Show raw JSON data'}
+          aria-expanded={expanded}
           className="text-xs"
           style={{
             color: 'var(--text-muted)',
@@ -499,6 +501,7 @@ export function InboxViewer({ allInboxes, initialTeam = null, loading }) {
                       color: 'inherit',
                     }}
                     aria-expanded={isExpanded}
+                    aria-label={`${isExpanded ? 'Collapse' : 'Expand'} team ${teamName}`}
                   >
                     {isExpanded ? (
                       <ChevronDown style={{ height: '14px', width: '14px', color: '#9ca3af', flexShrink: 0 }} aria-hidden="true" />
@@ -544,6 +547,8 @@ export function InboxViewer({ allInboxes, initialTeam = null, loading }) {
                           <button
                             key={agentName}
                             onClick={() => selectAgent(teamName, agentName)}
+                            aria-label={`View inbox for ${agentName}`}
+                            aria-current={isSelected ? 'true' : undefined}
                             style={{
                               width: '100%',
                               display: 'flex',
@@ -692,6 +697,7 @@ export function InboxViewer({ allInboxes, initialTeam = null, loading }) {
                       }));
                       exportToCSV(data, `inbox-${selectedTeam}-${selectedAgent}`);
                     }}
+                    aria-label="Export messages as CSV"
                     title="Export messages as CSV"
                     style={{
                       display: 'flex',
@@ -761,6 +767,8 @@ export function InboxViewer({ allInboxes, initialTeam = null, loading }) {
                   </div>
                   <button
                     onClick={() => setShowFilters(prev => !prev)}
+                    aria-label={`Toggle filters${activeFilterCount > 0 ? ` (${activeFilterCount} active)` : ''}`}
+                    aria-expanded={showFilters}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -933,6 +941,7 @@ export function InboxViewer({ allInboxes, initialTeam = null, loading }) {
                       {activeFilterCount > 0 && (
                         <button
                           onClick={clearAllFilters}
+                          aria-label="Clear all filters"
                           style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -1081,6 +1090,7 @@ export function InboxViewer({ allInboxes, initialTeam = null, loading }) {
                 }}>
                   <button
                     onClick={scrollToBottom}
+                    aria-label="Scroll to new messages"
                     style={{
                       display: 'flex',
                       alignItems: 'center',

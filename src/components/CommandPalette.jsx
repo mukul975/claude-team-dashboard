@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { BarChart3, Users, MessageSquare, Settings, History, Archive, Inbox, Search, Command } from 'lucide-react';
+import { BarChart3, Users, MessageSquare, Settings, History, Archive, Inbox, Search } from 'lucide-react';
 
 const commands = [
   { id: 'overview', label: 'Navigate to Overview', shortcut: 'Ctrl+1', icon: BarChart3, tab: 'overview' },
@@ -10,6 +10,19 @@ const commands = [
   { id: 'archive', label: 'Navigate to Archive', shortcut: 'Ctrl+6', icon: Archive, tab: 'archive' },
   { id: 'inboxes', label: 'Navigate to Inboxes', shortcut: 'Ctrl+7', icon: Inbox, tab: 'inboxes' },
 ];
+
+const kbdStyle = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '4px',
+  padding: '2px 8px',
+  fontSize: '0.75rem',
+  color: '#9ca3af',
+  background: 'linear-gradient(135deg, rgba(31, 41, 55, 0.95) 0%, rgba(17, 24, 39, 0.95) 100%)',
+  border: '1px solid rgba(55, 65, 81, 0.6)',
+  borderRadius: '4px',
+  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
+};
 
 export function CommandPalette({ isOpen, onClose, onNavigate }) {
   const [query, setQuery] = useState('');
@@ -24,12 +37,10 @@ export function CommandPalette({ isOpen, onClose, onNavigate }) {
         cmd.tab.toLowerCase().includes(query.toLowerCase())
       );
 
-  // Reset state when opening
   useEffect(() => {
     if (isOpen) {
       setQuery('');
       setSelectedIndex(0);
-      // Small delay to ensure the modal is rendered before focusing
       const rafId = requestAnimationFrame(() => {
         inputRef.current?.focus();
       });
@@ -37,14 +48,12 @@ export function CommandPalette({ isOpen, onClose, onNavigate }) {
     }
   }, [isOpen]);
 
-  // Clamp selectedIndex when filtered results change
   useEffect(() => {
     if (selectedIndex >= filtered.length) {
       setSelectedIndex(Math.max(0, filtered.length - 1));
     }
   }, [filtered.length, selectedIndex]);
 
-  // Scroll selected item into view
   useEffect(() => {
     if (listRef.current) {
       const selectedEl = listRef.current.children[selectedIndex];
@@ -80,24 +89,43 @@ export function CommandPalette({ isOpen, onClose, onNavigate }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center"
-      style={{ paddingTop: '20vh' }}
+      className="flex items-start"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 50,
+        paddingTop: '20vh',
+        justifyContent: 'center'
+      }}
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label="Command palette"
     >
-      {/* Backdrop */}
-      <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }} />
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'rgba(0,0,0,0.6)',
+        backdropFilter: 'blur(4px)',
+        WebkitBackdropFilter: 'blur(4px)'
+      }} />
 
-      {/* Palette */}
       <div
-        className="relative w-full max-w-lg mx-4 bg-gray-900 border border-gray-600 rounded-xl shadow-2xl overflow-hidden animate-fadeIn"
+        className="animate-fadeIn overflow-hidden"
+        style={{
+          position: 'relative',
+          width: '100%',
+          maxWidth: '512px',
+          margin: '0 16px',
+          background: 'rgba(15, 23, 42, 0.95)',
+          border: '1px solid rgba(75, 85, 99, 0.6)',
+          borderRadius: '12px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+        }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-700">
-          <Search className="h-5 w-5 text-gray-400 shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: '1px solid rgba(55, 65, 81, 0.6)' }}>
+          <Search className="h-5 w-5 text-gray-400" style={{ flexShrink: 0 }} aria-hidden="true" />
           <input
             ref={inputRef}
             type="text"
@@ -105,7 +133,13 @@ export function CommandPalette({ isOpen, onClose, onNavigate }) {
             onChange={e => { setQuery(e.target.value); setSelectedIndex(0); }}
             onKeyDown={handleKeyDown}
             placeholder="Type a command or search..."
-            className="flex-1 bg-transparent text-white placeholder-gray-500 outline-none text-sm"
+            className="flex-1 text-sm"
+            style={{
+              background: 'transparent',
+              color: '#ffffff',
+              outline: 'none',
+              border: 'none'
+            }}
             aria-label="Search commands"
             aria-activedescendant={filtered[selectedIndex] ? `cmd-${filtered[selectedIndex].id}` : undefined}
             role="combobox"
@@ -113,20 +147,18 @@ export function CommandPalette({ isOpen, onClose, onNavigate }) {
             aria-controls="command-list"
             aria-autocomplete="list"
           />
-          <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 text-xs text-gray-400 bg-gray-800 border border-gray-700 rounded">
-            ESC
-          </kbd>
+          <kbd style={kbdStyle}>ESC</kbd>
         </div>
 
-        {/* Commands list */}
         <ul
           ref={listRef}
           id="command-list"
           role="listbox"
-          className="max-h-72 overflow-y-auto py-2"
+          className="overflow-y-auto"
+          style={{ maxHeight: '288px', padding: '8px 0' }}
         >
           {filtered.length === 0 ? (
-            <li className="px-4 py-8 text-center text-sm text-gray-500">
+            <li className="px-4 text-center text-sm text-gray-500" style={{ padding: '32px 16px' }}>
               No matching commands
             </li>
           ) : (
@@ -139,38 +171,41 @@ export function CommandPalette({ isOpen, onClose, onNavigate }) {
                   id={`cmd-${cmd.id}`}
                   role="option"
                   aria-selected={isSelected}
-                  className={`flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg cursor-pointer transition-colors ${
-                    isSelected
-                      ? 'text-white'
-                      : 'text-gray-300 hover:bg-gray-800'
-                  }`}
-                  style={isSelected ? { background: 'rgba(232,117,10,0.2)' } : undefined}
+                  className="flex items-center gap-3 rounded-lg transition-colors"
+                  style={{
+                    padding: '10px 16px',
+                    margin: '0 8px',
+                    cursor: 'pointer',
+                    color: isSelected ? '#ffffff' : '#d1d5db',
+                    background: isSelected ? 'rgba(232,117,10,0.2)' : 'transparent'
+                  }}
                   onClick={() => handleSelect(cmd.tab)}
                   onMouseEnter={() => setSelectedIndex(i)}
                 >
-                  <Icon className={`h-4 w-4 shrink-0 ${isSelected ? 'text-claude-orange' : 'text-gray-500'}`} />
+                  <Icon
+                    className={isSelected ? 'h-4 w-4 text-claude-orange' : 'h-4 w-4 text-gray-500'}
+                    style={{ flexShrink: 0 }}
+                    aria-hidden="true"
+                  />
                   <span className="flex-1 text-sm">{cmd.label}</span>
-                  <kbd className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-gray-400 bg-gray-800 border border-gray-700 rounded font-mono">
-                    {cmd.shortcut}
-                  </kbd>
+                  <kbd style={kbdStyle}>{cmd.shortcut}</kbd>
                 </li>
               );
             })
           )}
         </ul>
 
-        {/* Footer hint */}
-        <div className="flex items-center gap-4 px-4 py-2.5 border-t border-gray-700 text-xs text-gray-500">
+        <div className="flex items-center gap-4 px-4 text-xs text-gray-500" style={{ padding: '10px 16px', borderTop: '1px solid rgba(55, 65, 81, 0.6)' }}>
           <span className="flex items-center gap-1">
-            <kbd className="px-1.5 py-0.5 bg-gray-800 border border-gray-700 rounded text-gray-400">↑↓</kbd>
+            <kbd style={kbdStyle}>{'\u2191\u2193'}</kbd>
             navigate
           </span>
           <span className="flex items-center gap-1">
-            <kbd className="px-1.5 py-0.5 bg-gray-800 border border-gray-700 rounded text-gray-400">↵</kbd>
+            <kbd style={kbdStyle}>{'\u21B5'}</kbd>
             select
           </span>
           <span className="flex items-center gap-1">
-            <kbd className="px-1.5 py-0.5 bg-gray-800 border border-gray-700 rounded text-gray-400">esc</kbd>
+            <kbd style={kbdStyle}>esc</kbd>
             close
           </span>
         </div>

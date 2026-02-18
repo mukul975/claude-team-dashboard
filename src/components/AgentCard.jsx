@@ -4,11 +4,15 @@ import { Bot, Crown, Cpu, Zap } from 'lucide-react';
 
 export function AgentCard({ agent, isLead, agentStatus }) {
   const [isHovered, setIsHovered] = useState(false);
+  const [statusHovered, setStatusHovered] = useState(false);
 
   return (
     <div
-      className="relative group rounded-2xl p-5 transition-all duration-300"
+      className="p-5"
       style={{
+        position: 'relative',
+        borderRadius: '16px',
+        transition: 'all 0.3s',
         background: isLead
           ? 'linear-gradient(135deg, rgba(234, 179, 8, 0.12) 0%, rgba(202, 138, 4, 0.08) 100%)'
           : 'linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(37, 99, 235, 0.08) 100%)',
@@ -23,8 +27,12 @@ export function AgentCard({ agent, isLead, agentStatus }) {
     >
       {/* Gradient Border Animation */}
       <div
-        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
         style={{
+          position: 'absolute',
+          inset: 0,
+          borderRadius: '16px',
+          opacity: isHovered ? 1 : 0,
+          transition: 'opacity 0.5s',
           background: isLead
             ? 'linear-gradient(135deg, rgba(234, 179, 8, 0.2), transparent 50%, rgba(234, 179, 8, 0.1))'
             : 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), transparent 50%, rgba(59, 130, 246, 0.1))',
@@ -32,12 +40,15 @@ export function AgentCard({ agent, isLead, agentStatus }) {
         }}
       />
 
-      <div className="flex items-start justify-between relative z-10">
+      <div className="flex items-start justify-between" style={{ position: 'relative', zIndex: 10 }}>
         <div className="flex items-start gap-4 flex-1">
           {/* Icon Container with Glow */}
           <div
-            className="relative p-3 rounded-xl transition-all duration-300"
+            className="p-3"
             style={{
+              position: 'relative',
+              borderRadius: '12px',
+              transition: 'all 0.3s',
               background: isLead
                 ? 'linear-gradient(135deg, rgba(234, 179, 8, 0.25) 0%, rgba(202, 138, 4, 0.15) 100%)'
                 : 'linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.15) 100%)',
@@ -71,8 +82,11 @@ export function AgentCard({ agent, isLead, agentStatus }) {
             {/* Pulsing Glow Effect */}
             {isHovered && (
               <div
-                className="absolute inset-0 rounded-xl animate-pulse"
+                className="animate-pulse"
                 style={{
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: '12px',
                   background: isLead
                     ? 'radial-gradient(circle, rgba(234, 179, 8, 0.3), transparent 70%)'
                     : 'radial-gradient(circle, rgba(59, 130, 246, 0.3), transparent 70%)',
@@ -86,15 +100,42 @@ export function AgentCard({ agent, isLead, agentStatus }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
               {agentStatus && (
-                <div className="relative group/status" title={agentStatus.tooltipText}>
+                <div
+                  style={{ position: 'relative' }}
+                  title={agentStatus.tooltipText}
+                  onMouseEnter={() => setStatusHovered(true)}
+                  onMouseLeave={() => setStatusHovered(false)}
+                >
                   <span
-                    className={`inline-block w-2.5 h-2.5 rounded-full shrink-0 ${agentStatus.pulse ? 'animate-pulse' : ''}`}
+                    className={`inline-block rounded-full ${agentStatus.pulse ? 'animate-pulse' : ''}`}
                     style={{
+                      width: '10px',
+                      height: '10px',
+                      flexShrink: 0,
                       backgroundColor: agentStatus.color,
                       boxShadow: agentStatus.pulse ? `0 0 8px ${agentStatus.color}` : 'none'
                     }}
                   />
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-xs text-gray-200 rounded whitespace-nowrap opacity-0 group-hover/status:opacity-100 transition-opacity pointer-events-none z-20 border border-gray-700">
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: '100%',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      marginBottom: '8px',
+                      padding: '4px 8px',
+                      background: '#111827',
+                      fontSize: '12px',
+                      color: '#e5e7eb',
+                      borderRadius: '4px',
+                      whiteSpace: 'nowrap',
+                      zIndex: 20,
+                      border: '1px solid #374151',
+                      opacity: statusHovered ? 1 : 0,
+                      transition: 'opacity 0.15s',
+                      pointerEvents: 'none',
+                    }}
+                  >
                     {agentStatus.tooltipText}
                   </div>
                 </div>
@@ -111,8 +152,10 @@ export function AgentCard({ agent, isLead, agentStatus }) {
 
               {isLead && (
                 <span
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider"
+                  className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wider"
                   style={{
+                    textTransform: 'uppercase',
+                    gap: '6px',
                     background: 'linear-gradient(135deg, rgba(234, 179, 8, 0.3) 0%, rgba(202, 138, 4, 0.2) 100%)',
                     color: '#facc15',
                     border: '1px solid rgba(234, 179, 8, 0.5)',
@@ -128,8 +171,10 @@ export function AgentCard({ agent, isLead, agentStatus }) {
 
             {agent.agentType && (
               <div
-                className="flex items-center gap-2 mb-2 px-2.5 py-1 rounded-lg inline-flex"
+                className="flex items-center gap-2 mb-2 py-1 rounded-lg inline-flex"
                 style={{
+                  paddingLeft: '10px',
+                  paddingRight: '10px',
                   background: 'rgba(55, 65, 81, 0.4)',
                   border: '1px solid rgba(75, 85, 99, 0.3)'
                 }}
@@ -142,7 +187,8 @@ export function AgentCard({ agent, isLead, agentStatus }) {
             )}
 
             <p
-              className="text-xs font-mono truncate"
+              className="text-xs truncate"
+              style={{ fontFamily: 'monospace' }}
               style={{
                 color: 'rgba(156, 163, 175, 0.8)'
               }}

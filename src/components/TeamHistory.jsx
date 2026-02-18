@@ -82,6 +82,7 @@ export function TeamHistory({ teamHistory, loading }) {
               background: 'var(--bg-secondary)',
               color: 'var(--text-muted)',
             }}
+            aria-label="Export team history as JSON"
             title="Export team history as JSON"
           >
             <Download className="h-3 w-3" />
@@ -134,7 +135,7 @@ export function TeamHistory({ teamHistory, loading }) {
                     <div className="flex items-center gap-2 mb-1">
                       <h4 className="font-semibold" style={{ color: 'var(--text-heading)' }}>{team.name}</h4>
                       {team.isActive && (
-                        <span className="px-2 py-0.5 text-green-400 text-xs rounded-full" style={{ background: 'rgba(34,197,94,0.2)', border: '1px solid rgba(34,197,94,0.3)' }}>
+                        <span className="px-2 py-0.5 text-xs rounded-full" style={{ color: '#4ade80', background: 'rgba(34,197,94,0.2)', border: '1px solid rgba(34,197,94,0.3)' }}>
                           Active
                         </span>
                       )}
@@ -158,8 +159,8 @@ export function TeamHistory({ teamHistory, loading }) {
                     {/* Progress Bar */}
                     <div className="w-full rounded-full h-2" style={{ background: 'var(--border-color)' }}>
                       <div
-                        className="bg-gradient-to-r from-green-500 to-emerald-400 h-2 rounded-full transition-all duration-500"
-                        style={{ width: `${completionRate}%` }}
+                        className="h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${completionRate}%`, background: 'linear-gradient(to right, #22c55e, #34d399)' }}
                       ></div>
                     </div>
                     <div className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
@@ -198,15 +199,15 @@ export function TeamHistory({ teamHistory, loading }) {
                         <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Total</div>
                       </div>
                       <div className="p-2 rounded-lg text-center" style={{ background: 'rgba(34,197,94,0.1)' }}>
-                        <div className="text-lg font-bold text-green-400">{stats.completed}</div>
+                        <div className="text-lg font-bold" style={{ color: '#4ade80' }}>{stats.completed}</div>
                         <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Done</div>
                       </div>
                       <div className="p-2 rounded-lg text-center" style={{ background: 'rgba(59,130,246,0.1)' }}>
-                        <div className="text-lg font-bold text-blue-400">{stats.inProgress}</div>
+                        <div className="text-lg font-bold" style={{ color: '#60a5fa' }}>{stats.inProgress}</div>
                         <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Active</div>
                       </div>
                       <div className="p-2 rounded-lg text-center" style={{ background: 'rgba(234,179,8,0.1)' }}>
-                        <div className="text-lg font-bold text-yellow-400">{stats.pending}</div>
+                        <div className="text-lg font-bold" style={{ color: '#facc15' }}>{stats.pending}</div>
                         <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Pending</div>
                       </div>
                     </div>
@@ -224,11 +225,12 @@ export function TeamHistory({ teamHistory, loading }) {
                             style={{ background: 'var(--bg-secondary)' }}
                           >
                             <div className="flex items-center gap-2">
-                              <span className={`h-2 w-2 rounded-full flex-shrink-0 ${
-                                task.status === 'completed' ? 'bg-green-400' :
-                                task.status === 'in_progress' ? 'bg-blue-400' :
-                                'bg-yellow-400'
-                              }`}></span>
+                              <span className="rounded-full" style={{
+                                width: 8, height: 8, flexShrink: 0,
+                                backgroundColor: task.status === 'completed' ? '#4ade80' :
+                                task.status === 'in_progress' ? '#60a5fa' :
+                                '#facc15'
+                              }}></span>
                               <span className="truncate" style={{ color: 'var(--text-primary)' }}>{task.subject}</span>
                               {task.owner && (
                                 <span className="ml-auto text-xs" style={{ color: 'var(--text-muted)' }}>{task.owner}</span>

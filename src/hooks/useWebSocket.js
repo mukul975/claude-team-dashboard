@@ -39,7 +39,6 @@ export function useWebSocket(url) {
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log('WebSocket connected');
         setIsConnected(true);
         setConnectionStatus('connected');
         setError(null);
@@ -89,7 +88,6 @@ export function useWebSocket(url) {
       };
 
       ws.onclose = () => {
-        console.log('WebSocket disconnected');
         setIsConnected(false);
         wsRef.current = null;
 
@@ -103,8 +101,6 @@ export function useWebSocket(url) {
 
         const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
         reconnectAttempts.current++;
-
-        console.log(`Reconnecting in ${delay}ms (attempt ${reconnectAttempts.current})...`);
 
         reconnectTimeoutRef.current = setTimeout(() => {
           connect();
@@ -121,7 +117,6 @@ export function useWebSocket(url) {
     connect();
 
     const handleOnline = () => {
-      console.log('Browser is online, reconnecting WebSocket...');
       isPausedRef.current = false;
       reconnectAttempts.current = 0;
       if (reconnectTimeoutRef.current) {
@@ -131,7 +126,6 @@ export function useWebSocket(url) {
     };
 
     const handleOffline = () => {
-      console.log('Browser is offline, pausing WebSocket reconnect...');
       isPausedRef.current = true;
       setConnectionStatus('offline');
       if (reconnectTimeoutRef.current) {

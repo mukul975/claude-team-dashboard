@@ -264,13 +264,13 @@ export function LiveMetrics({ stats, allInboxes, isConnected, lastRawMessage }) 
           <div className="flex items-center justify-center gap-1 mb-1">
             <Sparkline data={rateHistory} color="#f97316" />
           </div>
-          <div className="text-2xl font-bold text-orange-400">
+          <div className="text-2xl font-bold" style={{ color: '#fb923c' }}>
             <AnimatedCounter value={messageRate} />
           </div>
           <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Events/min</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-blue-400">
+          <div className="text-2xl font-bold" style={{ color: '#60a5fa' }}>
             <AnimatedCounter value={stats.inProgressTasks} />
           </div>
           <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Working Now</div>

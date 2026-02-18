@@ -185,6 +185,7 @@ function App() {
               role="tab"
               aria-selected={activeTab === 'overview'}
               aria-controls="tab-panel-overview"
+              aria-label="Live Metrics tab"
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
                 activeTab === 'overview'
                   ? 'bg-claude-orange text-white shadow-lg'
@@ -201,6 +202,7 @@ function App() {
               role="tab"
               aria-selected={activeTab === 'teams'}
               aria-controls="tab-panel-teams"
+              aria-label="Teams and Tasks tab"
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
                 activeTab === 'teams'
                   ? 'bg-claude-orange text-white shadow-lg'
@@ -217,6 +219,7 @@ function App() {
               role="tab"
               aria-selected={activeTab === 'communication'}
               aria-controls="tab-panel-communication"
+              aria-label="Communication tab"
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
                 activeTab === 'communication'
                   ? 'bg-claude-orange text-white shadow-lg'
@@ -233,6 +236,7 @@ function App() {
               role="tab"
               aria-selected={activeTab === 'monitoring'}
               aria-controls="tab-panel-monitoring"
+              aria-label="Monitoring tab"
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
                 activeTab === 'monitoring'
                   ? 'bg-claude-orange text-white shadow-lg'
@@ -249,6 +253,7 @@ function App() {
               role="tab"
               aria-selected={activeTab === 'history'}
               aria-controls="tab-panel-history"
+              aria-label="History and Outputs tab"
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
                 activeTab === 'history'
                   ? 'bg-claude-orange text-white shadow-lg'
@@ -265,6 +270,7 @@ function App() {
               role="tab"
               aria-selected={activeTab === 'archive'}
               aria-controls="tab-panel-archive"
+              aria-label="Archive tab"
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
                 activeTab === 'archive'
                   ? 'bg-claude-orange text-white shadow-lg'
@@ -281,6 +287,7 @@ function App() {
               role="tab"
               aria-selected={activeTab === 'inboxes'}
               aria-controls="tab-panel-inboxes"
+              aria-label="Inboxes tab"
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
                 activeTab === 'inboxes'
                   ? 'bg-claude-orange text-white shadow-lg'
@@ -302,6 +309,7 @@ function App() {
               role="tab"
               aria-selected={activeTab === 'analytics'}
               aria-controls="tab-panel-analytics"
+              aria-label="Analytics tab"
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
                 activeTab === 'analytics'
                   ? 'bg-claude-orange text-white shadow-lg'
@@ -362,6 +370,8 @@ function App() {
               <div className="flex items-center gap-1 mb-6 rounded-lg p-1 w-fit" style={{ background: 'var(--bg-secondary)' }}>
                 <button
                   onClick={() => setTeamsView('list')}
+                  aria-label="Switch to team list view"
+                  aria-pressed={teamsView === 'list'}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                     teamsView === 'list'
                       ? 'bg-claude-orange text-white shadow'
@@ -372,6 +382,8 @@ function App() {
                 </button>
                 <button
                   onClick={() => setTeamsView('compare')}
+                  aria-label="Switch to team comparison view"
+                  aria-pressed={teamsView === 'compare'}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                     teamsView === 'compare'
                       ? 'bg-claude-orange text-white shadow'

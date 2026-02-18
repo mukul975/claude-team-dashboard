@@ -16,7 +16,7 @@ export function SystemStatus({ isConnected, lastUpdate, connectionStatus, reconn
   const statusInfo = STATUS_CONFIG[connectionStatus] || STATUS_CONFIG.connecting;
 
   return (
-    <div className="card">
+    <div className="card" role="status" aria-live="polite" aria-label="System status">
       <div className="flex items-center gap-2 mb-4">
         <Server aria-hidden="true" className="h-5 w-5 text-claude-orange" />
         <h3 className="text-lg font-semibold" style={{ color: 'var(--text-heading)' }}>System Status</h3>

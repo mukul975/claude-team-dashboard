@@ -140,8 +140,8 @@ export function AgentOutputViewer({ agentOutputs }) {
           <button
             onClick={handleManualRefresh}
             disabled={isRefreshing}
-            className="p-2 rounded-lg transition-colors disabled:opacity-50"
-            style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)' }}
+            className="p-2 rounded-lg transition-colors"
+            style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', opacity: isRefreshing ? 0.5 : 1 }}
             aria-label="Refresh outputs"
             title="Refresh outputs"
           >
@@ -151,7 +151,7 @@ export function AgentOutputViewer({ agentOutputs }) {
 
         {refreshError && (
           <div className="mb-4 p-3 rounded-lg flex items-start gap-2" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
-            <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+            <AlertCircle className="h-5 w-5 text-red-400" style={{ flexShrink: 0, marginTop: '2px' }} />
             <div className="flex-1">
               <p className="text-sm text-red-400 font-medium">Failed to load outputs</p>
               <p className="text-xs mt-1" style={{ color: 'rgba(248,113,113,0.8)' }}>{refreshError}</p>
@@ -160,7 +160,7 @@ export function AgentOutputViewer({ agentOutputs }) {
         )}
 
         <div className="text-center py-12" style={{ color: 'var(--text-muted)' }}>
-          <Terminal className="h-16 w-16 mx-auto mb-3 opacity-50" />
+          <Terminal className="h-16 w-16 mx-auto mb-3" style={{ opacity: 0.5 }} />
           <p className="text-sm">No agent outputs yet. Agent activity will appear here.</p>
         </div>
       </div>
@@ -168,14 +168,14 @@ export function AgentOutputViewer({ agentOutputs }) {
   }
 
   return (
-    <div className={`card ${isExpanded ? 'fixed inset-4 z-50' : ''}`}>
+    <div className="card" style={isExpanded ? { position: 'fixed', inset: '16px', zIndex: 50 } : undefined}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Terminal className="h-5 w-5 text-claude-orange animate-pulse" />
           <h3 className="text-lg font-semibold" style={{ color: 'var(--text-heading)' }}>Agent Output Stream</h3>
-          <span className="px-2 py-0.5 text-green-400 text-xs rounded-full flex items-center gap-1" style={{ background: 'rgba(34,197,94,0.2)', border: '1px solid rgba(34,197,94,0.3)' }}>
-            <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse"></span>
+          <span className="px-2 text-green-400 text-xs rounded-full flex items-center gap-1" style={{ background: 'rgba(34,197,94,0.2)', border: '1px solid rgba(34,197,94,0.3)', paddingTop: '2px', paddingBottom: '2px' }}>
+            <span className="rounded-full animate-pulse" style={{ height: '8px', width: '8px', backgroundColor: '#4ade80' }}></span>
             LIVE
           </span>
         </div>
@@ -184,8 +184,8 @@ export function AgentOutputViewer({ agentOutputs }) {
           <button
             onClick={handleManualRefresh}
             disabled={isRefreshing}
-            className="p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)' }}
+            className="p-2 rounded-lg transition-colors"
+            style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', opacity: isRefreshing ? 0.5 : 1, cursor: isRefreshing ? 'not-allowed' : 'pointer' }}
             aria-label="Refresh outputs"
             title="Refresh outputs"
           >
@@ -207,8 +207,8 @@ export function AgentOutputViewer({ agentOutputs }) {
           <button
             onClick={downloadOutput}
             disabled={!selectedOutput}
-            className="p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)' }}
+            className="p-2 rounded-lg transition-colors"
+            style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', opacity: !selectedOutput ? 0.5 : 1, cursor: !selectedOutput ? 'not-allowed' : 'pointer' }}
             aria-label="Download agent output"
             title="Download agent output"
           >
@@ -234,7 +234,7 @@ export function AgentOutputViewer({ agentOutputs }) {
       {/* Error Display */}
       {refreshError && (
         <div className="mb-4 p-3 rounded-lg flex items-start gap-2" style={{ background: 'rgba(234, 179, 8, 0.1)', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
-          <AlertCircle className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="h-5 w-5 text-yellow-400" style={{ flexShrink: 0, marginTop: '2px' }} />
           <div className="flex-1">
             <p className="text-sm text-yellow-400 font-medium">Connection Issue</p>
             <p className="text-xs mt-1" style={{ color: 'rgba(250,204,21,0.8)' }}>
@@ -247,26 +247,32 @@ export function AgentOutputViewer({ agentOutputs }) {
       {/* Output Selector */}
       <div className="mb-4">
         <label className="block text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>Select Agent Output:</label>
-        <div className="flex gap-2 overflow-x-auto pb-2">
+        <div className="flex gap-2" style={{ overflowX: 'auto', paddingBottom: '8px' }}>
           {localOutputs.map((output, index) => (
             <button
               key={output.taskId}
               onClick={() => setSelectedOutput(output)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+              aria-label={`View output for Task ${output.taskId}`}
+              className={`rounded-lg text-sm font-medium ${
                 selectedOutput?.taskId === output.taskId
                   ? 'bg-claude-orange text-white shadow-lg'
                   : ''
               }`}
-              style={selectedOutput?.taskId !== output.taskId
-                ? { background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', animation: `fadeInScale 0.3s ease-out ${index * 0.05}s backwards` }
-                : { animation: `fadeInScale 0.3s ease-out ${index * 0.05}s backwards` }
-              }
+              style={{
+                padding: '8px 16px',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s',
+                ...(selectedOutput?.taskId !== output.taskId
+                  ? { background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', animation: `fadeInScale 0.3s ease-out ${index * 0.05}s backwards` }
+                  : { animation: `fadeInScale 0.3s ease-out ${index * 0.05}s backwards` }
+                )
+              }}
             >
               <div className="flex items-center gap-2">
                 <Terminal className="h-4 w-4" />
                 <span>Task {output.taskId}</span>
               </div>
-              <div className="text-xs opacity-75 mt-0.5">
+              <div className="text-xs" style={{ opacity: 0.75, marginTop: '2px' }}>
                 {dayjs(output.lastModified).fromNow()}
               </div>
             </button>
@@ -297,10 +303,8 @@ export function AgentOutputViewer({ agentOutputs }) {
           {/* Terminal Output */}
           <div
             ref={outputRef}
-            className={`font-mono text-sm rounded-lg p-4 overflow-auto ${
-              isExpanded ? 'h-[calc(100vh-300px)]' : ''
-            }`}
-            style={{ background: 'var(--code-bg)', border: '1px solid var(--code-border)', ...(!isExpanded ? { height: '500px' } : {}) }}
+            className="text-sm rounded-lg p-4"
+            style={{ background: 'var(--code-bg)', border: '1px solid var(--code-border)', fontFamily: 'monospace', overflow: 'auto', height: isExpanded ? 'calc(100vh - 300px)' : '500px' }}
             onScroll={(e) => {
               const { scrollTop, scrollHeight, clientHeight } = e.target;
               const isAtBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 10;
@@ -310,14 +314,14 @@ export function AgentOutputViewer({ agentOutputs }) {
             }}
           >
             {selectedOutput.content ? (
-              <pre className="whitespace-pre-wrap break-words" style={{ color: 'var(--text-primary)' }}>
+              <pre style={{ color: 'var(--text-primary)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                 {selectedOutput.content}
               </pre>
             ) : (
               <div className="text-center py-12" style={{ color: 'var(--text-muted)' }}>
-                <Terminal className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <Terminal className="mx-auto mb-3" style={{ height: '48px', width: '48px', opacity: 0.5 }} />
                 <p className="text-sm font-medium mb-2">No output content available</p>
-                <p className="text-xs max-w-md mx-auto" style={{ color: 'var(--text-muted)' }}>
+                <p className="text-xs mx-auto" style={{ color: 'var(--text-muted)', maxWidth: '28rem' }}>
                   This task output is empty. Agent outputs will appear here when agents write to their output streams during task execution.
                 </p>
                 <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
@@ -329,7 +333,7 @@ export function AgentOutputViewer({ agentOutputs }) {
 
           {/* Footer Info */}
           <div className="mt-3 text-xs text-center flex items-center justify-center gap-2" style={{ color: 'var(--text-muted)' }}>
-            <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse"></span>
+            <span className="rounded-full animate-pulse" style={{ height: '8px', width: '8px', backgroundColor: '#4ade80' }}></span>
             <span>
               Real-time output from Claude Code agent • Updates via WebSocket
               {!agentOutputs || agentOutputs.length === 0 ? ' (fallback polling active)' : ''}

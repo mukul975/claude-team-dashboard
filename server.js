@@ -939,12 +939,13 @@ app.get('/api/teams/:teamName/inboxes', async (req, res) => {
 // Get specific agent's inbox
 app.get('/api/teams/:teamName/inboxes/:agentName', async (req, res) => {
   try {
-    const teamName = sanitizeProjectPath(req.params.teamName);
+    const teamName = sanitizeTeamName(req.params.teamName);
     const agentName = sanitizeFileName(req.params.agentName);
     const inboxPath = path.join(TEAMS_DIR, teamName, 'inboxes', `${agentName}.json`);
+    const validatedInboxPath = validatePath(inboxPath, TEAMS_DIR);
 
     try {
-      const content = await fs.readFile(inboxPath, 'utf8');
+      const content = await fs.readFile(validatedInboxPath, 'utf8');
       const data = JSON.parse(content);
       // Handle both array format (data is array) and object format (data.messages)
       const messages = Array.isArray(data) ? data : (data.messages || []);
@@ -1007,15 +1008,20 @@ app.get('/api/archive', async (req, res) => {
 
       for (const file of files) {
         if (file.endsWith('.json')) {
-          const filePath = path.join(ARCHIVE_DIR, file);
-          const content = await fs.readFile(filePath, 'utf8');
-          const data = JSON.parse(content);
-          archives.push({
-            filename: file,
-            ...data.summary,
-            archivedAt: data.archivedAt,
-            // fullPath intentionally excluded (would leak server filesystem paths)
-          });
+          try {
+            const sanitizedFile = sanitizeFileName(file);
+            const filePath = validatePath(path.join(ARCHIVE_DIR, sanitizedFile), ARCHIVE_DIR);
+            const content = await fs.readFile(filePath, 'utf8');
+            const data = JSON.parse(content);
+            archives.push({
+              filename: sanitizedFile,
+              ...data.summary,
+              archivedAt: data.archivedAt,
+              // fullPath intentionally excluded (would leak server filesystem paths)
+            });
+          } catch (fileErr) {
+            console.error(`Error reading archive file ${sanitizeForLog(file)}:`, fileErr.message);
+          }
         }
       }
     } catch (err) {
@@ -1033,8 +1039,8 @@ app.get('/api/archive', async (req, res) => {
 
     res.json({ archives: paginatedArchives, count, page, limit, totalPages });
   } catch (error) {
-    console.error('Error fetching archives:', error);
-    res.status(500).json({ error: 'Failed to fetch archived teams' });
+    console.error('Error fetching archives:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -1543,10 +1549,10 @@ app.get('/api/version', (req, res) => {
   res.json({ version: require('./package.json').version, node: process.version });
 });
 
-// Error handling middleware
+// Error handling middleware — never leak internal error details to clients
 app.use((err, req, res, next) => {
   console.error('API Error:', err.message);
-  res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
+  res.status(err.status || 500).json({ error: 'Internal server error' });
 });
 
 // SPA fallback — serve index.html for all non-API routes (Express 5 compatible)

@@ -41,7 +41,7 @@ export class ErrorBoundary extends React.Component {
       // Panel-level fallback when a name prop is provided
       if (this.props.name) {
         return (
-          <div className="card p-6" style={{ border: '1px solid rgba(239,68,68,0.3)' }}>
+          <div className="card p-6" role="alert" style={{ border: '1px solid rgba(239,68,68,0.3)' }}>
             <div className="flex items-start gap-3 mb-4">
               <AlertCircle className="h-6 w-6 text-red-400 flex-shrink-0 mt-0.5" />
               <div>
@@ -67,6 +67,7 @@ export class ErrorBoundary extends React.Component {
             )}
             <button
               onClick={this.handleReset}
+              aria-label="Try again"
               className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm font-medium transition-colors"
             >
               <RefreshCw className="h-3.5 w-3.5" />
@@ -81,7 +82,7 @@ export class ErrorBoundary extends React.Component {
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-6">
           <div className="max-w-2xl w-full">
             {/* Error Card */}
-            <div className="card p-8 text-center">
+            <div className="card p-8 text-center" role="alert">
               {/* Icon */}
               <div className="mb-6 flex justify-center">
                 <div className="relative">
@@ -124,6 +125,7 @@ export class ErrorBoundary extends React.Component {
               <div className="flex gap-4 justify-center">
                 <button
                   onClick={this.handleReset}
+                  aria-label="Try again"
                   className="flex items-center gap-2 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
                 >
                   <RefreshCw className="h-4 w-4" />
@@ -131,6 +133,7 @@ export class ErrorBoundary extends React.Component {
                 </button>
                 <button
                   onClick={this.handleReload}
+                  aria-label="Reload dashboard"
                   className="flex items-center gap-2 px-6 py-3 bg-claude-orange hover:bg-orange-600 text-white rounded-lg font-medium transition-colors"
                 >
                   <RefreshCw className="h-4 w-4" />

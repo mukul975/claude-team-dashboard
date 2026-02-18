@@ -69,6 +69,10 @@ function TaskInfoCard({ task, onClose }) {
       className="fixed inset-0 z-50 flex items-center justify-center"
       style={{ background: 'rgba(0,0,0,0.5)' }}
       onClick={onClose}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClose(); }}
+      aria-label="Close modal overlay"
     >
       <div
         className="rounded-xl p-5 max-w-md w-full mx-4 shadow-2xl"
@@ -101,6 +105,7 @@ function TaskInfoCard({ task, onClose }) {
             style={{ backgroundColor: 'transparent' }}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(55,65,81,0.5)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+            aria-label="Close task details"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -282,7 +287,11 @@ function StatusBoard({ allTasks, onTaskClick }) {
                       background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.6) 100%)',
                       border: '1px solid rgba(75, 85, 99, 0.3)',
                     }}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => onTaskClick(task)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onTaskClick(task); } }}
+                    aria-label={`View details for task: ${truncate(task.subject, 40)}`}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.borderColor = color.border;
                       e.currentTarget.style.boxShadow = `0 2px 12px ${color.glow}`;
@@ -575,6 +584,10 @@ function DependencyGraph({ allTasks, onTaskClick }) {
               onMouseEnter={(e) => handleNodeMouseEnter(task, e)}
               onMouseLeave={handleNodeMouseLeave}
               onClick={() => onTaskClick(task)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onTaskClick(task); } }}
+              aria-label={`Task: ${truncate(task.subject, 40)}`}
             >
               <rect
                 width={nodeW}
@@ -726,7 +739,7 @@ function GanttView({ allTasks, onTaskClick }) {
             currentRow++;
             const bw = getBarWidth(task);
             return (
-              <g key={task.id || ti} style={{ cursor: 'pointer' }} onClick={() => onTaskClick(task)}>
+              <g key={task.id || ti} style={{ cursor: 'pointer' }} onClick={() => onTaskClick(task)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onTaskClick(task); } }} aria-label={`Task: ${truncate(task.subject, 40)}`}>
                 {/* Row background on hover */}
                 <rect
                   x="0"
@@ -923,6 +936,8 @@ export function TaskDependencyGraph({ teams }) {
                 color: view === tab.key ? '#fb923c' : '#9ca3af',
                 border: view === tab.key ? '1px solid rgba(249, 115, 22, 0.4)' : '1px solid transparent',
               }}
+              aria-label={`Switch to ${tab.label} view`}
+              aria-pressed={view === tab.key}
             >
               {tab.label}
             </button>

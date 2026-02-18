@@ -105,13 +105,13 @@ function MetricRow({ label, valueA, valueB, higherIsBetter = true, formatFn, uni
   const displayB = formatFn ? formatFn(valueB) : `${valueB}${unitSuffix}`;
 
   return (
-    <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center py-3 last:border-b-0" style={{ borderBottom: '1px solid rgba(55,65,81,0.5)' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 16, alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid rgba(55,65,81,0.5)' }}>
       {/* Team A side */}
       <div className="flex items-center gap-2">
         <div className="flex-1 text-right">
           <div className="flex items-center justify-end gap-2">
             {(aWins || tie) && <WinnerBadge />}
-            <span className={`text-lg font-bold ${aWins ? 'text-green-400' : tie ? 'text-blue-400' : 'text-gray-300'}`}>
+            <span className="text-lg font-bold" style={{ color: aWins ? '#4ade80' : tie ? '#60a5fa' : '#d1d5db' }}>
               {displayA}
             </span>
           </div>
@@ -130,7 +130,7 @@ function MetricRow({ label, valueA, valueB, higherIsBetter = true, formatFn, uni
       <div className="flex items-center gap-2">
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <span className={`text-lg font-bold ${bWins ? 'text-green-400' : tie ? 'text-blue-400' : 'text-gray-300'}`}>
+            <span className="text-lg font-bold" style={{ color: bWins ? '#4ade80' : tie ? '#60a5fa' : '#d1d5db' }}>
               {displayB}
             </span>
             {(bWins || tie) && <WinnerBadge />}
@@ -146,7 +146,7 @@ function MetricRow({ label, valueA, valueB, higherIsBetter = true, formatFn, uni
 
 function StringMetricRow({ label, valueA, valueB }) {
   return (
-    <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center py-3 last:border-b-0" style={{ borderBottom: '1px solid rgba(55,65,81,0.5)' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 16, alignItems: 'center', paddingTop: 12, paddingBottom: 12, borderBottom: '1px solid rgba(55,65,81,0.5)' }}>
       <div className="text-right">
         <span className="text-sm font-semibold text-gray-200">{valueA || '--'}</span>
       </div>
@@ -254,7 +254,7 @@ export function TeamComparison({ teams, allInboxes }) {
       ) : (
         <div className="card">
           {/* Header row with team names */}
-          <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center pb-4 mb-4 border-b border-gray-600">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 16, alignItems: 'center', paddingBottom: 16, marginBottom: 16, borderBottom: '1px solid #4b5563' }}>
             <div className="text-right">
               <div className="flex items-center justify-end gap-2">
                 <Crown className="h-5 w-5 text-claude-orange" />

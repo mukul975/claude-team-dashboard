@@ -2,15 +2,26 @@ import React, { useState, useMemo } from 'react';
 import { Clock, ChevronDown, Filter } from 'lucide-react';
 import { formatRelativeTime, getAgentColor, getAgentInitials, formatMessageText } from '../utils/formatting';
 
-const BORDER_COLORS = {
-  'bg-blue-600': 'border-blue-500',
-  'bg-purple-600': 'border-purple-500',
-  'bg-green-600': 'border-green-500',
-  'bg-red-600': 'border-red-500',
-  'bg-yellow-600': 'border-yellow-500',
-  'bg-pink-600': 'border-pink-500',
-  'bg-indigo-600': 'border-indigo-500',
-  'bg-orange-500': 'border-orange-400',
+const AGENT_BG_COLORS = {
+  'bg-blue-600': '#2563eb',
+  'bg-purple-600': '#9333ea',
+  'bg-green-600': '#16a34a',
+  'bg-red-600': '#dc2626',
+  'bg-yellow-600': '#ca8a04',
+  'bg-pink-600': '#db2777',
+  'bg-indigo-600': '#4f46e5',
+  'bg-orange-500': '#f97316',
+};
+
+const AGENT_BORDER_COLORS = {
+  'bg-blue-600': '#3b82f6',
+  'bg-purple-600': '#a855f7',
+  'bg-green-600': '#22c55e',
+  'bg-red-600': '#ef4444',
+  'bg-yellow-600': '#eab308',
+  'bg-pink-600': '#ec4899',
+  'bg-indigo-600': '#6366f1',
+  'bg-orange-500': '#fb923c',
 };
 
 const PAGE_SIZE = 50;
@@ -149,7 +160,8 @@ export function TeamTimeline({ allInboxes = {}, teams = [] }) {
             {visibleMessages.map((msg, index) => {
               const agentColor = getAgentColor(msg.agentName);
               const agentInitials = getAgentInitials(msg.agentName);
-              const colorBorder = BORDER_COLORS[agentColor] || 'border-gray-500';
+              const bgColor = AGENT_BG_COLORS[agentColor] || '#6b7280';
+              const borderColor = AGENT_BORDER_COLORS[agentColor] || '#6b7280';
               const relativeTime = formatRelativeTime(msg.timestamp);
               const parsedSummary = getSummaryText(msg);
 
@@ -164,16 +176,17 @@ export function TeamTimeline({ allInboxes = {}, teams = [] }) {
                   }}
                 >
                   {/* Agent avatar */}
-                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${agentColor}`}>
+                  <div className="rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ flexShrink: 0, width: 32, height: 32, backgroundColor: bgColor }}>
                     {agentInitials}
                   </div>
 
                   {/* Content */}
                   <div
-                    className={`flex-1 rounded-lg p-3 border-l-2 ${colorBorder}`}
+                    className="flex-1 rounded-lg p-3"
                     style={{
                       background: 'var(--bg-secondary)',
                       boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+                      borderLeft: `2px solid ${borderColor}`,
                     }}
                   >
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -199,6 +212,7 @@ export function TeamTimeline({ allInboxes = {}, teams = [] }) {
               <div className="pt-2 text-center">
                 <button
                   onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
+                  aria-label={`Show more messages, ${filteredMessages.length - visibleCount} remaining`}
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all"
                   style={{
                     background: 'rgba(249, 115, 22, 0.15)',

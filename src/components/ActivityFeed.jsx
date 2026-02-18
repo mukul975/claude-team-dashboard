@@ -335,6 +335,7 @@ export function ActivityFeed({ updates, loading }) {
           {/* Pause / Play toggle */}
           <button
             onClick={togglePause}
+            aria-label={isPaused ? 'Resume auto-scroll' : 'Pause auto-scroll'}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200"
             style={{
               background: isPaused ? 'rgba(249, 115, 22, 0.2)' : 'var(--bg-secondary)',
@@ -374,6 +375,8 @@ export function ActivityFeed({ updates, loading }) {
               <button
                 key={type}
                 onClick={() => handleFilterClick(type)}
+                aria-label={`Filter by ${cfg.label}`}
+                aria-pressed={isActive}
                 className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-200"
                 style={{
                   background: isActive ? cfg.badgeBg : 'var(--bg-secondary)',
@@ -402,6 +405,7 @@ export function ActivityFeed({ updates, loading }) {
           {activeFilter && (
             <button
               onClick={() => { setActiveFilter(null); setVisibleCount(VISIBLE_BATCH); }}
+              aria-label="Clear activity filter"
               className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-200"
               style={{
                 background: 'rgba(239, 68, 68, 0.15)',
@@ -419,8 +423,8 @@ export function ActivityFeed({ updates, loading }) {
       {/* Timeline Container */}
       <div
         ref={scrollRef}
-        className="max-h-96 overflow-y-auto pr-2"
-        style={{ scrollbarWidth: 'thin' }}
+        className="overflow-y-auto pr-2"
+        style={{ maxHeight: '24rem', scrollbarWidth: 'thin' }}
         aria-live="polite"
         aria-label="Activity feed updates"
       >
@@ -590,6 +594,7 @@ export function ActivityFeed({ updates, loading }) {
               <div className="mt-4 text-center">
                 <button
                   onClick={handleLoadMore}
+                  aria-label={`Load more activities (${filteredActivities.length - visibleCount} remaining)`}
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200"
                   style={{
                     background: 'var(--bg-secondary)',
@@ -630,4 +635,5 @@ ActivityFeed.propTypes = {
     inboxes: PropTypes.object,
     outputs: PropTypes.array,
   }),
+  loading: PropTypes.bool,
 };
