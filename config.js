@@ -33,18 +33,23 @@ module.exports = {
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'", "'unsafe-inline'"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-        connectSrc: ["'self'", "ws://localhost:3001", "wss://localhost:3001", "ws://127.0.0.1:3001"],
-        imgSrc: ["'self'", "data:", "https:", "blob:"],
-        fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        connectSrc: ["'self'", "ws://localhost:3001", "ws://localhost:5173", "http://localhost:3001", "http://localhost:5173"],
+        imgSrc: ["'self'", "data:", "https://cdn.jsdelivr.net", "https://api.star-history.com", "https://avatars.githubusercontent.com"],
+        fontSrc: ["'self'", "data:"],
+        frameAncestors: ["'none'"],
         objectSrc: ["'none'"],
-        mediaSrc: ["'self'"],
-        frameSrc: ["'none'"],
         baseUri: ["'self'"],
         formAction: ["'self'"]
       }
     },
     crossOriginEmbedderPolicy: false,
-    crossOriginResourcePolicy: { policy: "cross-origin" }
+    crossOriginResourcePolicy: { policy: "same-origin" },
+    crossOriginOpenerPolicy: { policy: "same-origin" },
+    hsts: { maxAge: 31536000, includeSubDomains: true, preload: false },
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    noSniff: true,
+    frameguard: { action: 'deny' },
+    xssFilter: true
   }
 };

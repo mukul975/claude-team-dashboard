@@ -12,7 +12,7 @@ export function SetupScreen({ onSetup }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!password.trim()) { setError('Please enter a password'); return; }
-    if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
+    if (password.length < 8) { setError('Password must be at least 8 characters'); return; }
     if (password !== confirm) { setError('Passwords do not match'); return; }
 
     setLoading(true);
@@ -79,7 +79,7 @@ export function SetupScreen({ onSetup }) {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); setError(''); }}
-                placeholder="At least 6 characters"
+                placeholder="At least 8 characters"
                 autoFocus
                 autoComplete="new-password"
                 style={inputStyle(!!error)}

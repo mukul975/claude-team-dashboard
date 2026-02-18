@@ -18,13 +18,22 @@ const server = http.createServer(app);
 // --- Password Authentication (always required) ---
 // Password stored as scrypt hash in ~/.claude/dashboard.key
 // Format: <hex-salt>:<hex-hash>
+//
+// Auth token lifecycle: the token is stored in the browser's sessionStorage.
+// This means it is NOT protected by HttpOnly (sessionStorage is accessible to JS),
+// but it is automatically cleared when the browser tab/window is closed. For a
+// localhost-only developer tool this is an acceptable tradeoff: XSS risk is minimal
+// on localhost and the short-lived session scope limits exposure.
 const KEY_FILE = path.join(os.homedir(), '.claude', 'dashboard.key');
 let authToken = crypto.randomBytes(32).toString('hex');
+
+// OWASP-recommended scrypt parameters (minimum): N=16384, r=8, p=1
+const SCRYPT_PARAMS = { N: 16384, r: 8, p: 1 };
 
 async function hashPassword(password) {
   const salt = crypto.randomBytes(16);
   const hash = await new Promise((resolve, reject) => {
-    crypto.scrypt(password, salt, 32, (err, derived) => {
+    crypto.scrypt(password, salt, 32, SCRYPT_PARAMS, (err, derived) => {
       if (err) reject(err); else resolve(derived);
     });
   });
@@ -37,7 +46,7 @@ async function verifyPassword(password, stored) {
   const salt = Buffer.from(saltHex, 'hex');
   const expected = Buffer.from(hashHex, 'hex');
   const derived = await new Promise((resolve, reject) => {
-    crypto.scrypt(password, salt, 32, (err, d) => {
+    crypto.scrypt(password, salt, 32, SCRYPT_PARAMS, (err, d) => {
       if (err) reject(err); else resolve(d);
     });
   });
@@ -56,7 +65,19 @@ async function loadStoredHash() {
 
 // storedHash is null when no password has been set yet (first run)
 let storedHash = null;
-(async () => { storedHash = await loadStoredHash(); })();
+(async () => {
+  storedHash = await loadStoredHash();
+
+  // Security check: warn if the key file is world-readable (Unix permissions)
+  try {
+    const keyStats = await fs.stat(KEY_FILE);
+    if (keyStats.mode & 0o004) {
+      console.warn('WARNING: dashboard.key is world-readable. Run: chmod 600 ' + KEY_FILE);
+    }
+  } catch {
+    // Key file does not exist yet (first run) — nothing to check
+  }
+})();
 
 console.log('🔒 Password authentication is ENABLED');
 
@@ -72,6 +93,12 @@ const wss = new WebSocket.Server({
 // Security middleware
 app.use(helmet(config.HELMET_CONFIG));
 
+// Permissions-Policy header — restrict access to sensitive browser APIs
+app.use((req, res, next) => {
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()');
+  next();
+});
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: config.RATE_LIMIT.WINDOW_MS,
@@ -82,6 +109,15 @@ const limiter = rateLimit({
 });
 
 app.use('/api/', limiter);
+
+// Stricter rate limiter for auth endpoints: max 5 requests per 15 minutes per IP
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: 'Too many authentication attempts, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
 // Restrict CORS to localhost only for security
 app.use(cors({
@@ -111,6 +147,17 @@ app.use('/api/', (req, res, next) => {
 
 app.use(express.json({ limit: '10kb' }));
 
+// Content-Type validation — POST requests to /api/ must be application/json
+app.use('/api/', (req, res, next) => {
+  if (req.method === 'POST') {
+    const ct = req.headers['content-type'] || '';
+    if (!ct.includes('application/json')) {
+      return res.status(415).json({ error: 'Unsupported Media Type: Content-Type must be application/json' });
+    }
+  }
+  next();
+});
+
 // --- Auth endpoints ---
 // Returns { required: true, setup: true } when no password has been set yet
 app.get('/api/auth/required', (req, res) => {
@@ -118,16 +165,21 @@ app.get('/api/auth/required', (req, res) => {
 });
 
 // First-time setup — only works when no password is stored yet
-app.post('/api/auth/setup', async (req, res) => {
+app.post('/api/auth/setup', authLimiter, async (req, res) => {
+  if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+    return res.status(400).json({ error: 'Invalid request body' });
+  }
   if (storedHash) {
     return res.status(403).json({ error: 'Password already set' });
   }
-  const { password } = req.body || {};
-  if (!password || typeof password !== 'string' || password.length < 6) {
-    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  const { password } = req.body;
+  if (!password || typeof password !== 'string' || password.length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters' });
   }
   try {
     storedHash = await hashPassword(password);
+    const claudeDir = path.join(os.homedir(), '.claude');
+    validatePath(KEY_FILE, claudeDir);
     await fs.mkdir(path.dirname(KEY_FILE), { recursive: true });
     await fs.writeFile(KEY_FILE, storedHash, { mode: 0o600 });
     authToken = crypto.randomBytes(32).toString('hex');
@@ -137,11 +189,14 @@ app.post('/api/auth/setup', async (req, res) => {
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', authLimiter, async (req, res) => {
+  if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+    return res.status(400).json({ error: 'Invalid request body' });
+  }
   if (!storedHash) {
     return res.status(403).json({ error: 'No password set — complete setup first' });
   }
-  const { password } = req.body || {};
+  const { password } = req.body;
   if (!password || typeof password !== 'string') {
     return res.status(400).json({ error: 'Password is required' });
   }
@@ -150,6 +205,8 @@ app.post('/api/auth/login', async (req, res) => {
     if (!valid) {
       return res.status(401).json({ error: 'Invalid password' });
     }
+    // Rotate token on every successful login so each session gets a fresh token
+    authToken = crypto.randomBytes(32).toString('hex');
     res.json({ token: authToken });
   } catch {
     res.status(500).json({ error: 'Internal server error' });
@@ -202,26 +259,30 @@ const teamLifecycle = new Map(); // teamName -> { created, lastSeen, archived }
 // Archive team data before deletion
 async function archiveTeam(teamName, teamData) {
   try {
+    const sanitizedName = sanitizeTeamName(teamName);
     const timestamp = new Date().toISOString().replace(/:/g, '-');
-    const archiveFile = path.join(ARCHIVE_DIR, `${teamName}_${timestamp}.json`);
+    const archiveFile = path.join(ARCHIVE_DIR, `${sanitizedName}_${timestamp}.json`);
+
+    // Validate the archive file path is within ARCHIVE_DIR
+    const validatedArchivePath = validatePath(archiveFile, ARCHIVE_DIR);
 
     // Ensure archive directory exists
     await fs.mkdir(ARCHIVE_DIR, { recursive: true });
 
     // Create natural language summary
     const summary = {
-      teamName,
+      teamName: sanitizedName,
       archivedAt: new Date().toISOString(),
       summary: generateTeamSummary(teamData),
       rawData: teamData
     };
 
-    await fs.writeFile(archiveFile, JSON.stringify(summary, null, 2));
-    console.log(`📦 Team archived: ${teamName} → ${archiveFile}`);
+    await fs.writeFile(validatedArchivePath, JSON.stringify(summary, null, 2));
+    console.log(`📦 Team archived: ${sanitizedName} → ${validatedArchivePath}`);
 
     return archiveFile;
   } catch (error) {
-    console.error(`Error archiving team ${teamName}:`, error);
+    console.error(`Error archiving team ${sanitizeForLog(teamName)}:`, error.message);
   }
 }
 
@@ -277,24 +338,35 @@ function sanitizeTeamName(teamName) {
   if (!teamName || typeof teamName !== 'string') {
     throw new Error('Invalid team name');
   }
-
-  // Reject any path separators to prevent traversal
-  if (teamName.includes('/') || teamName.includes('\\') || teamName.includes(path.sep)) {
-    throw new Error('Invalid team name: path separators not allowed');
+  if (teamName.length > 100) {
+    throw new Error('Invalid team name: too long');
   }
-
-  // Reject parent directory references
-  if (teamName.includes('..') || teamName.startsWith('.')) {
-    throw new Error('Invalid team name: relative paths not allowed');
-  }
-
-  // Only allow alphanumeric, dash, underscore (whitelist approach)
-  if (!/^[a-zA-Z0-9_-]+$/.test(teamName)) {
+  // Strict allowlist: alphanumeric, dash, underscore, dot
+  if (!/^[a-zA-Z0-9_.-]+$/.test(teamName)) {
     throw new Error('Invalid team name format');
   }
-
-  // Return the sanitized team name (now guaranteed safe for path operations)
+  // Reject directory traversal even within allowlist
+  if (teamName === '.' || teamName === '..' || teamName.includes('..')) {
+    throw new Error('Invalid team name: relative paths not allowed');
+  }
   return teamName;
+}
+
+// Sanitize agent name — same strict rules as team name
+function sanitizeAgentName(agentName) {
+  if (!agentName || typeof agentName !== 'string') {
+    throw new Error('Invalid agent name');
+  }
+  if (agentName.length > 100) {
+    throw new Error('Invalid agent name: too long');
+  }
+  if (!/^[a-zA-Z0-9_.-]+$/.test(agentName)) {
+    throw new Error('Invalid agent name format');
+  }
+  if (agentName === '.' || agentName === '..' || agentName.includes('..')) {
+    throw new Error('Invalid agent name: relative paths not allowed');
+  }
+  return agentName;
 }
 
 // Sanitize string for logging to prevent log injection
@@ -311,26 +383,21 @@ function sanitizeFileName(fileName) {
   if (!fileName || typeof fileName !== 'string') {
     throw new Error('Invalid file name');
   }
-
-  // Reject any path separators
-  if (fileName.includes('/') || fileName.includes('\\') || fileName.includes(path.sep)) {
-    throw new Error('Invalid file name: path separators not allowed');
+  if (fileName.length > 100) {
+    throw new Error('Invalid file name: too long');
   }
-
-  // Reject parent directory references
-  if (fileName.includes('..')) {
+  // Strip any path separator characters
+  const stripped = fileName.replace(/[/\\]/g, '');
+  // Use basename as additional safety layer
+  const baseName = path.basename(stripped);
+  // Reject directory traversal
+  if (baseName === '.' || baseName === '..' || baseName.includes('..')) {
     throw new Error('Invalid file name: relative paths not allowed');
   }
-
-  // Use basename as additional safety layer
-  const baseName = path.basename(fileName);
-
   // Only allow safe characters (whitelist approach)
   if (!/^[a-zA-Z0-9_.-]+$/.test(baseName)) {
     throw new Error('Invalid file name format');
   }
-
-  // Return the sanitized filename (now guaranteed safe for path operations)
   return baseName;
 }
 
@@ -524,7 +591,8 @@ async function getTeamHistory() {
         if (config) {
           // Get team directory stats for timestamps
           const teamDir = path.join(TEAMS_DIR, sanitizeTeamName(teamName));
-          const stats = await fs.stat(teamDir);
+          const validatedTeamDir = validatePath(teamDir, TEAMS_DIR);
+          const stats = await fs.stat(validatedTeamDir);
 
           history.push({
             name: teamName,
@@ -536,7 +604,7 @@ async function getTeamHistory() {
           });
         }
       } catch (error) {
-        console.error(`Error reading team history for ${teamName}:`, error.message);
+        console.error(`Error reading team history for ${sanitizeForLog(teamName)}:`, error.message);
       }
     }
 
@@ -759,7 +827,8 @@ function setupWatchers() {
     interval: config.WATCH_CONFIG.INTERVAL,
     binaryInterval: config.WATCH_CONFIG.BINARY_INTERVAL,
     depth: config.WATCH_CONFIG.DEPTH,
-    awaitWriteFinish: config.WATCH_CONFIG.AWAIT_WRITE_FINISH
+    awaitWriteFinish: config.WATCH_CONFIG.AWAIT_WRITE_FINISH,
+    followSymlinks: false
   };
 
   // Watch team config files only (not inbox files — those have their own watcher)
@@ -968,6 +1037,13 @@ function setupWatchers() {
     });
 }
 
+// WebSocket security constants
+const WS_HEARTBEAT_INTERVAL = 30000; // 30 seconds between pings
+const WS_PONG_TIMEOUT = 10000; // 10 seconds to respond with pong
+const WS_MAX_MESSAGE_SIZE = 65536; // 64KB max message size
+const WS_RATE_LIMIT_MAX = 50; // max messages per second
+const WS_RATE_LIMIT_WINDOW = 1000; // 1 second window
+
 // WebSocket connection handler
 wss.on('connection', async (ws, req) => {
   // Always require a valid token in the URL query string
@@ -982,13 +1058,72 @@ wss.on('connection', async (ws, req) => {
   const tokenBuffer = Buffer.from(token);
   const expectedBuffer = Buffer.from(authToken);
 
+  // timingSafeEqual requires equal-length buffers; check length first
   if (tokenBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(tokenBuffer, expectedBuffer)) {
     ws.close(4001, 'Invalid token');
     return;
   }
 
-  console.log('👋 A new viewer joined the dashboard');
+  // Connection audit logging
+  const clientIp = req.socket.remoteAddress || 'unknown';
+  console.log(`WS connected: ${clientIp}`);
   clients.add(ws);
+
+  // --- Ping/pong heartbeat ---
+  ws.isAlive = true;
+  let pongTimeout = null;
+
+  ws.on('pong', () => {
+    ws.isAlive = true;
+    if (pongTimeout) {
+      clearTimeout(pongTimeout);
+      pongTimeout = null;
+    }
+  });
+
+  const heartbeatInterval = setInterval(() => {
+    if (!ws.isAlive) {
+      console.log(`WS heartbeat timeout, terminating: ${clientIp}`);
+      clearInterval(heartbeatInterval);
+      ws.terminate();
+      return;
+    }
+    ws.isAlive = false;
+    ws.ping();
+    pongTimeout = setTimeout(() => {
+      if (!ws.isAlive) {
+        console.log(`WS pong timeout, terminating: ${clientIp}`);
+        clearInterval(heartbeatInterval);
+        ws.terminate();
+      }
+    }, WS_PONG_TIMEOUT);
+  }, WS_HEARTBEAT_INTERVAL);
+
+  // --- Per-connection message rate limiting ---
+  let messageCount = 0;
+  let rateWindowStart = Date.now();
+
+  // --- Message handler with size validation and rate limiting ---
+  ws.on('message', (data) => {
+    const messageSize = Buffer.isBuffer(data) ? data.length : Buffer.byteLength(data);
+    if (messageSize > WS_MAX_MESSAGE_SIZE) {
+      console.log(`WS message too large (${messageSize} bytes) from: ${clientIp}`);
+      ws.close(1009, 'Message too big');
+      return;
+    }
+
+    const now = Date.now();
+    if (now - rateWindowStart >= WS_RATE_LIMIT_WINDOW) {
+      messageCount = 0;
+      rateWindowStart = now;
+    }
+    messageCount++;
+    if (messageCount > WS_RATE_LIMIT_MAX) {
+      console.log(`WS rate limit exceeded from: ${clientIp}`);
+      ws.close(1008, 'Policy violation: rate limit exceeded');
+      return;
+    }
+  });
 
   // Send initial data
   try {
@@ -1011,12 +1146,16 @@ wss.on('connection', async (ws, req) => {
   }
 
   ws.on('close', () => {
-    console.log('👋 A viewer left the dashboard');
+    console.log(`WS disconnected: ${clientIp}`);
+    clearInterval(heartbeatInterval);
+    if (pongTimeout) clearTimeout(pongTimeout);
     clients.delete(ws);
   });
 
   ws.on('error', (error) => {
-    console.error('WebSocket error:', error);
+    console.error(`WebSocket error from ${clientIp}:`, error.message);
+    clearInterval(heartbeatInterval);
+    if (pongTimeout) clearTimeout(pongTimeout);
     clients.delete(ws);
   });
 });
@@ -1045,8 +1184,12 @@ app.get('/api/teams', async (req, res) => {
 
 app.get('/api/teams/:teamName', async (req, res) => {
   try {
-    const config = await readTeamConfig(req.params.teamName);
-    const tasks = await readTasks(req.params.teamName);
+    const teamName = sanitizeTeamName(req.params.teamName);
+    if (teamName !== req.params.teamName) {
+      return res.status(400).json({ error: 'Invalid parameter' });
+    }
+    const config = await readTeamConfig(teamName);
+    const tasks = await readTasks(teamName);
 
     if (!config) {
       return res.status(404).json({ error: 'Team not found' });
@@ -1054,6 +1197,9 @@ app.get('/api/teams/:teamName', async (req, res) => {
 
     res.json({ config, tasks });
   } catch (error) {
+    if (error.message.includes('Invalid')) {
+      return res.status(400).json({ error: 'Invalid parameter' });
+    }
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -1062,9 +1208,15 @@ app.get('/api/teams/:teamName', async (req, res) => {
 app.get('/api/teams/:teamName/inboxes', async (req, res) => {
   try {
     const teamName = sanitizeTeamName(req.params.teamName);
+    if (teamName !== req.params.teamName) {
+      return res.status(400).json({ error: 'Invalid parameter' });
+    }
     const inboxes = await readTeamInboxes(teamName);
     res.json({ inboxes });
   } catch (error) {
+    if (error.message.includes('Invalid')) {
+      return res.status(400).json({ error: 'Invalid parameter' });
+    }
     console.error('Error fetching team inboxes:', error.message);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -1074,14 +1226,19 @@ app.get('/api/teams/:teamName/inboxes', async (req, res) => {
 app.get('/api/teams/:teamName/inboxes/:agentName', async (req, res) => {
   try {
     const teamName = sanitizeTeamName(req.params.teamName);
-    const agentName = sanitizeFileName(req.params.agentName);
+    if (teamName !== req.params.teamName) {
+      return res.status(400).json({ error: 'Invalid parameter' });
+    }
+    const agentName = sanitizeAgentName(req.params.agentName);
+    if (agentName !== req.params.agentName) {
+      return res.status(400).json({ error: 'Invalid parameter' });
+    }
     const inboxPath = path.join(TEAMS_DIR, teamName, 'inboxes', `${agentName}.json`);
     const validatedInboxPath = validatePath(inboxPath, TEAMS_DIR);
 
     try {
       const content = await fs.readFile(validatedInboxPath, 'utf8');
       const data = JSON.parse(content);
-      // Handle both array format (data is array) and object format (data.messages)
       const messages = Array.isArray(data) ? data : (data.messages || []);
       res.json({
         agent: agentName,
@@ -1095,6 +1252,9 @@ app.get('/api/teams/:teamName/inboxes/:agentName', async (req, res) => {
       throw error;
     }
   } catch (error) {
+    if (error.message.includes('Invalid')) {
+      return res.status(400).json({ error: 'Invalid parameter' });
+    }
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -1102,7 +1262,10 @@ app.get('/api/teams/:teamName/inboxes/:agentName', async (req, res) => {
 // Get paginated tasks for a specific team
 app.get('/api/teams/:teamName/tasks', async (req, res) => {
   try {
-    const teamName = req.params.teamName;
+    const teamName = sanitizeTeamName(req.params.teamName);
+    if (teamName !== req.params.teamName) {
+      return res.status(400).json({ error: 'Invalid parameter' });
+    }
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const limit = Math.min(200, Math.max(1, parseInt(req.query.limit) || 50));
     const statusFilter = req.query.status || 'all';
@@ -1124,6 +1287,9 @@ app.get('/api/teams/:teamName/tasks', async (req, res) => {
 
     res.json({ tasks: paginatedTasks, count, page, limit, totalPages, status: statusFilter });
   } catch (error) {
+    if (error.message.includes('Invalid')) {
+      return res.status(400).json({ error: 'Invalid parameter' });
+    }
     console.error('Error fetching team tasks:', error.message);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -1182,6 +1348,9 @@ app.get('/api/archive', async (req, res) => {
 app.get('/api/archive/:filename', async (req, res) => {
   try {
     const filename = sanitizeFileName(req.params.filename);
+    if (filename !== req.params.filename) {
+      return res.status(400).json({ error: 'Invalid parameter' });
+    }
     const filePath = validatePath(path.join(ARCHIVE_DIR, filename), ARCHIVE_DIR);
 
     let content;
@@ -1260,8 +1429,12 @@ app.get('/api/inboxes/messages', async (req, res) => {
 
     let allInboxes;
     if (teamFilter) {
-      const inboxes = await readTeamInboxes(teamFilter);
-      allInboxes = Object.keys(inboxes).length > 0 ? { [teamFilter]: inboxes } : {};
+      const sanitizedTeam = sanitizeTeamName(teamFilter);
+      if (sanitizedTeam !== teamFilter) {
+        return res.status(400).json({ error: 'Invalid parameter' });
+      }
+      const inboxes = await readTeamInboxes(sanitizedTeam);
+      allInboxes = Object.keys(inboxes).length > 0 ? { [sanitizedTeam]: inboxes } : {};
     } else {
       allInboxes = await readAllInboxes();
     }
@@ -1313,12 +1486,14 @@ app.get('/api/agent-outputs', async (req, res) => {
 // Get specific agent output
 app.get('/api/agent-outputs/:taskId', async (req, res) => {
   try {
-    // Sanitize taskId to prevent path traversal
-    const taskId = req.params.taskId.replace(/[^a-zA-Z0-9_-]/g, '');
-
-    // Validate taskId is not empty after sanitization
-    if (!taskId || taskId.length === 0) {
+    // Validate taskId: strict allowlist, reject if sanitized !== original
+    const rawTaskId = req.params.taskId;
+    if (!rawTaskId || rawTaskId.length > 100) {
       return res.status(400).json({ error: 'Invalid task ID' });
+    }
+    const taskId = rawTaskId.replace(/[^a-zA-Z0-9_.-]/g, '');
+    if (!taskId || taskId !== rawTaskId) {
+      return res.status(400).json({ error: 'Invalid parameter' });
     }
 
     // Construct file path with sanitized taskId
@@ -1368,7 +1543,11 @@ app.get('/api/search', searchLimiter, async (req, res) => {
     if (!q || typeof q !== 'string' || q.trim().length < 2) {
       return res.status(400).json({ error: 'Query parameter "q" is required and must be at least 2 characters.' });
     }
+    if (q.length > 200) {
+      return res.status(400).json({ error: 'Query too long (max 200 characters).' });
+    }
 
+    // Use simple string indexOf matching (no regex) to prevent ReDoS
     const query = q.trim().toLowerCase();
     const MAX_RESULTS = 5;
 
