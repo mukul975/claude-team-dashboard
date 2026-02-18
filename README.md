@@ -99,6 +99,10 @@ Export any team's tasks and inbox messages as **JSON or CSV** directly from the 
 
 Works as a **Progressive Web App** — add to your home screen, get an app icon, and keep viewing cached data when the server is temporarily unreachable.
 
+### 🔒 **Optional Password Auth**
+
+Set one env var and the dashboard shows a login screen. Uses `crypto.timingSafeEqual` to prevent timing attacks. Token stored in `sessionStorage`. Skip it entirely for local dev — zero friction by default.
+
 </td>
 </tr>
 </table>
@@ -131,6 +135,25 @@ npm start
 ```
 
 Open **http://localhost:3001** and you're monitoring agents in real time.
+
+### 🔒 Optional Password Protection
+
+By default the dashboard is open — no login needed. To restrict access (e.g. when exposing over a tunnel or to teammates), set `DASHBOARD_PASSWORD` before starting:
+
+```bash
+# Linux / Mac
+DASHBOARD_PASSWORD=mysecret npm start
+
+# Windows CMD
+set DASHBOARD_PASSWORD=mysecret && npm start
+
+# Windows PowerShell
+$env:DASHBOARD_PASSWORD="mysecret"; npm start
+```
+
+The server generates a random token at startup. Opening the dashboard will show a login screen — enter your password to unlock. The token lives in `sessionStorage` and clears when the browser tab closes.
+
+> **Local dev?** Don't set the variable — the dashboard loads instantly with no login screen.
 
 ### 🎁 Dev Container (Instant Environment)
 
@@ -696,6 +719,8 @@ The lifecycle tracking is powered by three independent watchers:
 
 ### Security Features
 
+**Optional Password Auth**: Set `DASHBOARD_PASSWORD` to enable a login screen. The server uses `crypto.timingSafeEqual` for constant-time comparison and issues a 256-bit random token stored in `sessionStorage`.
+
 **Path Sanitization**: All team names and file paths are sanitized to prevent path traversal attacks:
 ```javascript
 // Only allows: a-zA-Z0-9_-
@@ -745,6 +770,9 @@ validatePath(inboxPath, TEAMS_DIR)
 
 ### ✅ Recently Shipped
 
+- [x] **Optional password auth** — `DASHBOARD_PASSWORD` env var enables a login screen with `crypto.timingSafeEqual` timing-safe comparison, Bearer token middleware on all API routes, WebSocket token validation, and `sessionStorage` persistence
+- [x] **Tailwind v4 + code splitting** — `@tailwindcss/vite` installed; 4 heavy components (`AgentNetworkGraph`, `TaskDependencyGraph`, `AnalyticsPanel`, `ArchiveViewer`) now lazy-loaded, cutting initial JS bundle by ~50 kB
+- [x] **Expanded test suite** — 223 tests across 15 files covering all 4 custom hooks, key components, and utility functions
 - [x] **Full accessibility audit** — 50+ buttons with `aria-label`, interactive divs with `role`/`tabIndex`/`onKeyDown`, `aria-live` on status components, `role="alert"` on error states, focus management in modals
 - [x] **Security hardening** — server.js: fixed wrong sanitizer on inbox route, patched error message leakage in global handler, added path validation on archive listing, consistent error responses across all endpoints
 - [x] **Complete inline styles migration** — All 30+ components now use React inline `style={{}}` for every sizing, color, animation, and layout value — no broken Tailwind arbitrary values remain
