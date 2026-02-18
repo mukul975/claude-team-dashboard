@@ -12,7 +12,6 @@ import { DetailedTaskProgress } from './components/DetailedTaskProgress';
 import { AgentActivity } from './components/AgentActivity';
 import { RealTimeMessages } from './components/RealTimeMessages';
 import { LiveCommunication } from './components/LiveCommunication';
-import { LiveAgentStream } from './components/LiveAgentStream';
 import { TeamHistory } from './components/TeamHistory';
 import { AgentOutputViewer } from './components/AgentOutputViewer';
 import { ArchiveViewer } from './components/ArchiveViewer';

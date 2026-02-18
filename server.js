@@ -224,10 +224,13 @@ async function readTeamConfig(teamName) {
     const data = await fs.readFile(validatedPath, 'utf8');
     return JSON.parse(data);
   } catch (error) {
-    console.error('Error reading team config:', {
-      team: sanitizeForLog(teamName),
-      error: error.message
-    });
+    // ENOENT is expected for team directories without a config.json (e.g. UUID-named or legacy dirs)
+    if (error.code !== 'ENOENT') {
+      console.error('Error reading team config:', {
+        team: sanitizeForLog(teamName),
+        error: error.message
+      });
+    }
     return null;
   }
 }
@@ -268,10 +271,13 @@ async function readTasks(teamName) {
       .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
     return tasks;
   } catch (error) {
-    console.error('Error reading tasks:', {
-      team: sanitizeForLog(teamName),
-      error: error.message
-    });
+    // ENOENT is expected for teams without a tasks directory
+    if (error.code !== 'ENOENT') {
+      console.error('Error reading tasks:', {
+        team: sanitizeForLog(teamName),
+        error: error.message
+      });
+    }
     return [];
   }
 }

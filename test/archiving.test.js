@@ -1,23 +1,22 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'fs/promises';
 import path from 'path';
-import os from 'os';
 
-// Mock dependencies
-vi.mock('fs/promises');
-vi.mock('os');
-
-// Import the functions we need to test
-// Since server.js doesn't export these, we'll need to test them indirectly
-// For now, let's create a test module that exports the functions
+// Mock fs/promises for file operation tests with explicit vi.fn() stubs
+vi.mock('fs/promises', () => ({
+  default: {
+    mkdir: vi.fn(),
+    writeFile: vi.fn(),
+    readFile: vi.fn(),
+    readdir: vi.fn(),
+    access: vi.fn(),
+    stat: vi.fn(),
+  }
+}));
 
 describe('Team Archiving System', () => {
-  const mockHomeDir = '/home/test';
-  const mockArchiveDir = path.join(mockHomeDir, '.claude', 'archive');
-
   beforeEach(() => {
     vi.clearAllMocks();
-    os.homedir.mockReturnValue(mockHomeDir);
   });
 
   afterEach(() => {

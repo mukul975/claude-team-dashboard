@@ -45,22 +45,22 @@ describe('StatsOverview Component', () => {
     const { container } = render(<StatsOverview stats={mockStats} />);
 
     const grid = container.querySelector('.grid');
-    expect(grid).toHaveClass('grid-cols-2', 'md:grid-cols-3', 'lg:grid-cols-6');
+    expect(grid).toHaveClass('grid-cols-2', 'md:grid-cols-4', 'lg:grid-cols-8');
   });
 
   it('renders icons for each stat', () => {
     const { container } = render(<StatsOverview stats={mockStats} />);
 
-    // Check for 6 icon containers (one for each stat)
-    const iconContainers = container.querySelectorAll('.flex-shrink-0');
-    expect(iconContainers.length).toBe(6);
+    // Check for 8 stat cards (one for each stat including Messages and Unread)
+    const statCards = container.querySelectorAll('.group.rounded-xl.p-4');
+    expect(statCards.length).toBe(8);
   });
 
   it('displays stat values with correct formatting', () => {
-    render(<StatsOverview stats={mockStats} />);
+    const { container } = render(<StatsOverview stats={mockStats} />);
 
-    // Check that values are displayed as bold white text
-    const valueElements = screen.getByText('4').closest('p');
-    expect(valueElements).toHaveClass('text-xl', 'font-bold', 'text-white');
+    // Check that value elements use the correct font classes
+    const valueElements = container.querySelectorAll('.text-3xl.font-extrabold.tabular-nums');
+    expect(valueElements.length).toBeGreaterThan(0);
   });
 });

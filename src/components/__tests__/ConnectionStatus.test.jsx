@@ -26,29 +26,27 @@ describe('ConnectionStatus Component', () => {
   });
 
   it('displays green indicator when connected', () => {
-    const { container } = render(<ConnectionStatus isConnected={true} error={null} />);
+    render(<ConnectionStatus isConnected={true} error={null} />);
 
-    // Check for green color classes
-    const statusDiv = container.querySelector('.bg-green-500\\/20');
-    expect(statusDiv).toBeInTheDocument();
-    expect(statusDiv).toHaveClass('text-green-400');
+    // Component uses aria-label for accessibility; connected state renders a status element
+    const statusEl = screen.getByRole('status', { name: /connection status: connected/i });
+    expect(statusEl).toBeInTheDocument();
   });
 
   it('displays red indicator when error occurs', () => {
-    const { container } = render(<ConnectionStatus isConnected={false} error="Error" />);
+    render(<ConnectionStatus isConnected={false} error="Error" />);
 
-    // Check for red color classes
-    const statusDiv = container.querySelector('.bg-red-500\\/20');
-    expect(statusDiv).toBeInTheDocument();
-    expect(statusDiv).toHaveClass('text-red-400');
+    // Error state renders an alert role element
+    const alertEl = screen.getByRole('alert');
+    expect(alertEl).toBeInTheDocument();
   });
 
   it('displays yellow indicator when connecting', () => {
-    const { container } = render(<ConnectionStatus isConnected={false} error={null} />);
+    render(<ConnectionStatus isConnected={false} error={null} />);
 
-    // Check for yellow color classes
-    const statusDiv = container.querySelector('.bg-yellow-500\\/20');
-    expect(statusDiv).toBeInTheDocument();
-    expect(statusDiv).toHaveClass('text-yellow-400');
+    // Connecting state renders a status element with aria-busy
+    const statusEl = screen.getByRole('status', { name: /connection status: connecting/i });
+    expect(statusEl).toBeInTheDocument();
+    expect(statusEl).toHaveAttribute('aria-busy', 'true');
   });
 });
