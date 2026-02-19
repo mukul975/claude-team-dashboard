@@ -67,6 +67,8 @@
     "d3": "^7.9.0",
     "dayjs": "^1.11.19",
     "jsdom": "^28.0.0",
+    "jsfuzz": "^1.0.1",
+    "license-checker": "^25.0.1",
     "lucide-react": "^0.563.0",
     "prop-types": "^15.8.1",
     "react": "^19.2.4",

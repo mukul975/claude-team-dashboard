@@ -16,8 +16,7 @@ export class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    const safeName = String(this.props.name || 'Unknown Component').replace(/[\r\n\t]/g, ' ').slice(0, 100);
-    console.error(`[ErrorBoundary] "${safeName}" crashed:`, error, errorInfo); // lgtm[js/tainted-format-string]
+    console.error('[ErrorBoundary] component crashed:', error, errorInfo);
     this.setState({
       error,
       errorInfo

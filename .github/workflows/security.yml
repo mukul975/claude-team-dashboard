@@ -83,13 +83,10 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
-    - name: Install license-checker
-      run: npm install -g license-checker@25.0.1
-
     - name: Check licenses
       run: |
-        license-checker --summary
-        license-checker --json > license-report.json
+        npx license-checker --summary
+        npx license-checker --json > license-report.json
 
     - name: Upload license report
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0

@@ -489,7 +489,6 @@ function DependencyGraph({ allTasks, onTaskClick }) {
     const container = e.currentTarget.closest('.dep-graph-container');
     if (container) {
       const rect = container.getBoundingClientRect();
-      const svgEl = e.currentTarget.closest('svg');
       setHoverPos({
         x: e.clientX - rect.left,
         y: e.clientY - rect.top,

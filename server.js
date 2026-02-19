@@ -158,7 +158,7 @@ app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
     if (req.path.startsWith('/api/')) {
-      console.log(`${sanitizeForLog(req.method)} ${sanitizeForLog(req.path)} ${res.statusCode} ${Date.now()-start}ms`);
+      console.log(`API ${res.statusCode} ${Date.now()-start}ms`);
     }
   });
   next();
@@ -1129,7 +1129,7 @@ wss.on('connection', async (ws, req) => {
   ws.on('message', (data) => {
     const messageSize = Buffer.isBuffer(data) ? data.length : Buffer.byteLength(data);
     if (messageSize > WS_MAX_MESSAGE_SIZE) {
-      console.log(`WS message too large (${messageSize} bytes) from: ${sanitizeForLog(clientIp)}`);
+      console.log(`WS message too large (${messageSize} bytes)`);
       ws.close(1009, 'Message too big');
       return;
     }

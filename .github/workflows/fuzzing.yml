@@ -1,0 +1,48 @@
+name: Fuzzing
+
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    # Run fuzzing weekly on Sunday at 3:00 AM UTC
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fuzz:
+    name: jsfuzz — message parsing utilities
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4
+      with:
+        node-version: '22.x'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build application
+      run: npm run build
+
+    - name: Run fuzzing (60 seconds)
+      run: npx jsfuzz fuzz/fuzz.js --max-total-time=60
+      continue-on-error: true
+
+    - name: Upload crash artifacts
+      if: always()
+      uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
+      with:
+        name: fuzz-artifacts
+        path: |
+          crash-*
+          oom-*
+          timeout-*
+        if-no-files-found: ignore
+        retention-days: 14
