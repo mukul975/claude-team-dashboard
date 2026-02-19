@@ -704,7 +704,7 @@ The lifecycle tracking is powered by three independent watchers:
 - Monitors: Individual task files
 - Triggers: Task creation, updates, completion
 
-**3. Output Watcher** (`/tmp/claude/D--agentdashboard/tasks/*.output`)
+**3. Output Watcher** (`/tmp/claude/{project}/tasks/*.output`)
 - Monitors: Agent output files
 - Triggers: Agent activity updates
 
@@ -713,11 +713,12 @@ The lifecycle tracking is powered by three independent watchers:
 {
   persistent: true,         // Keep process running
   ignoreInitial: true,      // Don't trigger on startup
-  usePolling: false,        // Use native events (faster)
-  interval: 100,            // Polling interval if needed
+  usePolling: true,         // Use polling for cross-platform reliability
+  interval: 1000,           // Polling interval (ms)
+  depth: 10,                // Directory depth limit
   awaitWriteFinish: {       // Wait for complete writes
-    stabilityThreshold: 200,
-    pollInterval: 50
+    stabilityThreshold: 500,
+    pollInterval: 100
   }
 }
 ```

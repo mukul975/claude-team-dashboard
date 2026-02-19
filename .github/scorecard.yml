@@ -1,0 +1,10 @@
+annotations:
+  - checks:
+      - name: Fuzzing
+    reasons:
+      - reason: not-detected
+        comment: >
+          This project uses jsfuzz for coverage-guided fuzzing of message
+          parsing and formatting utilities. See fuzz/fuzz.js and
+          .github/workflows/fuzzing.yml. OSS-Fuzz/ClusterFuzzLite integration
+          is not applicable for this local developer dashboard.

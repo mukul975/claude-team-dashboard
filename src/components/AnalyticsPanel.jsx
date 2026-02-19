@@ -4,6 +4,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend
 } from 'recharts';
 import { BarChart3 } from 'lucide-react';
+import { getInboxMessages } from '../utils/safeKey';
 
 const COLORS = ['#f97316', '#3b82f6', '#22c55e', '#a855f7', '#ec4899', '#eab308', '#06b6d4', '#ef4444', '#6366f1', '#14b8a6'];
 
@@ -18,7 +19,7 @@ function flattenAllMessages(allInboxes) {
   const messages = [];
   for (const [teamName, agents] of Object.entries(allInboxes)) {
     for (const [agentName, inbox] of Object.entries(agents || {})) {
-      const msgs = Array.isArray(inbox) ? inbox : (inbox.messages || []);
+      const msgs = getInboxMessages(inbox);
       for (const msg of msgs) {
         messages.push({ ...msg, teamName, agentName });
       }
@@ -152,7 +153,7 @@ export function AnalyticsPanel({ teams = [], allInboxes = {} }) {
     return Object.entries(allInboxes).map(([teamName, agents]) => {
       let total = 0;
       for (const inbox of Object.values(agents || {})) {
-        const msgs = Array.isArray(inbox) ? inbox : (inbox.messages || []);
+        const msgs = getInboxMessages(inbox);
         total += msgs.length;
       }
       return {

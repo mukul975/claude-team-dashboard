@@ -15,7 +15,12 @@ const config = require('./config');
 
 const IS_WINDOWS = process.platform === 'win32';
 
-// Restrict a file to the current user only (cross-platform)
+/**
+ * Restricts file permissions to the current user only (cross-platform).
+ * On Windows uses icacls; on Unix uses chmod 600.
+ * @param {string} filePath - Absolute path to the file to lock down
+ * @returns {Promise<void>}
+ */
 async function lockFilePermissions(filePath) {
   if (IS_WINDOWS) {
     // Remove all inherited permissions, grant full control to current user only
@@ -46,6 +51,11 @@ let authToken = crypto.randomBytes(32).toString('hex');
 // OWASP-recommended scrypt parameters (minimum): N=16384, r=8, p=1
 const SCRYPT_PARAMS = { N: 16384, r: 8, p: 1 };
 
+/**
+ * Hashes a password using scrypt with a random 16-byte salt.
+ * @param {string} password - The plaintext password to hash
+ * @returns {Promise<string>} The stored format "hex-salt:hex-hash"
+ */
 async function hashPassword(password) {
   const salt = crypto.randomBytes(16);
   const hash = await new Promise((resolve, reject) => {
@@ -56,6 +66,12 @@ async function hashPassword(password) {
   return `${salt.toString('hex')}:${hash.toString('hex')}`;
 }
 
+/**
+ * Verifies a plaintext password against a stored scrypt hash using timing-safe comparison.
+ * @param {string} password - The plaintext password to verify
+ * @param {string} stored - The stored "hex-salt:hex-hash" string
+ * @returns {Promise<boolean>} True if the password matches
+ */
 async function verifyPassword(password, stored) {
   const [saltHex, hashHex] = stored.split(':');
   if (!saltHex || !hashHex) return false;
@@ -158,7 +174,7 @@ app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
     if (req.path.startsWith('/api/')) {
-      console.log(`${sanitizeForLog(req.method)} ${sanitizeForLog(req.path)} ${res.statusCode} ${Date.now()-start}ms`);
+      console.log(`API ${res.statusCode} ${Date.now()-start}ms`);
     }
   });
   next();
@@ -210,7 +226,8 @@ app.post('/api/auth/setup', authLimiter, async (req, res) => {
     await lockFilePermissions(KEY_FILE);
     authToken = crypto.randomBytes(32).toString('hex');
     res.json({ token: authToken });
-  } catch {
+  } catch (err) {
+    console.error('Auth setup error:', err.message);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -234,9 +251,28 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
     // Rotate token on every successful login so each session gets a fresh token
     authToken = crypto.randomBytes(32).toString('hex');
     res.json({ token: authToken });
-  } catch {
+  } catch (err) {
+    console.error('Auth login error:', err.message);
     res.status(500).json({ error: 'Internal server error' });
   }
+});
+
+// --- Unauthenticated utility endpoints (before auth middleware) ---
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    watchers: {
+      teams: !!teamWatcher,
+      tasks: !!taskWatcher,
+      inboxes: !!inboxWatcher,
+      outputs: !!outputWatcher
+    }
+  });
+});
+
+app.get('/api/version', (req, res) => {
+  res.json({ version: require('./package.json').version, node: process.version });
 });
 
 // --- Auth middleware for protected /api/* routes (skip /api/auth/*) ---
@@ -282,7 +318,13 @@ const clients = new Set();
 // Team lifecycle tracking
 const teamLifecycle = new Map(); // teamName -> { created, lastSeen, archived }
 
-// Archive team data before deletion
+/**
+ * Archives team data to a JSON file before the team is deleted.
+ * Writes to ~/.claude/archive/<teamName>_<timestamp>.json.
+ * @param {string} teamName - Name of the team to archive
+ * @param {Object} teamData - Full team data including config, tasks, and name
+ * @returns {Promise<string|undefined>} Path to the archive file, or undefined on error
+ */
 async function archiveTeam(teamName, teamData) {
   try {
     const sanitizedName = sanitizeTeamName(teamName);
@@ -312,7 +354,11 @@ async function archiveTeam(teamName, teamData) {
   }
 }
 
-// Generate natural language summary of team activity
+/**
+ * Generates a natural language summary of team activity for archival.
+ * @param {Object} teamData - Team data with config, tasks, and name fields
+ * @returns {Object} Summary with overview, created, members, accomplishments, and duration
+ */
 function generateTeamSummary(teamData) {
   const members = teamData.config?.members || [];
   const tasks = teamData.tasks || [];
@@ -337,7 +383,11 @@ function generateTeamSummary(teamData) {
   };
 }
 
-// Broadcast to all connected clients (with dead client cleanup)
+/**
+ * Broadcasts a JSON message to all connected WebSocket clients.
+ * Automatically cleans up dead/closed connections.
+ * @param {Object} data - The data object to JSON-serialize and send
+ */
 function broadcast(data) {
   const message = JSON.stringify(data);
   const deadClients = new Set();
@@ -359,7 +409,13 @@ function broadcast(data) {
   deadClients.forEach(client => clients.delete(client));
 }
 
-// Sanitize team name to prevent path traversal attacks
+/**
+ * Sanitizes a team name to prevent path traversal attacks.
+ * Only allows alphanumeric characters, dashes, underscores, and dots.
+ * @param {string} teamName - The raw team name to sanitize
+ * @returns {string} The validated team name
+ * @throws {Error} If the name is invalid, too long, or contains traversal patterns
+ */
 function sanitizeTeamName(teamName) {
   if (!teamName || typeof teamName !== 'string') {
     throw new Error('Invalid team name');
@@ -378,7 +434,13 @@ function sanitizeTeamName(teamName) {
   return teamName;
 }
 
-// Sanitize agent name — same strict rules as team name
+/**
+ * Sanitizes an agent name using the same strict rules as team names.
+ * Only allows alphanumeric characters, dashes, underscores, and dots.
+ * @param {string} agentName - The raw agent name to sanitize
+ * @returns {string} The validated agent name
+ * @throws {Error} If the name is invalid, too long, or contains traversal patterns
+ */
 function sanitizeAgentName(agentName) {
   if (!agentName || typeof agentName !== 'string') {
     throw new Error('Invalid agent name');
@@ -395,12 +457,23 @@ function sanitizeAgentName(agentName) {
   return agentName;
 }
 
-// Sanitize string for logging to prevent log injection
+/**
+ * Sanitizes a string for safe logging by stripping control characters (CR, LF, tab, etc.)
+ * and truncating to 200 characters to prevent log injection attacks.
+ * @param {*} input - The value to sanitize (coerced to string)
+ * @returns {string} A safe-to-log string with no control characters, max 200 chars
+ */
 function sanitizeForLog(input) {
   return String(input ?? '').replace(/[\r\n\t\x00-\x1f\x7f]/g, ' ').slice(0, 200);
 }
 
-// Sanitize filename to prevent path traversal
+/**
+ * Sanitizes a filename to prevent path traversal by stripping separators,
+ * applying path.basename, and enforcing a strict alphanumeric/dot/dash/underscore allowlist.
+ * @param {string} fileName - The raw filename to sanitize
+ * @returns {string} The validated base filename
+ * @throws {Error} If the filename is invalid, too long, or contains disallowed characters
+ */
 function sanitizeFileName(fileName) {
   if (!fileName || typeof fileName !== 'string') {
     throw new Error('Invalid file name');
@@ -423,7 +496,13 @@ function sanitizeFileName(fileName) {
   return baseName;
 }
 
-// Validate path is within allowed directory
+/**
+ * Validates that a file path resolves within an allowed directory to prevent path traversal.
+ * @param {string} filePath - The file path to validate
+ * @param {string} allowedDir - The directory the path must reside within
+ * @returns {string} The normalized absolute path
+ * @throws {Error} If the path escapes the allowed directory
+ */
 function validatePath(filePath, allowedDir) {
   const normalizedPath = path.resolve(filePath);
   const normalizedDir = path.resolve(allowedDir);
@@ -439,7 +518,11 @@ function validatePath(filePath, allowedDir) {
   return normalizedPath;
 }
 
-// Read team configuration
+/**
+ * Reads and parses the config.json for a given team.
+ * @param {string} teamName - Name of the team directory
+ * @returns {Promise<Object|null>} Parsed team config, or null if not found
+ */
 async function readTeamConfig(teamName) {
   try {
     const sanitizedName = sanitizeTeamName(teamName);
@@ -464,7 +547,11 @@ async function readTeamConfig(teamName) {
   }
 }
 
-// Read all tasks for a team
+/**
+ * Reads all task JSON files for a team, sorted by creation time.
+ * @param {string} teamName - Name of the team directory
+ * @returns {Promise<Array<Object>>} Array of task objects with id fields injected
+ */
 async function readTasks(teamName) {
   try {
     const sanitizedName = sanitizeTeamName(teamName);
@@ -530,27 +617,36 @@ function getCachedActiveTeams() {
   return getCached('activeTeams', () => getActiveTeams());
 }
 
-// Get all active teams
+/**
+ * Returns all currently active agent teams by reading team config and task files.
+ * Reads all team configs concurrently for performance.
+ * @returns {Promise<Array<Object>>} Array of team objects with name, config, tasks, and lastUpdated
+ */
 async function getActiveTeams() {
   try {
     await fs.access(TEAMS_DIR);
     const teams = await fs.readdir(TEAMS_DIR);
-    const teamData = [];
 
-    for (const teamName of teams) {
-      const config = await readTeamConfig(teamName);
-      if (config) {
-        const tasks = await readTasks(teamName);
-        teamData.push({
-          name: teamName,
-          config,
-          tasks,
-          lastUpdated: new Date().toISOString()
-        });
-      }
-    }
+    // Read all team configs concurrently (fixes N+1 sequential reads)
+    const teamDataList = await Promise.all(
+      teams.map(async (teamName) => {
+        try {
+          const config = await readTeamConfig(teamName);
+          if (!config) return null;
+          const tasks = await readTasks(teamName);
+          return {
+            name: teamName,
+            config,
+            tasks,
+            lastUpdated: new Date().toISOString()
+          };
+        } catch {
+          return null;
+        }
+      })
+    );
 
-    return teamData;
+    return teamDataList.filter(Boolean);
   } catch (error) {
     if (error.code === 'ENOENT') {
       console.log('Teams directory does not exist yet');
@@ -561,7 +657,11 @@ async function getActiveTeams() {
   }
 }
 
-// Calculate team statistics
+/**
+ * Calculates aggregate statistics across all teams.
+ * @param {Array<Object>} teams - Array of team objects from getActiveTeams()
+ * @returns {Object} Stats with totalTeams, totalAgents, totalTasks, pendingTasks, inProgressTasks, completedTasks, blockedTasks
+ */
 function calculateTeamStats(teams) {
   const stats = {
     totalTeams: teams.length,
@@ -832,6 +932,36 @@ async function readAllInboxes() {
   }
 }
 
+// Debounced broadcast — prevents redundant broadcasts from rapid file changes
+let broadcastTeamsDebounceTimer = null;
+let broadcastTasksDebounceTimer = null;
+
+function debouncedTeamsBroadcast(eventType) {
+  if (broadcastTeamsDebounceTimer) clearTimeout(broadcastTeamsDebounceTimer);
+  broadcastTeamsDebounceTimer = setTimeout(async () => {
+    try {
+      cache.delete('activeTeams');
+      const teams = await getActiveTeams();
+      broadcast({ type: eventType || 'teams_update', data: teams, stats: calculateTeamStats(teams) });
+    } catch (err) {
+      console.error('[DEBOUNCE] Error broadcasting teams:', err.message);
+    }
+  }, 300);
+}
+
+function debouncedTasksBroadcast() {
+  if (broadcastTasksDebounceTimer) clearTimeout(broadcastTasksDebounceTimer);
+  broadcastTasksDebounceTimer = setTimeout(async () => {
+    try {
+      cache.delete('activeTeams');
+      const teams = await getActiveTeams();
+      broadcast({ type: 'task_update', data: teams, stats: calculateTeamStats(teams) });
+    } catch (err) {
+      console.error('[DEBOUNCE] Error broadcasting tasks:', err.message);
+    }
+  }, 300);
+}
+
 // Watch for file system changes
 let teamWatcher = null;
 let teamDirWatcher = null;
@@ -867,13 +997,7 @@ function setupWatchers() {
         created: Date.now(),
         lastSeen: Date.now()
       });
-      try {
-        cache.delete('activeTeams');
-        const teams = await getActiveTeams();
-        broadcast({ type: 'teams_update', data: teams, stats: calculateTeamStats(teams) });
-      } catch (err) {
-        console.error('[TEAM] Error on add:', err.message);
-      }
+      debouncedTeamsBroadcast('teams_update');
     })
     .on('change', async (filePath) => {
       const teamName = path.basename(path.dirname(filePath));
@@ -881,13 +1005,7 @@ function setupWatchers() {
       if (teamLifecycle.has(teamName)) {
         teamLifecycle.get(teamName).lastSeen = Date.now();
       }
-      try {
-        cache.delete('activeTeams');
-        const teams = await getActiveTeams();
-        broadcast({ type: 'teams_update', data: teams, stats: calculateTeamStats(teams) });
-      } catch (err) {
-        console.error('[TEAM] Error on change:', err.message);
-      }
+      debouncedTeamsBroadcast('teams_update');
     })
     .on('unlink', async (filePath) => {
       const teamName = path.basename(path.dirname(filePath));
@@ -908,8 +1026,7 @@ function setupWatchers() {
         }
 
         teamLifecycle.delete(teamName);
-        const updatedTeams = await getActiveTeams();
-        broadcast({ type: 'teams_update', data: updatedTeams, stats: calculateTeamStats(updatedTeams) });
+        debouncedTeamsBroadcast('teams_update');
       } catch (err) {
         console.error('[TEAM] Error on unlink:', err.message);
       }
@@ -925,19 +1042,8 @@ function setupWatchers() {
       if (path.resolve(dirPath) === path.resolve(TEAMS_DIR)) return; // ignore root dir
       const teamName = path.basename(dirPath);
       console.log(`🗑️ Team directory removed: ${sanitizeForLog(teamName)}`);
-      try {
-        teamLifecycle.delete(teamName);
-        cache.delete('activeTeams');
-        const updatedTeams = await getActiveTeams();
-        broadcast({
-          type: 'teams_update',
-          data: updatedTeams,
-          stats: calculateTeamStats(updatedTeams),
-          removedTeam: teamName
-        });
-      } catch (err) {
-        console.error('[TEAMDIR] Error on unlinkDir:', err.message);
-      }
+      teamLifecycle.delete(teamName);
+      debouncedTeamsBroadcast('teams_update');
     });
 
   // Watch inbox files — ~/.claude/teams/*/inboxes/*.json
@@ -992,35 +1098,17 @@ function setupWatchers() {
     .on('ready', () => {
       console.log('   ✓ Task watcher is ready - tracking all your agent tasks');
     })
-    .on('add', async (filePath) => {
+    .on('add', (filePath) => {
       console.log(`✨ New task created: ${sanitizeForLog(path.basename(filePath))}`);
-      try {
-        cache.delete('activeTeams');
-        const teams = await getActiveTeams();
-        broadcast({ type: 'task_update', data: teams, stats: calculateTeamStats(teams) });
-      } catch (err) {
-        console.error('[TASK] Error on add:', err.message);
-      }
+      debouncedTasksBroadcast();
     })
-    .on('change', async (filePath) => {
+    .on('change', (filePath) => {
       console.log(`📝 Task updated: ${sanitizeForLog(path.basename(filePath))}`);
-      try {
-        cache.delete('activeTeams');
-        const teams = await getActiveTeams();
-        broadcast({ type: 'task_update', data: teams, stats: calculateTeamStats(teams) });
-      } catch (err) {
-        console.error('[TASK] Error on change:', err.message);
-      }
+      debouncedTasksBroadcast();
     })
-    .on('unlink', async (filePath) => {
+    .on('unlink', (filePath) => {
       console.log(`✅ Task completed/removed: ${sanitizeForLog(path.basename(filePath))}`);
-      try {
-        cache.delete('activeTeams');
-        const teams = await getActiveTeams();
-        broadcast({ type: 'task_update', data: teams, stats: calculateTeamStats(teams) });
-      } catch (err) {
-        console.error('[TASK] Error on unlink:', err.message);
-      }
+      debouncedTasksBroadcast();
     })
     .on('error', error => {
       console.error('[TASK] Watcher error:', error);
@@ -1129,7 +1217,7 @@ wss.on('connection', async (ws, req) => {
   ws.on('message', (data) => {
     const messageSize = Buffer.isBuffer(data) ? data.length : Buffer.byteLength(data);
     if (messageSize > WS_MAX_MESSAGE_SIZE) {
-      console.log(`WS message too large (${messageSize} bytes) from: ${sanitizeForLog(clientIp)}`);
+      console.log(`WS message too large (${messageSize} bytes)`);
       ws.close(1009, 'Message too big');
       return;
     }
@@ -1164,7 +1252,12 @@ wss.on('connection', async (ws, req) => {
       allInboxes
     }));
   } catch (error) {
-    console.error('Error sending initial data:', error);
+    console.error('Failed to send initial WS data:', error.message);
+    try {
+      ws.send(JSON.stringify({ type: 'error', message: 'Failed to load initial data' }));
+    } catch {
+      // Client may have already disconnected
+    }
   }
 
   ws.on('close', () => {
@@ -1394,19 +1487,6 @@ app.get('/api/archive/:filename', async (req, res) => {
     console.error('Error fetching archive:', error.message);
     res.status(400).json({ error: 'Invalid archive filename' });
   }
-});
-
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    watchers: {
-      teams: !!teamWatcher,
-      tasks: !!taskWatcher,
-      inboxes: !!inboxWatcher,
-      outputs: !!outputWatcher
-    }
-  });
 });
 
 // Pre-computed stats endpoint
@@ -1829,7 +1909,10 @@ app.get('/api/stats/live', async (req, res) => {
   }
 });
 
-// Graceful shutdown handler
+/**
+ * Registers SIGTERM/SIGINT handlers to gracefully close the HTTP server,
+ * WebSocket connections, and file watchers before exiting.
+ */
 function setupGracefulShutdown() {
   let isShuttingDown = false;
 
@@ -1878,11 +1961,6 @@ function setupGracefulShutdown() {
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('SIGINT', () => shutdown('SIGINT'));
 }
-
-// Version endpoint
-app.get('/api/version', (req, res) => {
-  res.json({ version: require('./package.json').version, node: process.version });
-});
 
 // Error handling middleware — never leak internal error details to clients
 app.use((err, req, res, next) => {

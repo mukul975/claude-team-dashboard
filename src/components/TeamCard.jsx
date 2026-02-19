@@ -5,14 +5,9 @@ import { AgentCard } from './AgentCard';
 import { TaskList } from './TaskList';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-dayjs.extend(relativeTime);
+import { safePropKey, getInboxMessages } from '../utils/safeKey';
 
-/** Validates a property key to prevent prototype pollution via dynamic access. */
-const safePropKey = (key) => {
-  const k = String(key ?? '');
-  if (k === '__proto__' || k === 'constructor' || k === 'prototype') return null;
-  return k;
-};
+dayjs.extend(relativeTime);
 
 /**
  * Derives the latest message timestamp for a given agent from the team inbox data.
@@ -29,7 +24,7 @@ function getLatestTimestamp(allInboxes, teamName, agentName) {
   let latest = null;
 
   if (agentInbox) {
-    const messages = Array.isArray(agentInbox) ? agentInbox : (agentInbox.messages || []);
+    const messages = getInboxMessages(agentInbox);
     for (const msg of messages) {
       const ts = msg.timestamp || msg.createdAt || msg.date || msg.sentAt;
       if (ts) {
@@ -43,7 +38,7 @@ function getLatestTimestamp(allInboxes, teamName, agentName) {
 
   // Also scan all inboxes for messages from this agent (sender field)
   for (const [, inbox] of Object.entries(teamInboxes)) {
-    const messages = Array.isArray(inbox) ? inbox : (inbox.messages || []);
+    const messages = getInboxMessages(inbox);
     for (const msg of messages) {
       if (msg.from === agentName || msg.sender === agentName || msg.agentName === agentName) {
         const ts = msg.timestamp || msg.createdAt || msg.date || msg.sentAt;
@@ -139,10 +134,10 @@ export function TeamCard({ team, inboxes = {}, allInboxes = {}, onNavigateToInbo
 
   const inboxEntries = Object.values(inboxes);
   const totalMessages = inboxEntries.reduce((total, agentInbox) => {
-    return total + (Array.isArray(agentInbox) ? agentInbox.length : (agentInbox.messages || []).length);
+    return total + getInboxMessages(agentInbox).length;
   }, 0);
   const unreadCount = inboxEntries.reduce((total, agentInbox) => {
-    const msgs = Array.isArray(agentInbox) ? agentInbox : (agentInbox.messages || []);
+    const msgs = getInboxMessages(agentInbox);
     return total + msgs.filter(m => m.read === false).length;
   }, 0);
 

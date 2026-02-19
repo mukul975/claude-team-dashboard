@@ -24,6 +24,9 @@ export function AgentCard({ agent, isLead, agentStatus }) {
   return (
     <div
       className="p-5"
+      role="article"
+      tabIndex={0}
+      aria-label={`Agent ${agent.name}${isLead ? ', team lead' : ''}`}
       style={{
         position: 'relative',
         borderRadius: '16px',
@@ -34,11 +37,13 @@ export function AgentCard({ agent, isLead, agentStatus }) {
         border: `2px solid ${isLead ? 'rgba(234, 179, 8, 0.3)' : 'rgba(59, 130, 246, 0.25)'}`,
         boxShadow: isHovered
           ? `0 8px 24px ${isLead ? 'rgba(234, 179, 8, 0.25)' : 'rgba(59, 130, 246, 0.2)'}, inset 0 1px 0 rgba(255, 255, 255, 0.1)`
-          : '0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+          : 'var(--card-shadow)',
         transform: isHovered ? 'translateY(-4px) scale(1.02)' : 'translateY(0) scale(1)',
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onFocus={() => setIsHovered(true)}
+      onBlur={() => setIsHovered(false)}
     >
       <div
         style={{
@@ -99,10 +104,15 @@ export function AgentCard({ agent, isLead, agentStatus }) {
             <div className="flex items-center gap-2 mb-2">
               {agentStatus && (
                 <div
+                  role="img"
+                  aria-label={agentStatus.tooltipText}
+                  tabIndex={0}
                   style={{ position: 'relative' }}
                   title={agentStatus.tooltipText}
                   onMouseEnter={() => setStatusHovered(true)}
                   onMouseLeave={() => setStatusHovered(false)}
+                  onFocus={() => setStatusHovered(true)}
+                  onBlur={() => setStatusHovered(false)}
                 >
                   <span
                     className={`inline-block rounded-full ${agentStatus.pulse ? 'animate-pulse' : ''}`}
@@ -124,11 +134,11 @@ export function AgentCard({ agent, isLead, agentStatus }) {
                       padding: '4px 8px',
                       background: 'var(--bg-card)',
                       fontSize: '12px',
-                      color: '#e5e7eb',
+                      color: 'var(--text-primary)',
                       borderRadius: '4px',
                       whiteSpace: 'nowrap',
                       zIndex: 20,
-                      border: '1px solid #374151',
+                      border: '1px solid var(--border-color)',
                       opacity: statusHovered ? 1 : 0,
                       transition: 'opacity 0.15s',
                       pointerEvents: 'none',
@@ -140,8 +150,9 @@ export function AgentCard({ agent, isLead, agentStatus }) {
               )}
 
               <h5
-                className="text-white font-bold text-lg truncate"
+                className="font-bold text-lg truncate"
                 style={{
+                  color: 'var(--text-heading)',
                   letterSpacing: '-0.01em',
                   textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
                 }}
@@ -177,8 +188,8 @@ export function AgentCard({ agent, isLead, agentStatus }) {
                   border: '1px solid rgba(75, 85, 99, 0.3)',
                 }}
               >
-                <Cpu className="h-4 w-4 text-gray-400" aria-hidden="true" />
-                <span className="text-sm text-gray-300 truncate font-medium">
+                <Cpu className="h-4 w-4" aria-hidden="true" style={{ color: 'var(--text-secondary)' }} />
+                <span className="text-sm truncate font-medium" style={{ color: 'var(--text-muted)' }}>
                   {agent.agentType}
                 </span>
               </div>

@@ -1,5 +1,18 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Users, Zap, Brain, CheckSquare, Grid3X3 } from 'lucide-react';
+import { getAgentColor } from '../utils/formatting';
+import { getInboxMessages } from '../utils/safeKey';
+
+const TAILWIND_TO_HEX = {
+  'bg-blue-600': '#60a5fa',
+  'bg-purple-600': '#c084fc',
+  'bg-green-600': '#34d399',
+  'bg-red-600': '#f87171',
+  'bg-yellow-600': '#fbbf24',
+  'bg-pink-600': '#f472b6',
+  'bg-indigo-600': '#a78bfa',
+  'bg-orange-500': '#fb923c',
+};
 
 function getHeatmapColor(count) {
   if (count === 0) return '#374151';
@@ -22,7 +35,7 @@ function buildHeatmapData(allInboxes) {
 
   for (const [, agents] of Object.entries(allInboxes)) {
     for (const [agentName, inbox] of Object.entries(agents || {})) {
-      const messages = Array.isArray(inbox) ? inbox : (inbox.messages || []);
+      const messages = getInboxMessages(inbox);
       for (const msg of messages) {
         const sender = msg.from || agentName;
         if (!msg.timestamp) continue;
@@ -66,7 +79,7 @@ export function AgentActivity({ teams, allInboxes = {} }) {
               agentType: member.agentType,
               activeTasks: agentTasks.length,
               currentTask: agentTasks[0]?.subject || 'Idle',
-              color: getAgentColor(member.name)
+              color: TAILWIND_TO_HEX[getAgentColor(member.name)] || '#60a5fa'
             });
           });
         }
@@ -74,15 +87,6 @@ export function AgentActivity({ teams, allInboxes = {} }) {
       setActiveAgents(agents.slice(0, 10));
     }
   }, [teams]);
-
-  const getAgentColor = (name) => {
-    const colors = [
-      '#60a5fa', '#34d399', '#fbbf24', '#f87171',
-      '#c084fc', '#22d3ee', '#fb923c', '#a78bfa'
-    ];
-    const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return colors[hash % colors.length];
-  };
 
   const heatmap = useMemo(() => buildHeatmapData(allInboxes), [allInboxes]);
   const hasHeatmapData = heatmap.agents.length > 0;

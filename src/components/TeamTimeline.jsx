@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Clock, ChevronDown, Filter } from 'lucide-react';
 import { formatRelativeTime, getAgentColor, getAgentInitials, formatMessageText } from '../utils/formatting';
+import { getInboxMessages } from '../utils/safeKey';
 
 const AGENT_BG_COLORS = {
   'bg-blue-600': '#2563eb',
@@ -26,7 +27,16 @@ const AGENT_BORDER_COLORS = {
 
 const PAGE_SIZE = 50;
 
-export function TeamTimeline({ allInboxes = {}, teams = [] }) {
+function getSummaryText(msg) {
+  const raw = msg.summary || msg.content || msg.message || '';
+  const parsed = formatMessageText(raw); // lgtm[js/call-to-non-callable]
+  if (parsed.type === 'text' || parsed.type === 'raw') return parsed.content;
+  if (parsed.summary) return parsed.summary;
+  if (parsed.subject) return parsed.subject;
+  return raw;
+}
+
+export const TeamTimeline = React.memo(function TeamTimeline({ allInboxes = {}, teams = [] }) {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [selectedTeam, setSelectedTeam] = useState('all');
 
@@ -36,11 +46,11 @@ export function TeamTimeline({ allInboxes = {}, teams = [] }) {
     return Object.entries(allInboxes)
       .flatMap(([teamName, agents]) =>
         Object.entries(agents || {}).flatMap(([agentName, inbox]) => {
-          const messages = Array.isArray(inbox) ? inbox : (inbox.messages || []);
+          const messages = getInboxMessages(inbox);
           return messages.map(msg => ({ ...msg, teamName, agentName }));
         })
       )
-      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      .sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp));
   }, [allInboxes]);
 
   const filteredMessages = useMemo(() => {
@@ -48,17 +58,8 @@ export function TeamTimeline({ allInboxes = {}, teams = [] }) {
     return allMessages.filter(msg => msg.teamName === selectedTeam);
   }, [allMessages, selectedTeam]);
 
-  const visibleMessages = filteredMessages.slice(0, visibleCount);
+  const visibleMessages = useMemo(() => filteredMessages.slice(0, visibleCount), [filteredMessages, visibleCount]);
   const hasMore = visibleCount < filteredMessages.length;
-
-  function getSummaryText(msg) {
-    const raw = msg.summary || msg.content || msg.message || '';
-    const parsed = formatMessageText(raw); // lgtm[js/call-to-non-callable]
-    if (parsed.type === 'text' || parsed.type === 'raw') return parsed.content;
-    if (parsed.summary) return parsed.summary;
-    if (parsed.subject) return parsed.subject;
-    return raw;
-  }
 
   return (
     <div
@@ -236,4 +237,4 @@ export function TeamTimeline({ allInboxes = {}, teams = [] }) {
       </div>
     </div>
   );
-}
+});

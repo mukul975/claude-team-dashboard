@@ -1,18 +1,12 @@
 import { useState, useMemo } from 'react';
 import { Crown, GitCompare } from 'lucide-react';
-
-/** Validates a property key to prevent prototype pollution via dynamic access. */
-const safePropKey = (key) => {
-  const k = String(key ?? '');
-  if (k === '__proto__' || k === 'constructor' || k === 'prototype') return null;
-  return k;
-};
+import { safePropKey, getInboxMessages } from '../utils/safeKey';
 
 function getTeamMessageCount(teamInbox) {
   let count = 0;
   if (!teamInbox) return count;
   for (const agentInbox of Object.values(teamInbox)) {
-    const msgs = Array.isArray(agentInbox) ? agentInbox : (agentInbox.messages || []);
+    const msgs = getInboxMessages(agentInbox);
     count += msgs.length;
   }
   return count;
@@ -58,7 +52,7 @@ function getMostActiveAgent(teamInbox) {
   if (!teamInbox) return null;
   const counts = {};
   for (const [agentName, agentInbox] of Object.entries(teamInbox)) {
-    const msgs = Array.isArray(agentInbox) ? agentInbox : (agentInbox.messages || []);
+    const msgs = getInboxMessages(agentInbox);
     for (const msg of msgs) {
       const sender = msg.from || agentName;
       const sk = safePropKey(sender);

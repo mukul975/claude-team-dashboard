@@ -1,22 +1,23 @@
 import React, { useEffect, useRef } from 'react';
 import { X, Keyboard } from 'lucide-react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 const ShortcutKey = ({ keys }) => (
   <div className="flex items-center gap-1">
     {keys.map((key, i) => (
       <React.Fragment key={i}>
-        {i > 0 && <span style={{ color: '#6b7280', fontSize: 12 }}>+</span>}
+        {i > 0 && <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>+</span>}
         <kbd
           className="inline-flex items-center justify-center text-xs font-semibold"
           style={{
             minWidth: 28,
             height: 28,
             padding: '0 8px',
-            color: '#e5e7eb',
-            background: '#374151',
-            border: '1px solid #4b5563',
+            color: 'var(--text-primary)',
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border-color)',
             borderRadius: 6,
-            boxShadow: '0 1px 2px rgba(0,0,0,0.3)',
+            boxShadow: 'var(--card-shadow)',
             fontFamily: 'inherit',
           }}
         >
@@ -31,10 +32,10 @@ const ShortcutRow = ({ keys, description }) => (
   <div
     className="flex items-center justify-between rounded-lg transition-colors"
     style={{ padding: '8px 12px' }}
-    onMouseEnter={e => e.currentTarget.style.background = 'rgba(55,65,81,0.5)'}
+    onMouseEnter={e => e.currentTarget.style.background = 'var(--tab-inactive-bg)'}
     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
   >
-    <span className="text-sm" style={{ color: '#d1d5db' }}>{description}</span>
+    <span className="text-sm" style={{ color: 'var(--text-muted)' }}>{description}</span>
     <ShortcutKey keys={keys} />
   </div>
 );
@@ -43,7 +44,7 @@ const ShortcutSection = ({ title, shortcuts }) => (
   <div style={{ marginBottom: 20 }}>
     <h3
       className="text-xs font-semibold uppercase"
-      style={{ color: '#9ca3af', letterSpacing: '0.05em', marginBottom: 8, padding: '0 12px' }}
+      style={{ color: 'var(--text-secondary)', letterSpacing: '0.05em', marginBottom: 8, padding: '0 12px' }}
     >
       {title}
     </h3>
@@ -57,6 +58,7 @@ const ShortcutSection = ({ title, shortcuts }) => (
 
 export function KeyboardShortcutsModal({ isOpen, onClose }) {
   const modalRef = useRef(null);
+  const trapRef = useFocusTrap(isOpen);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -99,6 +101,7 @@ export function KeyboardShortcutsModal({ isOpen, onClose }) {
 
   return (
     <div
+      ref={trapRef}
       style={{
         position: 'fixed',
         inset: 0,
@@ -128,10 +131,10 @@ export function KeyboardShortcutsModal({ isOpen, onClose }) {
         onClick={e => e.stopPropagation()}
         style={{
           position: 'relative',
-          background: '#111827',
-          border: '1px solid #374151',
+          background: 'var(--bg-primary)',
+          border: '1px solid var(--border-color)',
           borderRadius: 16,
-          boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
+          boxShadow: 'var(--card-hover-shadow)',
           width: '100%',
           maxWidth: 512,
           margin: '0 16px',
@@ -147,7 +150,7 @@ export function KeyboardShortcutsModal({ isOpen, onClose }) {
           className="flex items-center justify-between"
           style={{
             padding: '16px 24px',
-            borderBottom: '1px solid rgba(55,65,81,0.6)',
+            borderBottom: '1px solid var(--footer-border)',
             flexShrink: 0,
           }}
         >
@@ -162,7 +165,7 @@ export function KeyboardShortcutsModal({ isOpen, onClose }) {
             }}>
               <Keyboard style={{ width: 20, height: 20, color: '#e8750a' }} />
             </div>
-            <h2 className="text-lg font-semibold" style={{ color: '#ffffff' }}>Keyboard Shortcuts</h2>
+            <h2 className="text-lg font-semibold" style={{ color: 'var(--text-heading)' }}>Keyboard Shortcuts</h2>
           </div>
           <button
             onClick={onClose}
@@ -170,14 +173,14 @@ export function KeyboardShortcutsModal({ isOpen, onClose }) {
             aria-label="Close shortcuts modal"
             style={{
               padding: '6px',
-              color: '#9ca3af',
+              color: 'var(--text-secondary)',
               borderRadius: 8,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
-            onMouseEnter={e => { e.currentTarget.style.color = '#ffffff'; e.currentTarget.style.background = '#374151'; }}
-            onMouseLeave={e => { e.currentTarget.style.color = '#9ca3af'; e.currentTarget.style.background = 'transparent'; }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-heading)'; e.currentTarget.style.background = 'var(--bg-secondary)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'transparent'; }}
           >
             <X style={{ width: 20, height: 20 }} />
           </button>
@@ -192,20 +195,20 @@ export function KeyboardShortcutsModal({ isOpen, onClose }) {
         {/* Footer */}
         <div style={{
           padding: '12px 24px',
-          borderTop: '1px solid rgba(55,65,81,0.6)',
-          background: 'rgba(31,41,55,0.4)',
+          borderTop: '1px solid var(--footer-border)',
+          background: 'var(--footer-bg)',
           flexShrink: 0,
           textAlign: 'center',
         }}>
-          <p className="text-xs" style={{ color: '#6b7280' }}>
+          <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
             Press{' '}
             <kbd style={{
               padding: '2px 6px',
               fontSize: 11,
-              background: '#374151',
-              border: '1px solid #4b5563',
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-color)',
               borderRadius: 4,
-              color: '#e5e7eb',
+              color: 'var(--text-primary)',
             }}>?</kbd>
             {' '}anytime to show this dialog
           </p>

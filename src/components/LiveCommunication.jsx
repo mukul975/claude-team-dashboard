@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { MessageSquare, Users, Clock, Bot, CheckCircle, AlertCircle, Zap, ChevronLeft, Layers, List } from 'lucide-react';
+import { apiFetch } from '../utils/api.js';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { parseMessageToNatural } from '../utils/messageParser';
+import { getInboxMessages } from '../utils/safeKey';
 dayjs.extend(relativeTime);
 
 const getIconComponent = (type) => {
@@ -20,7 +22,7 @@ function buildMessages(allInboxes, selectedTeam) {
   const teamInboxes = allInboxes[selectedTeam] || {};
   return Object.entries(teamInboxes)
     .flatMap(([agentName, inbox]) => {
-      const msgs = Array.isArray(inbox) ? inbox : (inbox.messages || []);
+      const msgs = getInboxMessages(inbox);
       return msgs
         .filter(msg => msg != null)
         .map(msg => {
@@ -68,6 +70,7 @@ export function LiveCommunication({ teams, allInboxes = {} }) {
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [autoScroll, setAutoScroll] = useState(true);
   const [fetchedInboxes, setFetchedInboxes] = useState(null);
+  const [fetchError, setFetchError] = useState(null);
   const [viewMode, setViewMode] = useState('flat'); // 'flat' | 'threads'
   const [expandedThread, setExpandedThread] = useState(null); // pairKey of expanded thread
   const messagesEndRef = React.useRef(null);
@@ -79,10 +82,15 @@ export function LiveCommunication({ teams, allInboxes = {} }) {
   useEffect(() => {
     if (hasWsData) return;
     let cancelled = false;
-    fetch('/api/inboxes')
+    apiFetch('/api/inboxes')
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .then(data => { if (!cancelled) setFetchedInboxes(data.inboxes || {}); })
-      .catch(() => {});
+      .then(data => { if (!cancelled) { setFetchedInboxes(data.inboxes || {}); setFetchError(null); } })
+      .catch(err => {
+        if (!cancelled) {
+          console.error('LiveCommunication fetch error:', err);
+          setFetchError(err.message || 'Failed to load communications');
+        }
+      });
     return () => { cancelled = true; };
   }, [hasWsData]);
 
@@ -365,6 +373,13 @@ export function LiveCommunication({ teams, allInboxes = {} }) {
               );
             })}
           </select>
+        </div>
+      )}
+
+      {/* Error display */}
+      {fetchError && (
+        <div role="alert" className="mb-4 p-3 rounded-lg text-sm" style={{ color: 'var(--text-muted)', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }}>
+          Error loading data: {fetchError}
         </div>
       )}
 

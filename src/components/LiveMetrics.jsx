@@ -81,6 +81,14 @@ export function LiveMetrics({ stats, allInboxes, isConnected, lastRawMessage }) 
   const agentsHistoryRef = useRef([]);
   const [agentsHistory, setAgentsHistory] = useState([]);
 
+  // --- Refs for latest prop values (used in interval callbacks to avoid teardown) ---
+  const statsRef = useRef(stats);
+  const allInboxesRef = useRef(allInboxes);
+
+  // Keep refs in sync with prop changes
+  useEffect(() => { statsRef.current = stats; }, [stats]);
+  useEffect(() => { allInboxesRef.current = allInboxes; }, [allInboxes]);
+
   // --- Connection uptime tracking ---
   const connectedSinceRef = useRef(null);
   const [uptime, setUptime] = useState('');
@@ -126,6 +134,7 @@ export function LiveMetrics({ stats, allInboxes, isConnected, lastRawMessage }) 
   }, [lastRawMessage]);
 
   // Update sparkline histories every 3 seconds
+  // Uses refs for stats/allInboxes to avoid tearing down the interval on every WS message
   useEffect(() => {
     const interval = setInterval(() => {
       // Rate
@@ -137,21 +146,22 @@ export function LiveMetrics({ stats, allInboxes, isConnected, lastRawMessage }) 
       setRateHistory([...rateHistoryRef.current]);
 
       // Completion %
-      if (stats) {
-        const pct = stats.totalTasks > 0
-          ? Math.round((stats.completedTasks / stats.totalTasks) * 100)
+      const currentStats = statsRef.current;
+      if (currentStats) {
+        const pct = currentStats.totalTasks > 0
+          ? Math.round((currentStats.completedTasks / currentStats.totalTasks) * 100)
           : 0;
         completionHistoryRef.current = [...completionHistoryRef.current, pct].slice(-SPARK_SIZE);
         setCompletionHistory([...completionHistoryRef.current]);
       }
 
       // Active agents
-      const count = computeActiveAgents(allInboxes);
+      const count = computeActiveAgents(allInboxesRef.current);
       agentsHistoryRef.current = [...agentsHistoryRef.current, count].slice(-SPARK_SIZE);
       setAgentsHistory([...agentsHistoryRef.current]);
     }, 3000);
     return () => clearInterval(interval);
-  }, [stats, allInboxes]);
+  }, []);
 
   // Pulse on stats update
   useEffect(() => {

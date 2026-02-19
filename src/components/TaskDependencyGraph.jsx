@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 const STATUS_COLORS = {
   pending: {
@@ -60,19 +61,20 @@ function truncate(str, max) {
 
 // Floating detail card shown when a task is clicked
 function TaskInfoCard({ task, onClose }) {
+  const trapRef = useFocusTrap(!!task);
   if (!task) return null;
   const status = getEffectiveStatus(task);
   const color = STATUS_COLORS[status] || STATUS_COLORS.pending;
 
   return (
     <div
+      ref={trapRef}
       className="fixed inset-0 z-50 flex items-center justify-center"
       style={{ background: 'rgba(0,0,0,0.5)' }}
       onClick={onClose}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClose(); }}
-      aria-label="Close modal overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Task details"
     >
       <div
         className="rounded-xl p-5 max-w-md w-full mx-4 shadow-2xl"
@@ -213,7 +215,7 @@ function SvgTooltip({ task, x, y, svgRect }) {
   );
 }
 
-function StatusBoard({ allTasks, onTaskClick }) {
+const StatusBoard = React.memo(function StatusBoard({ allTasks, onTaskClick }) {
   const columns = useMemo(() => {
     const cols = { pending: [], in_progress: [], completed: [], blocked: [] };
     allTasks.forEach((task) => {
@@ -346,21 +348,154 @@ function StatusBoard({ allTasks, onTaskClick }) {
       })}
     </div>
   );
-}
+});
 
-function DependencyGraph({ allTasks, onTaskClick }) {
+const DependencyGraph = React.memo(function DependencyGraph({ allTasks, onTaskClick }) {
   const [hoveredTask, setHoveredTask] = useState(null);
   const [hoverPos, setHoverPos] = useState({ x: 0, y: 0 });
   const [containerRect, setContainerRect] = useState(null);
 
-  const hasDeps = allTasks.some(
+  const hasDeps = useMemo(() => allTasks.some(
     (t) => (t.blockedBy && t.blockedBy.length > 0) || (t.blocks && t.blocks.length > 0)
-  );
+  ), [allTasks]);
 
   const containerRef = useCallback((node) => {
     if (node) {
       setContainerRect({ width: node.offsetWidth, height: node.offsetHeight });
     }
+  }, []);
+
+  // Memoize the expensive graph layout computation
+  const graphLayout = useMemo(() => {
+    if (!hasDeps) return null;
+
+    // Build a task map by id
+    const taskMap = {};
+    allTasks.forEach((t) => {
+      if (t.id) taskMap[t.id] = t;
+    });
+
+    // Collect only tasks involved in dependencies
+    const involvedIds = new Set();
+    allTasks.forEach((t) => {
+      if (t.blockedBy && t.blockedBy.length > 0) {
+        involvedIds.add(t.id);
+        t.blockedBy.forEach((bid) => involvedIds.add(bid));
+      }
+      if (t.blocks && t.blocks.length > 0) {
+        involvedIds.add(t.id);
+        t.blocks.forEach((bid) => involvedIds.add(bid));
+      }
+    });
+
+    const involvedTasks = allTasks.filter((t) => involvedIds.has(t.id));
+
+    // Compute depth (layer) for each task via BFS from roots (topological sort)
+    const childrenMap = {};
+    involvedTasks.forEach((t) => {
+      if (t.blockedBy) {
+        t.blockedBy.forEach((parentId) => {
+          if (!childrenMap[parentId]) childrenMap[parentId] = [];
+          childrenMap[parentId].push(t.id);
+        });
+      }
+    });
+
+    const depthMap = {};
+    const roots = involvedTasks.filter(
+      (t) => !t.blockedBy || t.blockedBy.length === 0
+    );
+
+    // BFS to assign depths
+    const queue = roots.map((t) => ({ id: t.id, depth: 0 }));
+    const visited = new Set();
+    while (queue.length > 0) {
+      const { id, depth } = queue.shift();
+      if (visited.has(id)) {
+        depthMap[id] = Math.max(depthMap[id] || 0, depth);
+        continue;
+      }
+      visited.add(id);
+      depthMap[id] = Math.max(depthMap[id] || 0, depth);
+      const children = childrenMap[id] || [];
+      children.forEach((cid) => {
+        queue.push({ id: cid, depth: depth + 1 });
+      });
+    }
+
+    involvedTasks.forEach((t) => {
+      if (depthMap[t.id] === undefined) depthMap[t.id] = 0;
+    });
+
+    // Group tasks by depth
+    const layers = {};
+    involvedTasks.forEach((t) => {
+      const d = depthMap[t.id];
+      if (!layers[d]) layers[d] = [];
+      layers[d].push(t);
+    });
+
+    const layerKeys = Object.keys(layers)
+      .map(Number)
+      .sort((a, b) => a - b);
+
+    // Layout constants
+    const nodeW = 210;
+    const nodeH = 68;
+    const hGap = 80;
+    const vGap = 24;
+    const padX = 40;
+    const padY = 40;
+
+    const maxPerLayer = Math.max(...layerKeys.map((k) => layers[k].length));
+    const svgWidth = padX * 2 + layerKeys.length * (nodeW + hGap) - hGap;
+    const svgHeight = padY * 2 + maxPerLayer * (nodeH + vGap) - vGap;
+
+    // Compute positions
+    const positions = {};
+    layerKeys.forEach((layer, li) => {
+      const tasks = layers[layer];
+      const colX = padX + li * (nodeW + hGap);
+      const totalH = tasks.length * nodeH + (tasks.length - 1) * vGap;
+      const startY = padY + (svgHeight - padY * 2 - totalH) / 2;
+      tasks.forEach((t, ti) => {
+        positions[t.id] = {
+          x: colX,
+          y: startY + ti * (nodeH + vGap),
+        };
+      });
+    });
+
+    // Build edges: from blocker to blocked task
+    const edges = [];
+    involvedTasks.forEach((t) => {
+      if (t.blockedBy) {
+        t.blockedBy.forEach((parentId) => {
+          if (positions[parentId] && positions[t.id]) {
+            edges.push({ from: parentId, to: t.id });
+          }
+        });
+      }
+    });
+
+    return { involvedTasks, positions, edges, svgWidth, svgHeight, nodeW, nodeH };
+  }, [allTasks, hasDeps]);
+
+  const handleNodeMouseEnter = useCallback((task, e) => {
+    const container = e.currentTarget.closest('.dep-graph-container');
+    if (container) {
+      const rect = container.getBoundingClientRect();
+      setHoverPos({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      });
+      setContainerRect({ width: rect.width, height: rect.height });
+    }
+    setHoveredTask(task);
+  }, []);
+
+  const handleNodeMouseLeave = useCallback(() => {
+    setHoveredTask(null);
   }, []);
 
   if (!hasDeps) {
@@ -376,132 +511,7 @@ function DependencyGraph({ allTasks, onTaskClick }) {
     );
   }
 
-  // Build a task map by id
-  const taskMap = {};
-  allTasks.forEach((t) => {
-    if (t.id) taskMap[t.id] = t;
-  });
-
-  // Collect only tasks involved in dependencies
-  const involvedIds = new Set();
-  allTasks.forEach((t) => {
-    if (t.blockedBy && t.blockedBy.length > 0) {
-      involvedIds.add(t.id);
-      t.blockedBy.forEach((bid) => involvedIds.add(bid));
-    }
-    if (t.blocks && t.blocks.length > 0) {
-      involvedIds.add(t.id);
-      t.blocks.forEach((bid) => involvedIds.add(bid));
-    }
-  });
-
-  const involvedTasks = allTasks.filter((t) => involvedIds.has(t.id));
-
-  // Compute depth (layer) for each task via BFS from roots (topological sort)
-  const childrenMap = {};
-  involvedTasks.forEach((t) => {
-    if (t.blockedBy) {
-      t.blockedBy.forEach((parentId) => {
-        if (!childrenMap[parentId]) childrenMap[parentId] = [];
-        childrenMap[parentId].push(t.id);
-      });
-    }
-  });
-
-  const depthMap = {};
-  const roots = involvedTasks.filter(
-    (t) => !t.blockedBy || t.blockedBy.length === 0
-  );
-
-  // BFS to assign depths
-  const queue = roots.map((t) => ({ id: t.id, depth: 0 }));
-  const visited = new Set();
-  while (queue.length > 0) {
-    const { id, depth } = queue.shift();
-    if (visited.has(id)) {
-      depthMap[id] = Math.max(depthMap[id] || 0, depth);
-      continue;
-    }
-    visited.add(id);
-    depthMap[id] = Math.max(depthMap[id] || 0, depth);
-    const children = childrenMap[id] || [];
-    children.forEach((cid) => {
-      queue.push({ id: cid, depth: depth + 1 });
-    });
-  }
-
-  involvedTasks.forEach((t) => {
-    if (depthMap[t.id] === undefined) depthMap[t.id] = 0;
-  });
-
-  // Group tasks by depth
-  const layers = {};
-  involvedTasks.forEach((t) => {
-    const d = depthMap[t.id];
-    if (!layers[d]) layers[d] = [];
-    layers[d].push(t);
-  });
-
-  const layerKeys = Object.keys(layers)
-    .map(Number)
-    .sort((a, b) => a - b);
-
-  // Layout constants
-  const nodeW = 210;
-  const nodeH = 68;
-  const hGap = 80;
-  const vGap = 24;
-  const padX = 40;
-  const padY = 40;
-
-  const maxPerLayer = Math.max(...layerKeys.map((k) => layers[k].length));
-  const svgWidth = padX * 2 + layerKeys.length * (nodeW + hGap) - hGap;
-  const svgHeight = padY * 2 + maxPerLayer * (nodeH + vGap) - vGap;
-
-  // Compute positions
-  const positions = {};
-  layerKeys.forEach((layer, li) => {
-    const tasks = layers[layer];
-    const colX = padX + li * (nodeW + hGap);
-    const totalH = tasks.length * nodeH + (tasks.length - 1) * vGap;
-    const startY = padY + (svgHeight - padY * 2 - totalH) / 2;
-    tasks.forEach((t, ti) => {
-      positions[t.id] = {
-        x: colX,
-        y: startY + ti * (nodeH + vGap),
-      };
-    });
-  });
-
-  // Build edges: from blocker to blocked task
-  const edges = [];
-  involvedTasks.forEach((t) => {
-    if (t.blockedBy) {
-      t.blockedBy.forEach((parentId) => {
-        if (positions[parentId] && positions[t.id]) {
-          edges.push({ from: parentId, to: t.id });
-        }
-      });
-    }
-  });
-
-  const handleNodeMouseEnter = (task, e) => {
-    const container = e.currentTarget.closest('.dep-graph-container');
-    if (container) {
-      const rect = container.getBoundingClientRect();
-      const svgEl = e.currentTarget.closest('svg');
-      setHoverPos({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      });
-      setContainerRect({ width: rect.width, height: rect.height });
-    }
-    setHoveredTask(task);
-  };
-
-  const handleNodeMouseLeave = () => {
-    setHoveredTask(null);
-  };
+  const { involvedTasks, positions, edges, svgWidth, svgHeight, nodeW, nodeH } = graphLayout;
 
   return (
     <div className="relative overflow-x-auto overflow-y-auto custom-scrollbar dep-graph-container" ref={containerRef} style={{ maxHeight: '520px' }}>
@@ -656,10 +666,10 @@ function DependencyGraph({ allTasks, onTaskClick }) {
       </svg>
     </div>
   );
-}
+});
 
 // Gantt-style horizontal bar chart showing all tasks grouped by status
-function GanttView({ allTasks, onTaskClick }) {
+const GanttView = React.memo(function GanttView({ allTasks, onTaskClick }) {
   const statusOrder = ['in_progress', 'pending', 'blocked', 'completed'];
   const grouped = useMemo(() => {
     const groups = {};
@@ -852,9 +862,9 @@ function GanttView({ allTasks, onTaskClick }) {
       </svg>
     </div>
   );
-}
+});
 
-export function TaskDependencyGraph({ teams }) {
+export const TaskDependencyGraph = React.memo(function TaskDependencyGraph({ teams }) {
   const [view, setView] = useState('board');
   const [selectedTask, setSelectedTask] = useState(null);
 
@@ -961,7 +971,7 @@ export function TaskDependencyGraph({ teams }) {
       )}
     </div>
   );
-}
+});
 
 TaskDependencyGraph.propTypes = {
   teams: PropTypes.arrayOf(

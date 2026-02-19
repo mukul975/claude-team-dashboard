@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Archive, Calendar, Users, CheckCircle, Clock, TrendingUp, ChevronDown, ChevronUp, FileText } from 'lucide-react';
+import { apiFetch } from '../utils/api.js';
 import { SkeletonArchiveCard } from './SkeletonLoader';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -8,27 +9,34 @@ import duration from 'dayjs/plugin/duration';
 dayjs.extend(relativeTime);
 dayjs.extend(duration);
 
+const ARCHIVE_POLL_MS = 30_000; // re-check every 30 s
+
 export function ArchiveViewer() {
   const [archives, setArchives] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedArchive, setExpandedArchive] = useState(null);
   const [selectedArchiveDetails, setSelectedArchiveDetails] = useState(null);
+  const [detailsError, setDetailsError] = useState(null);
+  const [lastRefreshed, setLastRefreshed] = useState(null);
 
   useEffect(() => {
     fetchArchives();
+    const interval = setInterval(fetchArchives, ARCHIVE_POLL_MS);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchArchives = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/archive');
+      const response = await apiFetch('/api/archive');
       if (!response.ok) {
         throw new Error('Failed to fetch archives');
       }
       const data = await response.json();
       setArchives(data.archives || []);
       setError(null);
+      setLastRefreshed(new Date());
     } catch (err) {
       setError(err.message);
       console.error('Error fetching archives:', err);
@@ -39,7 +47,8 @@ export function ArchiveViewer() {
 
   const fetchArchiveDetails = async (filename) => {
     try {
-      const response = await fetch(`/api/archive/${encodeURIComponent(filename)}`);
+      setDetailsError(null);
+      const response = await apiFetch(`/api/archive/${encodeURIComponent(filename)}`);
       if (!response.ok) {
         throw new Error('Failed to fetch archive details');
       }
@@ -47,6 +56,7 @@ export function ArchiveViewer() {
       setSelectedArchiveDetails(data);
     } catch (err) {
       console.error('Error fetching archive details:', err);
+      setDetailsError(err.message || 'Failed to load archive details');
     }
   };
 
@@ -54,6 +64,7 @@ export function ArchiveViewer() {
     if (expandedArchive === filename) {
       setExpandedArchive(null);
       setSelectedArchiveDetails(null);
+      setDetailsError(null);
     } else {
       setExpandedArchive(filename);
       await fetchArchiveDetails(filename);
@@ -116,9 +127,35 @@ export function ArchiveViewer() {
               </p>
             </div>
           </div>
-          <div className="px-4 py-2 rounded-lg" style={{ backgroundColor: 'rgba(168,85,247,0.2)' }}>
-            <span className="text-2xl font-bold text-purple-400">{archives.length}</span>
-            <span className="text-sm text-gray-400 ml-2">archived</span>
+          <div className="flex items-center gap-3">
+            <div style={{ textAlign: 'right' }}>
+              <div className="px-4 py-2 rounded-lg" style={{ backgroundColor: 'rgba(168,85,247,0.2)' }}>
+                <span className="text-2xl font-bold text-purple-400">{archives.length}</span>
+                <span className="text-sm text-gray-400 ml-2">archived</span>
+              </div>
+              {lastRefreshed && (
+                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                  Updated {dayjs(lastRefreshed).fromNow()}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={fetchArchives}
+              title="Refresh archives"
+              aria-label="Refresh archives"
+              style={{
+                padding: '8px',
+                borderRadius: '8px',
+                background: 'rgba(168,85,247,0.15)',
+                border: '1px solid rgba(168,85,247,0.3)',
+                color: '#a855f7',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              <TrendingUp style={{ width: '16px', height: '16px' }} />
+            </button>
           </div>
         </div>
       </div>
@@ -207,6 +244,12 @@ export function ArchiveViewer() {
           {/* Expanded Details */}
           {expandedArchive === archive.filename && (
             <div className="mt-4 pt-4 border-t border-gray-700 space-y-4 animate-fadeIn">
+              {/* Details error */}
+              {detailsError && (
+                <div role="alert" className="p-3 rounded-lg text-sm" style={{ color: '#f87171', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }}>
+                  Error loading details: {detailsError}
+                </div>
+              )}
               {/* Team Members */}
               {archive.members && archive.members.length > 0 && (
                 <div>

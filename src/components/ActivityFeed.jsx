@@ -201,9 +201,15 @@ export function ActivityFeed({ updates, loading }) {
   const scrollRef = useRef(null);
   const newItemIdRef = useRef(null);
   const prevTaskSnapshotRef = useRef(null);
+  const prevUpdatesRef = useRef(null);
 
   useEffect(() => {
     if (!updates || !updates.type) return;
+
+    // Skip if same reference as last processed update (prevents duplicate processing
+    // when parent re-renders without a new update object)
+    if (updates === prevUpdatesRef.current) return;
+    prevUpdatesRef.current = updates;
 
     // Determine the display event type. For task_update, sub-classify
     let eventType = updates.type;

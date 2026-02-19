@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import * as d3 from 'd3';
+import { select, max, scaleSqrt, scaleLinear, zoom, forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide, drag, color } from 'd3';
 import { Network } from 'lucide-react';
 
 const TEAM_COLORS = [
@@ -96,31 +96,31 @@ export function AgentNetworkGraph({ allInboxes = {}, teams = [] }) {
   useEffect(() => {
     if (nodes.length === 0) return;
 
-    const svg = d3.select(svgRef.current);
+    const svg = select(svgRef.current);
     svg.selectAll('*').remove();
 
     const { width, height } = dimensions;
 
-    const maxMsg = Math.max(1, d3.max(nodes, d => d.msgCount) || 1);
-    const radiusScale = d3.scaleSqrt().domain([0, maxMsg]).range([8, 24]);
+    const maxMsg = Math.max(1, max(nodes, d => d.msgCount) || 1);
+    const radiusScale = scaleSqrt().domain([0, maxMsg]).range([8, 24]);
 
-    const maxEdge = Math.max(1, d3.max(edges, d => d.count) || 1);
-    const edgeWidthScale = d3.scaleLinear().domain([1, maxEdge]).range([1.5, 6]);
+    const maxEdge = Math.max(1, max(edges, d => d.count) || 1);
+    const edgeWidthScale = scaleLinear().domain([1, maxEdge]).range([1.5, 6]);
 
     const g = svg.append('g');
 
-    const zoom = d3.zoom()
+    const zoomBehavior = zoom()
       .scaleExtent([0.3, 4])
       .on('zoom', (event) => {
         g.attr('transform', event.transform);
       });
-    svg.call(zoom);
+    svg.call(zoomBehavior);
 
-    const simulation = d3.forceSimulation(nodes)
-      .force('link', d3.forceLink(edges).id(d => d.id).distance(100))
-      .force('charge', d3.forceManyBody().strength(-250))
-      .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collide', d3.forceCollide().radius(d => radiusScale(d.msgCount) + 10));
+    const simulation = forceSimulation(nodes)
+      .force('link', forceLink(edges).id(d => d.id).distance(100))
+      .force('charge', forceManyBody().strength(-250))
+      .force('center', forceCenter(width / 2, height / 2))
+      .force('collide', forceCollide().radius(d => radiusScale(d.msgCount) + 10));
 
     // Arrow marker
     svg.append('defs').append('marker')
@@ -158,7 +158,7 @@ export function AgentNetworkGraph({ allInboxes = {}, teams = [] }) {
       .selectAll('g')
       .data(nodes)
       .join('g')
-      .call(d3.drag()
+      .call(drag()
         .on('start', (event, d) => {
           if (!event.active) simulation.alphaTarget(0.3).restart();
           d.fx = d.x;
@@ -179,7 +179,7 @@ export function AgentNetworkGraph({ allInboxes = {}, teams = [] }) {
       .attr('r', d => radiusScale(d.msgCount))
       .attr('fill', d => d.color)
       .attr('fill-opacity', 0.85)
-      .attr('stroke', d => d3.color(d.color).brighter(0.8))
+      .attr('stroke', d => color(d.color).brighter(0.8))
       .attr('stroke-width', 2)
       .style('cursor', 'grab');
 

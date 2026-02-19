@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { BarChart3, Users, MessageSquare, Settings, History, Archive, Inbox, Search } from 'lucide-react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 const commands = [
   { id: 'overview', label: 'Navigate to Overview', shortcut: 'Ctrl+1', icon: BarChart3, tab: 'overview' },
@@ -17,9 +18,9 @@ const kbdStyle = {
   gap: '4px',
   padding: '2px 8px',
   fontSize: '0.75rem',
-  color: '#9ca3af',
-  background: 'linear-gradient(135deg, rgba(31, 41, 55, 0.95) 0%, rgba(17, 24, 39, 0.95) 100%)',
-  border: '1px solid rgba(55, 65, 81, 0.6)',
+  color: 'var(--text-muted)',
+  background: 'var(--bg-secondary)',
+  border: '1px solid var(--border-color)',
   borderRadius: '4px',
   fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
 };
@@ -29,6 +30,7 @@ export function CommandPalette({ isOpen, onClose, onNavigate }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef(null);
   const listRef = useRef(null);
+  const trapRef = useFocusTrap(isOpen);
 
   const filtered = query.trim() === ''
     ? commands
@@ -89,6 +91,7 @@ export function CommandPalette({ isOpen, onClose, onNavigate }) {
 
   return (
     <div
+      ref={trapRef}
       className="flex items-start"
       style={{
         position: 'fixed',
@@ -117,15 +120,15 @@ export function CommandPalette({ isOpen, onClose, onNavigate }) {
           width: '100%',
           maxWidth: '512px',
           margin: '0 16px',
-          background: 'rgba(15, 23, 42, 0.95)',
-          border: '1px solid rgba(75, 85, 99, 0.6)',
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
           borderRadius: '12px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+          boxShadow: 'var(--card-shadow)'
         }}
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: '1px solid rgba(55, 65, 81, 0.6)' }}>
-          <Search className="h-5 w-5 text-gray-400" style={{ flexShrink: 0 }} aria-hidden="true" />
+        <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: '1px solid var(--border-color)' }}>
+          <Search className="h-5 w-5" style={{ flexShrink: 0, color: 'var(--text-muted)' }} aria-hidden="true" />
           <input
             ref={inputRef}
             type="text"
@@ -136,7 +139,7 @@ export function CommandPalette({ isOpen, onClose, onNavigate }) {
             className="flex-1 text-sm"
             style={{
               background: 'transparent',
-              color: '#ffffff',
+              color: 'var(--text-primary)',
               outline: 'none',
               border: 'none'
             }}
@@ -158,7 +161,7 @@ export function CommandPalette({ isOpen, onClose, onNavigate }) {
           style={{ maxHeight: '288px', padding: '8px 0' }}
         >
           {filtered.length === 0 ? (
-            <li className="px-4 text-center text-sm text-gray-500" style={{ padding: '32px 16px' }}>
+            <li className="px-4 text-center text-sm" style={{ padding: '32px 16px', color: 'var(--text-muted)' }}>
               No matching commands
             </li>
           ) : (
@@ -176,15 +179,15 @@ export function CommandPalette({ isOpen, onClose, onNavigate }) {
                     padding: '10px 16px',
                     margin: '0 8px',
                     cursor: 'pointer',
-                    color: isSelected ? '#ffffff' : '#d1d5db',
+                    color: isSelected ? 'var(--text-heading)' : 'var(--text-secondary)',
                     background: isSelected ? 'rgba(232,117,10,0.2)' : 'transparent'
                   }}
                   onClick={() => handleSelect(cmd.tab)}
                   onMouseEnter={() => setSelectedIndex(i)}
                 >
                   <Icon
-                    className={isSelected ? 'h-4 w-4 text-claude-orange' : 'h-4 w-4 text-gray-500'}
-                    style={{ flexShrink: 0 }}
+                    className="h-4 w-4"
+                    style={{ flexShrink: 0, color: isSelected ? '#f97316' : 'var(--text-muted)' }}
                     aria-hidden="true"
                   />
                   <span className="flex-1 text-sm">{cmd.label}</span>
@@ -195,7 +198,7 @@ export function CommandPalette({ isOpen, onClose, onNavigate }) {
           )}
         </ul>
 
-        <div className="flex items-center gap-4 px-4 text-xs text-gray-500" style={{ padding: '10px 16px', borderTop: '1px solid rgba(55, 65, 81, 0.6)' }}>
+        <div className="flex items-center gap-4 px-4 text-xs" style={{ padding: '10px 16px', borderTop: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
           <span className="flex items-center gap-1">
             <kbd style={kbdStyle}>{'\u2191\u2193'}</kbd>
             navigate

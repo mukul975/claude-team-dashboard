@@ -1,4 +1,10 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { apiFetch } from '../utils/api.js';
+
+// How long without a WS data message before falling back to REST polling
+const WS_STALE_THRESHOLD_MS = 20_000;
+// How often to poll via REST when WS is stale/disconnected
+const REST_POLL_INTERVAL_MS = 15_000;
 
 /** Reject prototype-polluting keys from server-supplied property names. */
 const safeTeamKey = (key) => {
@@ -30,6 +36,7 @@ export function useWebSocket(url) {
   const isPausedRef = useRef(false);
   const urlRef = useRef(url);
   const prevUrlRef = useRef(url);
+  const lastDataReceivedRef = useRef(0); // timestamp of last meaningful WS data message
   urlRef.current = url;
 
   const connect = useCallback(() => {
@@ -59,13 +66,13 @@ export function useWebSocket(url) {
         try {
           const message = JSON.parse(event.data);
           setLastRawMessage(message);
-
-          if (message.stats) setStats(message.stats);
-          if (message.teamHistory) setTeamHistory(message.teamHistory);
-          if (message.allInboxes) setAllInboxes(message.allInboxes);
+          lastDataReceivedRef.current = Date.now();
 
           if (message.type === 'initial_data') {
             if (message.data) setTeams(message.data);
+            if (message.stats) setStats(message.stats);
+            if (message.teamHistory) setTeamHistory(message.teamHistory);
+            if (message.allInboxes) setAllInboxes(message.allInboxes);
             if (message.agentOutputs || message.outputs) setAgentOutputs(message.agentOutputs || message.outputs);
           } else if (message.type === 'inbox_update') {
             const teamKey = safeTeamKey(message.teamName);
@@ -88,12 +95,11 @@ export function useWebSocket(url) {
             }
           } else if (message.type === 'agent_outputs_update') {
             setAgentOutputs(message.outputs);
-          } else if (message.data) {
-            // Fallback: any message with .data updates teams
-            setTeams(message.data);
+          } else {
+            console.warn('[WS] Unrecognized message type:', message.type, message);
           }
         } catch (err) {
-          console.error('Error parsing WebSocket message:', err);
+          console.error('[WS] Failed to parse message:', err, event.data);
         }
       };
 
@@ -178,6 +184,29 @@ export function useWebSocket(url) {
       }
     };
   }, [connect]);
+
+  // REST polling fallback — kicks in when WS is disconnected OR has gone quiet
+  useEffect(() => {
+    const pollInterval = setInterval(async () => {
+      const wsIsStale = Date.now() - lastDataReceivedRef.current > WS_STALE_THRESHOLD_MS;
+      const wsDown = !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN;
+      if (!wsIsStale && !wsDown) return; // WS is live and fresh — skip REST poll
+
+      try {
+        const res = await apiFetch('/api/teams');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (Array.isArray(data.teams)) setTeams(data.teams);
+        if (data.stats) setStats(data.stats);
+        if (Array.isArray(data.teamHistory)) setTeamHistory(data.teamHistory);
+        lastDataReceivedRef.current = Date.now();
+      } catch {
+        // silently ignore poll errors — WS will reconnect on its own
+      }
+    }, REST_POLL_INTERVAL_MS);
+
+    return () => clearInterval(pollInterval);
+  }, []);
 
   return {
     teams,

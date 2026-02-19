@@ -1,9 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import {
   X, Bell, BellOff,
   Users, CheckSquare, MessageSquare, Terminal, AlertTriangle, Info,
 } from 'lucide-react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 const ICON_MAP = {
   team: Users, task: CheckSquare, message: MessageSquare,
@@ -183,6 +184,11 @@ export function NotificationCenter({
 }) {
   const panelRef = useRef(null);
   const closeRef = useRef(null);
+  const trapRef = useFocusTrap(isOpen);
+  const mergedRef = useCallback((node) => {
+    panelRef.current = node;
+    trapRef.current = node;
+  }, [trapRef]);
 
   // Focus close button when opened
   useEffect(() => {
@@ -215,7 +221,7 @@ export function NotificationCenter({
 
   return (
     <div
-      ref={panelRef}
+      ref={mergedRef}
       role="dialog"
       aria-label="Notification Center"
       aria-modal="true"

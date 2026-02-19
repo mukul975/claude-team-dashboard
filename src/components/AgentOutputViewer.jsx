@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Terminal, Maximize2, Minimize2, Download, RefreshCw, AlertCircle } from 'lucide-react';
+import { apiFetch } from '../utils/api.js';
 import { SkeletonOutputViewer } from './SkeletonLoader';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -14,6 +15,7 @@ export function AgentOutputViewer({ agentOutputs }) {
   const [localOutputs, setLocalOutputs] = useState(agentOutputs || []);
   const outputRef = useRef(null);
   const pollingIntervalRef = useRef(null);
+  const selectedOutputRef = useRef(null);
 
   // Fetch outputs from API
   const fetchOutputs = useCallback(async () => {
@@ -21,7 +23,7 @@ export function AgentOutputViewer({ agentOutputs }) {
       setIsRefreshing(true);
       setRefreshError(null);
 
-      const response = await fetch(`http://${window.location.hostname}:3001/api/agent-outputs`);
+      const response = await apiFetch('/api/agent-outputs');
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -85,18 +87,22 @@ export function AgentOutputViewer({ agentOutputs }) {
 
   useEffect(() => {
     // Auto-select most recent output
-    if (localOutputs && localOutputs.length > 0 && !selectedOutput) {
-      setSelectedOutput(localOutputs[0]);
+    if (localOutputs && localOutputs.length > 0 && !selectedOutputRef.current) {
+      const first = localOutputs[0];
+      selectedOutputRef.current = first;
+      setSelectedOutput(first);
+      return;
     }
 
     // Update selected output if it exists in new data
-    if (selectedOutput && localOutputs && localOutputs.length > 0) {
-      const updatedOutput = localOutputs.find(o => o.taskId === selectedOutput.taskId);
-      if (updatedOutput && updatedOutput.lastModified !== selectedOutput.lastModified) {
+    if (selectedOutputRef.current && localOutputs && localOutputs.length > 0) {
+      const updatedOutput = localOutputs.find(o => o.taskId === selectedOutputRef.current.taskId);
+      if (updatedOutput && updatedOutput.lastModified !== selectedOutputRef.current.lastModified) {
+        selectedOutputRef.current = updatedOutput;
         setSelectedOutput(updatedOutput);
       }
     }
-  }, [localOutputs, selectedOutput]);
+  }, [localOutputs]);
 
   useEffect(() => {
     // Auto-scroll to bottom when content updates
@@ -251,7 +257,7 @@ export function AgentOutputViewer({ agentOutputs }) {
           {localOutputs.map((output, index) => (
             <button
               key={output.taskId}
-              onClick={() => setSelectedOutput(output)}
+              onClick={() => { selectedOutputRef.current = output; setSelectedOutput(output); }}
               aria-label={`View output for Task ${output.taskId}`}
               className={`rounded-lg text-sm font-medium ${
                 selectedOutput?.taskId === output.taskId

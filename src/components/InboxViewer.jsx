@@ -6,14 +6,21 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { parseMessageToNatural } from '../utils/messageParser';
 import { exportToCSV } from '../utils/exportUtils';
+import { safePropKey } from '../utils/safeKey';
+import { getAgentColor, getAgentInitials } from '../utils/formatting';
 
 dayjs.extend(relativeTime);
 
-const AVATAR_COLORS = [
-  '#3b82f6', '#22c55e', '#a855f7', '#06b6d4',
-  '#f97316', '#ec4899', '#eab308', '#ef4444',
-  '#6366f1', '#14b8a6', '#f43f5e', '#10b981'
-];
+const TAILWIND_TO_HEX = {
+  'bg-blue-600': '#3b82f6',
+  'bg-purple-600': '#a855f7',
+  'bg-green-600': '#22c55e',
+  'bg-red-600': '#ef4444',
+  'bg-yellow-600': '#eab308',
+  'bg-pink-600': '#ec4899',
+  'bg-indigo-600': '#6366f1',
+  'bg-orange-500': '#f97316',
+};
 
 const BORDER_COLOR_MAP = {
   green: '#22c55e',
@@ -28,38 +35,19 @@ const BORDER_COLOR_MAP = {
 
 const DEFAULT_BORDER_COLOR = '#4b5563';
 
-function hashCode(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash);
-}
-
 function getAvatarColor(name) {
-  return AVATAR_COLORS[hashCode(name) % AVATAR_COLORS.length];
+  return TAILWIND_TO_HEX[getAgentColor(name)] || '#3b82f6';
 }
 
 function getInitials(name) {
   if (!name) return '??';
-  const parts = name.split(/[-_\s]+/).filter(Boolean);
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  }
-  return name.substring(0, 2).toUpperCase();
+  const result = getAgentInitials(name);
+  return result || name.substring(0, 2).toUpperCase();
 }
 
 function getBorderColor(color) {
   if (!color) return DEFAULT_BORDER_COLOR;
   return BORDER_COLOR_MAP[color.toLowerCase()] || DEFAULT_BORDER_COLOR;
-}
-
-/** Sanitize a dynamic property key to prevent prototype pollution. */
-function safePropKey(key) {
-  const k = String(key ?? '');
-  if (k === '__proto__' || k === 'constructor' || k === 'prototype') return null;
-  return k;
 }
 
 function renderBoldMarkdown(text) {
@@ -842,10 +830,11 @@ export function InboxViewer({ allInboxes, initialTeam = null, loading }) {
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'flex-end' }}>
                       {/* Date Range */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', minWidth: '120px' }}>
-                        <label className="text-xs" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-muted)' }}>
+                        <label htmlFor="inbox-date-range" className="text-xs" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-muted)' }}>
                           <Calendar style={{ height: '10px', width: '10px' }} aria-hidden="true" /> Date Range
                         </label>
                         <select
+                          id="inbox-date-range"
                           value={dateRange}
                           onChange={e => setDateRange(e.target.value)}
                           style={{
@@ -868,10 +857,11 @@ export function InboxViewer({ allInboxes, initialTeam = null, loading }) {
 
                       {/* Sender */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', minWidth: '130px' }}>
-                        <label className="text-xs" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-muted)' }}>
+                        <label htmlFor="inbox-sender-filter" className="text-xs" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-muted)' }}>
                           <User style={{ height: '10px', width: '10px' }} aria-hidden="true" /> Sender
                         </label>
                         <select
+                          id="inbox-sender-filter"
                           value={senderFilter}
                           onChange={e => setSenderFilter(e.target.value)}
                           style={{
@@ -895,10 +885,11 @@ export function InboxViewer({ allInboxes, initialTeam = null, loading }) {
 
                       {/* Message Type */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', minWidth: '120px' }}>
-                        <label className="text-xs" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-muted)' }}>
+                        <label htmlFor="inbox-type-filter" className="text-xs" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-muted)' }}>
                           <MessageSquare style={{ height: '10px', width: '10px' }} aria-hidden="true" /> Type
                         </label>
                         <select
+                          id="inbox-type-filter"
                           value={typeFilter}
                           onChange={e => setTypeFilter(e.target.value)}
                           style={{
@@ -922,13 +913,14 @@ export function InboxViewer({ allInboxes, initialTeam = null, loading }) {
 
                       {/* Sort */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', minWidth: '120px' }}>
-                        <label className="text-xs" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-muted)' }}>
+                        <label htmlFor="inbox-sort-order" className="text-xs" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-muted)' }}>
                           {sortOrder === 'newest'
                             ? <SortDesc style={{ height: '10px', width: '10px' }} aria-hidden="true" />
                             : <SortAsc style={{ height: '10px', width: '10px' }} aria-hidden="true" />
                           } Sort
                         </label>
                         <select
+                          id="inbox-sort-order"
                           value={sortOrder}
                           onChange={e => setSortOrder(e.target.value)}
                           style={{

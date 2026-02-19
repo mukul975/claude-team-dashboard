@@ -27,8 +27,15 @@ export default defineConfig({
         'node_modules/',
         'src/test/',
         '*.config.js',
-        'dist/'
-      ]
+        'dist/',
+        'fuzz/'
+      ],
+      thresholds: {
+        lines: 30,
+        functions: 30,
+        branches: 25,
+        statements: 30
+      }
     }
   },
   resolve: {

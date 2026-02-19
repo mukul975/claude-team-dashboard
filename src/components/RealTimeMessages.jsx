@@ -1,16 +1,18 @@
 import { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { MessageCircle, ArrowRight, Radio, RefreshCw } from 'lucide-react';
+import { apiFetch } from '../utils/api.js';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { parseMessageToNatural } from '../utils/messageParser';
+import { getInboxMessages } from '../utils/safeKey';
 dayjs.extend(relativeTime);
 
 function flattenInboxes(allInboxes) {
   return Object.entries(allInboxes)
     .flatMap(([teamName, agents]) =>
       Object.entries(agents || {}).flatMap(([agentName, inbox]) => {
-        const messages = Array.isArray(inbox) ? inbox : (inbox.messages || []);
+        const messages = getInboxMessages(inbox);
         return messages.filter(msg => msg != null).map(msg => {
           const naturalMsg = parseMessageToNatural(msg.text, msg.summary); // lgtm[js/call-to-non-callable]
           return {
@@ -47,7 +49,7 @@ export function RealTimeMessages({ allInboxes = {} }) {
     setLoading(true);
     setFetchError(null);
 
-    fetch('/api/inboxes')
+    apiFetch('/api/inboxes')
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(data => {
         if (!cancelled) {

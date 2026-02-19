@@ -129,12 +129,13 @@ npm ci
 
 ### 1. WebSocket Connections
 
-**Risk**: Unauthenticated WebSocket connections could be abused
+**Risk**: WebSocket connections could be abused if not properly secured
 
 **Mitigation**:
+- Token authentication required on every connection (closed with 4001 if missing)
 - Connection rate limiting implemented
 - Message validation in place
-- Consider adding authentication for production deployments
+- Per-connection message rate limit (50 msg/sec) and size limit (64 KB)
 
 ### 2. File System Access
 
@@ -168,10 +169,10 @@ npm ci
 
 ### Roadmap
 
-- 🔄 WebSocket authentication
-- 🔄 Session management
-- 🔄 API token support
-- 🔄 Audit logging
+- ✅ WebSocket authentication (token required on every connection)
+- ✅ Session management (sessionStorage token with rotation on login)
+- ✅ API token support (Bearer token on all API routes)
+- ✅ Audit logging (WebSocket connection/disconnect/error with IP logging)
 - 🔄 Intrusion detection
 
 ## Vulnerability Disclosure Policy

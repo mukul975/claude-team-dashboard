@@ -28,7 +28,7 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
 
 ## ⚡ Quick Start (4 Commands)
 
-### Option 1: Standard Setup
+### Option 1: Production Build
 
 ```bash
 # 1. Fork & clone
@@ -37,16 +37,37 @@ git clone https://github.com/YOUR_USERNAME/claude-team-dashboard.git && cd claud
 # 2. Install dependencies
 npm install
 
-# 3. Start development servers (frontend + backend)
-npm start
+# 3. Build and start the production server
+npm run build && npm start
 
 # 4. Run tests
 npm test
 ```
 
-**Done!** Dashboard is running at `http://localhost:5173`.
+**Done!** Dashboard is running at `http://localhost:3001`.
 
-### Option 2: Dev Container (Instant Setup)
+### Option 2: Development Mode (Hot Reload)
+
+```bash
+# 1. Fork & clone
+git clone https://github.com/YOUR_USERNAME/claude-team-dashboard.git && cd claude-team-dashboard
+
+# 2. Install dependencies
+npm install
+
+# 3. Start backend in one terminal
+npm run server
+
+# 4. Start frontend dev server in another terminal
+npm run dev
+
+# 5. Run tests
+npm test
+```
+
+**Done!** Frontend dev server is running at `http://localhost:5173` (with hot reload).
+
+### Option 3: Dev Container (Instant Setup)
 
 Have VS Code + Docker? Skip everything:
 
