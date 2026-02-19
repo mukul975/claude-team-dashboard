@@ -10,7 +10,23 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const compression = require('compression');
 const crypto = require('crypto');
+const { exec } = require('child_process');
 const config = require('./config');
+
+const IS_WINDOWS = process.platform === 'win32';
+
+// Restrict a file to the current user only (cross-platform)
+async function lockFilePermissions(filePath) {
+  if (IS_WINDOWS) {
+    // Remove all inherited permissions, grant full control to current user only
+    const escaped = filePath.replace(/\//g, '\\');
+    await new Promise((resolve) => {
+      exec(`icacls "${escaped}" /inheritance:r /grant:r "%USERNAME%":F`, resolve);
+    });
+  } else {
+    await fs.chmod(filePath, 0o600);
+  }
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -68,11 +84,20 @@ let storedHash = null;
 (async () => {
   storedHash = await loadStoredHash();
 
-  // Security check: warn if the key file is world-readable (Unix permissions)
+  // Security check: warn if the key file is world-readable, and auto-fix if possible
   try {
     const keyStats = await fs.stat(KEY_FILE);
     if (keyStats.mode & 0o004) {
-      console.warn('WARNING: dashboard.key is world-readable. Run: chmod 600 ' + KEY_FILE);
+      console.warn('WARNING: dashboard.key has loose permissions — fixing automatically...');
+      try {
+        await lockFilePermissions(KEY_FILE);
+        console.log('✓ dashboard.key permissions fixed.');
+      } catch {
+        const fix = IS_WINDOWS
+          ? `icacls "${KEY_FILE}" /inheritance:r /grant:r "%USERNAME%":F`
+          : `chmod 600 ${KEY_FILE}`;
+        console.warn(`  Could not fix automatically. Run manually: ${fix}`);
+      }
     }
   } catch {
     // Key file does not exist yet (first run) — nothing to check
@@ -182,6 +207,7 @@ app.post('/api/auth/setup', authLimiter, async (req, res) => {
     validatePath(KEY_FILE, claudeDir);
     await fs.mkdir(path.dirname(KEY_FILE), { recursive: true });
     await fs.writeFile(KEY_FILE, storedHash, { mode: 0o600 });
+    await lockFilePermissions(KEY_FILE);
     authToken = crypto.randomBytes(32).toString('hex');
     res.json({ token: authToken });
   } catch {
