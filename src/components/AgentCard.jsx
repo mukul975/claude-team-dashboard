@@ -1,10 +1,25 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Bot, Crown, Cpu, Zap } from 'lucide-react';
+import { Crown, Cpu, Zap } from 'lucide-react';
+import { getAgentInitials, getAgentColor } from "../utils/formatting";
+
+const TAILWIND_TO_HEX = {
+  'bg-blue-600': '#2563eb',
+  'bg-purple-600': '#9333ea',
+  'bg-green-600': '#16a34a',
+  'bg-red-600': '#dc2626',
+  'bg-yellow-600': '#ca8a04',
+  'bg-pink-600': '#db2777',
+  'bg-indigo-600': '#4f46e5',
+  'bg-orange-500': '#f97316',
+};
 
 export function AgentCard({ agent, isLead, agentStatus }) {
   const [isHovered, setIsHovered] = useState(false);
   const [statusHovered, setStatusHovered] = useState(false);
+
+  const agentColorClass = getAgentColor(agent?.name);
+  const avatarHex = TAILWIND_TO_HEX[agentColorClass] ?? '#6b7280';
 
   return (
     <div
@@ -30,7 +45,6 @@ export function AgentCard({ agent, isLead, agentStatus }) {
       onFocus={() => setIsHovered(true)}
       onBlur={() => setIsHovered(false)}
     >
-      {/* Gradient Border Animation */}
       <div
         style={{
           position: 'absolute',
@@ -41,67 +55,51 @@ export function AgentCard({ agent, isLead, agentStatus }) {
           background: isLead
             ? 'linear-gradient(135deg, rgba(234, 179, 8, 0.2), transparent 50%, rgba(234, 179, 8, 0.1))'
             : 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), transparent 50%, rgba(59, 130, 246, 0.1))',
-          pointerEvents: 'none'
+          pointerEvents: 'none',
         }}
       />
 
       <div className="flex items-start justify-between" style={{ position: 'relative', zIndex: 10 }}>
         <div className="flex items-start gap-4 flex-1">
-          {/* Icon Container with Glow */}
+
+          {/* Avatar Circle */}
           <div
-            className="p-3"
             style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 'bold',
+              fontSize: '14px',
+              color: '#ffffff',
+              border: isLead ? '2px solid #facc15' : '2px solid transparent',
+              backgroundColor: avatarHex,
+              boxShadow: isHovered ? `0 0 12px ${avatarHex}` : 'none',
               position: 'relative',
-              borderRadius: '12px',
               transition: 'all 0.3s',
-              background: isLead
-                ? 'linear-gradient(135deg, rgba(234, 179, 8, 0.25) 0%, rgba(202, 138, 4, 0.15) 100%)'
-                : 'linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.15) 100%)',
-              boxShadow: isHovered
-                ? `0 4px 16px ${isLead ? 'rgba(234, 179, 8, 0.4)' : 'rgba(59, 130, 246, 0.35)'}, inset 0 1px 0 rgba(255, 255, 255, 0.15)`
-                : `0 2px 8px ${isLead ? 'rgba(234, 179, 8, 0.3)' : 'rgba(59, 130, 246, 0.25)'}, inset 0 1px 0 rgba(255, 255, 255, 0.1)`,
-              border: `1px solid ${isLead ? 'rgba(234, 179, 8, 0.4)' : 'rgba(59, 130, 246, 0.35)'}`,
-              transform: isHovered ? 'scale(1.1) rotate(-5deg)' : 'scale(1) rotate(0deg)'
+              flexShrink: 0,
             }}
           >
-            {isLead ? (
-              <Crown
-                className="h-6 w-6"
-                aria-hidden="true"
-                style={{
-                  color: '#facc15',
-                  filter: 'drop-shadow(0 0 8px rgba(234, 179, 8, 0.6))'
-                }}
-              />
-            ) : (
-              <Bot
-                className="h-6 w-6"
-                aria-hidden="true"
-                style={{
-                  color: '#60a5fa',
-                  filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))'
-                }}
-              />
-            )}
+            {getAgentInitials(agent?.name)}
 
-            {/* Pulsing Glow Effect */}
-            {isHovered && (
-              <div
-                className="animate-pulse"
+            {isLead && (
+              <Crown
+                size={12}
                 style={{
                   position: 'absolute',
-                  inset: 0,
-                  borderRadius: '12px',
-                  background: isLead
-                    ? 'radial-gradient(circle, rgba(234, 179, 8, 0.3), transparent 70%)'
-                    : 'radial-gradient(circle, rgba(59, 130, 246, 0.3), transparent 70%)',
-                  zIndex: -1
+                  top: '-4px',
+                  right: '-4px',
+                  background: 'var(--bg-card)',
+                  borderRadius: '50%',
+                  padding: '2px',
+                  color: '#facc15',
                 }}
               />
             )}
           </div>
 
-          {/* Agent Details */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
               {agentStatus && (
@@ -123,7 +121,7 @@ export function AgentCard({ agent, isLead, agentStatus }) {
                       height: '10px',
                       flexShrink: 0,
                       backgroundColor: agentStatus.color,
-                      boxShadow: agentStatus.pulse ? `0 0 8px ${agentStatus.color}` : 'none'
+                      boxShadow: agentStatus.pulse ? `0 0 8px ${agentStatus.color}` : 'none',
                     }}
                   />
                   <div
@@ -134,7 +132,7 @@ export function AgentCard({ agent, isLead, agentStatus }) {
                       transform: 'translateX(-50%)',
                       marginBottom: '8px',
                       padding: '4px 8px',
-                      background: 'var(--bg-primary)',
+                      background: 'var(--bg-card)',
                       fontSize: '12px',
                       color: 'var(--text-primary)',
                       borderRadius: '4px',
@@ -150,12 +148,12 @@ export function AgentCard({ agent, isLead, agentStatus }) {
                   </div>
                 </div>
               )}
+
               <h5
                 className="font-bold text-lg truncate"
                 style={{
                   color: 'var(--text-heading)',
                   letterSpacing: '-0.01em',
-                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
                 }}
               >
                 {agent.name}
@@ -170,8 +168,7 @@ export function AgentCard({ agent, isLead, agentStatus }) {
                     background: 'linear-gradient(135deg, rgba(234, 179, 8, 0.3) 0%, rgba(202, 138, 4, 0.2) 100%)',
                     color: '#facc15',
                     border: '1px solid rgba(234, 179, 8, 0.5)',
-                    boxShadow: '0 2px 8px rgba(234, 179, 8, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
-                    textShadow: '0 0 10px rgba(234, 179, 8, 0.4)'
+                    boxShadow: '0 2px 8px rgba(234, 179, 8, 0.3)',
                   }}
                 >
                   <Zap className="h-3 w-3" aria-hidden="true" />
@@ -186,8 +183,8 @@ export function AgentCard({ agent, isLead, agentStatus }) {
                 style={{
                   paddingLeft: '10px',
                   paddingRight: '10px',
-                  background: 'var(--tab-inactive-bg)',
-                  border: '1px solid var(--border-color)'
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
                 }}
               >
                 <Cpu className="h-4 w-4" aria-hidden="true" style={{ color: 'var(--text-secondary)' }} />
@@ -201,7 +198,7 @@ export function AgentCard({ agent, isLead, agentStatus }) {
               className="text-xs truncate"
               style={{
                 fontFamily: 'monospace',
-                color: 'var(--text-secondary)'
+                color: 'var(--text-muted)',
               }}
               title={agent.agentId}
             >
@@ -211,7 +208,6 @@ export function AgentCard({ agent, isLead, agentStatus }) {
         </div>
       </div>
 
-      {/* Shine Effect on Hover */}
       {isHovered && (
         <div
           style={{
@@ -220,7 +216,7 @@ export function AgentCard({ agent, isLead, agentStatus }) {
             borderRadius: '16px',
             pointerEvents: 'none',
             background: 'linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.05) 50%, transparent 100%)',
-            animation: 'shimmer 2s ease-in-out infinite'
+            animation: 'shimmer 2s ease-in-out infinite',
           }}
         />
       )}
@@ -233,7 +229,7 @@ AgentCard.propTypes = {
     name: PropTypes.string.isRequired,
     agentId: PropTypes.string.isRequired,
     agentType: PropTypes.string,
-    model: PropTypes.string
+    model: PropTypes.string,
   }).isRequired,
   isLead: PropTypes.bool,
   agentStatus: PropTypes.shape({
@@ -242,6 +238,6 @@ AgentCard.propTypes = {
     label: PropTypes.string,
     dot: PropTypes.string,
     pulse: PropTypes.bool,
-    tooltipText: PropTypes.string
-  })
+    tooltipText: PropTypes.string,
+  }),
 };
