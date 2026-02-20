@@ -4,6 +4,8 @@
 
 ### Stop Flying Blind — Monitor Your Claude Code Agent Teams in Real Time
 
+[![npm](https://img.shields.io/npm/v/claude-team-dashboard.svg)](https://www.npmjs.com/package/claude-team-dashboard)
+[![npm downloads](https://img.shields.io/npm/dm/claude-team-dashboard.svg)](https://www.npmjs.com/package/claude-team-dashboard)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/mukul975/claude-team-dashboard/blob/main/LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
 [![JavaScript](https://img.shields.io/badge/JavaScript-58%25-F7DF1E.svg?logo=javascript&logoColor=black)](https://github.com/mukul975/claude-team-dashboard)
@@ -117,7 +119,22 @@ Audited by 6 security specialists. OWASP scrypt password hashing, auth rate limi
 
 - **Node.js** v18+ ([Download](https://nodejs.org/))
 
-### 🛠️ Setup
+### ⚡ Install via npm (Recommended)
+
+```bash
+npm install -g claude-team-dashboard
+claude-dashboard
+```
+
+Or run without installing:
+
+```bash
+npx claude-team-dashboard
+```
+
+Open **http://localhost:3001** and you're monitoring agents in real time.
+
+### 🛠️ Clone & Build (Development)
 
 ```bash
 # 1. Clone the repo
