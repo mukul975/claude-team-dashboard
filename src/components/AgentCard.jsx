@@ -154,7 +154,6 @@ export function AgentCard({ agent, isLead, agentStatus }) {
                 style={{
                   color: 'var(--text-heading)',
                   letterSpacing: '-0.01em',
-                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
                 }}
               >
                 {agent.name}
