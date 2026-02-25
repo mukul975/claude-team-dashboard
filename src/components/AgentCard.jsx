@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Crown, Cpu, Zap } from 'lucide-react';
 import { getAgentInitials, getAgentColor } from "../utils/formatting";
+import { copyToClipboard } from "../utils/clipboard";
 
 const TAILWIND_TO_HEX = {
   'bg-blue-600': '#2563eb',
@@ -17,9 +18,19 @@ const TAILWIND_TO_HEX = {
 export function AgentCard({ agent, isLead, agentStatus }) {
   const [isHovered, setIsHovered] = useState(false);
   const [statusHovered, setStatusHovered] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const agentColorClass = getAgentColor(agent?.name);
   const avatarHex = TAILWIND_TO_HEX[agentColorClass] ?? '#6b7280';
+
+  const handleCopy = async () => {
+    if (!agent?.agentId) return;
+    const success = await copyToClipboard(agent.agentId);
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   return (
     <div
@@ -61,8 +72,6 @@ export function AgentCard({ agent, isLead, agentStatus }) {
 
       <div className="flex items-start justify-between" style={{ position: 'relative', zIndex: 10 }}>
         <div className="flex items-start gap-4 flex-1">
-
-          {/* Avatar Circle */}
           <div
             style={{
               width: '36px',
@@ -194,16 +203,34 @@ export function AgentCard({ agent, isLead, agentStatus }) {
               </div>
             )}
 
-            <p
-              className="text-xs truncate"
+            <div
+              className="flex items-center gap-2"
               style={{
                 fontFamily: 'monospace',
                 color: 'var(--text-muted)',
               }}
-              title={agent.agentId}
             >
-              ID: {agent.agentId?.substring(0, 12)}...
-            </p>
+              <p className="text-xs truncate" title={agent.agentId}>
+                ID: {agent.agentId?.substring(0, 12)}...
+              </p>
+
+              <button
+                onClick={handleCopy}
+                title="Copy agent ID"
+                aria-label="Copy agent ID"
+                style={{
+                  fontSize: '12px',
+                  padding: '2px 6px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-card)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+              >
+                {copied ? '✓ Copied!' : '📋'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
