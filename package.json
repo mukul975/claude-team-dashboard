@@ -1,6 +1,6 @@
 {
   "name": "claude-team-dashboard",
-  "version": "1.2.7",
+  "version": "1.2.8",
   "description": "Real-time monitoring dashboard for Claude Code agent teams",
   "main": "server.js",
   "bin": {
