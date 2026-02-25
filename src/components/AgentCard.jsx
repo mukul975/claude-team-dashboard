@@ -23,8 +23,8 @@ export function AgentCard({ agent, isLead, agentStatus }) {
   const agentColorClass = getAgentColor(agent?.name);
   const avatarHex = TAILWIND_TO_HEX[agentColorClass] ?? '#6b7280';
 
-  // Added copy handler
   const handleCopy = async () => {
+    if (!agent?.agentId) return;
     const success = await copyToClipboard(agent.agentId);
     if (success) {
       setCopied(true);
@@ -56,12 +56,22 @@ export function AgentCard({ agent, isLead, agentStatus }) {
       onFocus={() => setIsHovered(true)}
       onBlur={() => setIsHovered(false)}
     >
-      {/* Everything above unchanged */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          borderRadius: '16px',
+          opacity: isHovered ? 1 : 0,
+          transition: 'opacity 0.5s',
+          background: isLead
+            ? 'linear-gradient(135deg, rgba(234, 179, 8, 0.2), transparent 50%, rgba(234, 179, 8, 0.1))'
+            : 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), transparent 50%, rgba(59, 130, 246, 0.1))',
+          pointerEvents: 'none',
+        }}
+      />
 
       <div className="flex items-start justify-between" style={{ position: 'relative', zIndex: 10 }}>
         <div className="flex items-start gap-4 flex-1">
-
-          {/* Avatar Circle */}
           <div
             style={{
               width: '36px',
@@ -101,7 +111,53 @@ export function AgentCard({ agent, isLead, agentStatus }) {
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
-              {/* Existing code unchanged */}
+              {agentStatus && (
+                <div
+                  role="img"
+                  aria-label={agentStatus.tooltipText}
+                  tabIndex={0}
+                  style={{ position: 'relative' }}
+                  title={agentStatus.tooltipText}
+                  onMouseEnter={() => setStatusHovered(true)}
+                  onMouseLeave={() => setStatusHovered(false)}
+                  onFocus={() => setStatusHovered(true)}
+                  onBlur={() => setStatusHovered(false)}
+                >
+                  <span
+                    className={`inline-block rounded-full ${agentStatus.pulse ? 'animate-pulse' : ''}`}
+                    style={{
+                      width: '10px',
+                      height: '10px',
+                      flexShrink: 0,
+                      backgroundColor: agentStatus.color,
+                      boxShadow: agentStatus.pulse ? `0 0 8px ${agentStatus.color}` : 'none',
+                    }}
+                  />
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: '100%',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      marginBottom: '8px',
+                      padding: '4px 8px',
+                      background: 'var(--bg-card)',
+                      fontSize: '12px',
+                      color: 'var(--text-primary)',
+                      borderRadius: '4px',
+                      whiteSpace: 'nowrap',
+                      zIndex: 20,
+                      border: '1px solid var(--border-color)',
+                      opacity: statusHovered ? 1 : 0,
+                      transition: 'opacity 0.15s',
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    {agentStatus.tooltipText}
+                  </div>
+                </div>
+              )}
+
               <h5
                 className="font-bold text-lg truncate"
                 style={{
@@ -147,7 +203,6 @@ export function AgentCard({ agent, isLead, agentStatus }) {
               </div>
             )}
 
-            {/*  UPDATED ID SECTION WITH COPY BUTTON */}
             <div
               className="flex items-center gap-2"
               style={{
@@ -155,10 +210,7 @@ export function AgentCard({ agent, isLead, agentStatus }) {
                 color: 'var(--text-muted)',
               }}
             >
-              <p
-                className="text-xs truncate"
-                title={agent.agentId}
-              >
+              <p className="text-xs truncate" title={agent.agentId}>
                 ID: {agent.agentId?.substring(0, 12)}...
               </p>
 
@@ -179,7 +231,6 @@ export function AgentCard({ agent, isLead, agentStatus }) {
                 {copied ? '✓ Copied!' : '📋'}
               </button>
             </div>
-
           </div>
         </div>
       </div>
