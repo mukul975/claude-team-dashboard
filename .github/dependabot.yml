@@ -29,7 +29,7 @@ updates:
       - "dependencies"
       - "security"
     # Target branch for pull requests
-    target-branch: "develop"
+    target-branch: "main"
     # Commit message prefix
     commit-message:
       prefix: "chore"
