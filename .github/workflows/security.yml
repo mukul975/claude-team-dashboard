@@ -4,9 +4,9 @@ name: Security Scanning
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
   schedule:
     # Run security scans every day at 2:00 AM UTC
     - cron: '0 2 * * *'
@@ -62,7 +62,7 @@ jobs:
         fetch-depth: 0
 
     - name: TruffleHog Secret Scan
-      uses: trufflesecurity/trufflehog@6961f2bace57ab32b23b3ba40f8f420f6bc7e004 # v3.93.3
+      uses: trufflesecurity/trufflehog@7c0734f987ad0bb30ee8da210773b800ee2016d3 # v3.93.4
       with:
         # Scan the entire git history
         extra_args: --only-verified
@@ -118,7 +118,7 @@ jobs:
         publish_results: true
 
     - name: Upload SARIF results
-      uses: github/codeql-action/upload-sarif@b5ebac6f4c00c8ccddb7cdcd45fdb248329f808a # v3.32.2
+      uses: github/codeql-action/upload-sarif@89a39a4e59826350b863aa6b6252a07ad50cf83e # v4.32.4
       with:
         sarif_file: results.sarif
 
@@ -152,7 +152,7 @@ jobs:
 
     - name: Run Trivy vulnerability scanner
       if: steps.check-dockerfile.outputs.dockerfile_exists == 'true'
-      uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
+      uses: aquasecurity/trivy-action@e368e328979b113139d6f9068e03accaed98a518 # v0.34.1
       with:
         image-ref: 'claude-team-dashboard:${{ github.sha }}'
         format: 'sarif'
@@ -160,7 +160,7 @@ jobs:
 
     - name: Upload Trivy results to GitHub Security
       if: steps.check-dockerfile.outputs.dockerfile_exists == 'true'
-      uses: github/codeql-action/upload-sarif@b5ebac6f4c00c8ccddb7cdcd45fdb248329f808a # v3.32.2
+      uses: github/codeql-action/upload-sarif@89a39a4e59826350b863aa6b6252a07ad50cf83e # v4.32.4
       with:
         sarif_file: 'trivy-results.sarif'
 
