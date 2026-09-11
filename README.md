@@ -809,6 +809,32 @@ The dashboard was audited by a team of 6 security specialists. Every layer has b
 
 ---
 
+## 📡 Connecting to Grafana / Jaeger
+
+The dashboard can export completed team runs as OpenTelemetry traces to any OTLP-compatible backend (Jaeger, Grafana Tempo, Datadog, Honeycomb, etc.).
+
+**Enable it** via the API (opt-in, disabled by default):
+
+```bash
+curl -X POST http://localhost:3001/api/telemetry/config \
+  -H "Authorization: Bearer <your-token>" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": true, "endpoint": "http://localhost:4318/v1/traces", "authToken": ""}'
+```
+
+**Run Jaeger locally** to see traces:
+
+```bash
+docker run --rm -p 16686:16686 -p 4318:4318 jaegertracing/all-in-one:latest
+# Open http://localhost:16686
+```
+
+The `OTEL_EXPORTER_OTLP_ENDPOINT` environment variable always overrides the configured endpoint — useful for containerized deployments.
+
+Trace mapping: one team run = one trace (`team.run:<team>`), each task = a child span with `task.id` / `task.status` / `task.owner` attributes (completed tasks get status OK).
+
+---
+
 ## 🗺️ Roadmap
 
 ### ✅ Recently Shipped

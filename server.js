@@ -12,6 +12,8 @@ const compression = require('compression');
 const crypto = require('crypto');
 const { exec } = require('child_process');
 const config = require('./config');
+const { loadTelemetryConfig, saveTelemetryConfig } = require('./src/telemetry/telemetryConfig');
+const { traceTeamRun } = require('./src/telemetry/otlpExporter');
 
 const IS_WINDOWS = process.platform === 'win32';
 
@@ -273,6 +275,55 @@ app.get('/api/health', (req, res) => {
 
 app.get('/api/version', (req, res) => {
   res.json({ version: require('./package.json').version, node: process.version });
+});
+
+// --- Telemetry (OpenTelemetry export) configuration ---
+// GET returns the current config with the auth token masked
+app.get('/api/telemetry/config', async (req, res) => {
+  try {
+    const cfg = await loadTelemetryConfig();
+    res.json({
+      enabled: cfg.enabled,
+      endpoint: cfg.endpoint,
+      hasAuthToken: !!cfg.authToken
+    });
+  } catch (err) {
+    console.error('Error reading telemetry config:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST persists OTLP endpoint / auth token / enabled flag (opt-in)
+app.post('/api/telemetry/config', async (req, res) => {
+  try {
+    const body = req.body || {};
+    if (
+      !('enabled' in body) &&
+      !('endpoint' in body) &&
+      !('authToken' in body)
+    ) {
+      return res.status(400).json({ error: 'At least one of enabled, endpoint, authToken is required' });
+    }
+    if ('enabled' in body && typeof body.enabled !== 'boolean') {
+      return res.status(400).json({ error: 'enabled must be a boolean' });
+    }
+    if ('endpoint' in body && (typeof body.endpoint !== 'string' || !/^https?:\/\//.test(body.endpoint))) {
+      return res.status(400).json({ error: 'endpoint must be an http(s) URL' });
+    }
+    if ('authToken' in body && typeof body.authToken !== 'string') {
+      return res.status(400).json({ error: 'authToken must be a string' });
+    }
+    const saved = await saveTelemetryConfig(body);
+    console.log(`📡 Telemetry config updated: enabled=${saved.enabled}`);
+    res.json({
+      enabled: saved.enabled,
+      endpoint: saved.endpoint,
+      hasAuthToken: !!saved.authToken
+    });
+  } catch (err) {
+    console.error('Error saving telemetry config:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // --- Auth middleware for protected /api/* routes (skip /api/auth/*) ---
@@ -1018,6 +1069,8 @@ function setupWatchers() {
 
         if (teamData) {
           await archiveTeam(teamName, teamData);
+          // Fire-and-forget OTEL trace export (no-ops when telemetry is disabled)
+          traceTeamRun(teamName, teamData.tasks || []);
           const lifecycle = teamLifecycle.get(teamName);
           if (lifecycle) {
             const duration = Math.round((Date.now() - lifecycle.created) / 1000 / 60);
